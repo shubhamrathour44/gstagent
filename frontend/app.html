@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Dashboard — GSTAgent</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:#07090F;color:#E2E8F0;min-height:100vh;display:flex;align-items:center;justify-content:center}
+.loading{text-align:center}
+.spinner{width:36px;height:36px;border:3px solid rgba(99,102,241,.3);border-top-color:#6366F1;border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 16px}
+@keyframes spin{to{transform:rotate(360deg)}}
+p{color:#475569;font-size:14px}
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,600&display=swap"/>
+</head>
+<body>
+<div class="loading">
+  <div class="spinner"></div>
+  <p>Loading your workspace...</p>
+</div>
+<script>
+// Check auth
+const token = localStorage.getItem('gstagent_token');
+if(!token){
+  window.location.href='/login';
+} else {
+  // Load the React dashboard
+  // For now redirect to the JSX-based dashboard
+  // In production this would be the Next.js app
+  document.querySelector('.loading div:last-child').textContent = 'Redirecting to dashboard...';
+  
+  // Verify token is valid
+  fetch('https://api.gstagent.co.in/auth/me', {
+    headers: { 'Authorization': 'Bearer ' + token }
+  })
+  .then(r => {
+    if(!r.ok) throw new Error('invalid');
+    return r.json();
+  })
+  .then(user => {
+    // Store user data
+    localStorage.setItem('gstagent_user', JSON.stringify(user));
+    // Show simple dashboard until React app is ready
+    showDashboard(user);
+  })
+  .catch(() => {
+    localStorage.removeItem('gstagent_token');
+    window.location.href='/login';
+  });
+}
+
+function showDashboard(user){
+  document.body.innerHTML = `
+    <div style="min-height:100vh;background:#07090F;font-family:'DM Sans',sans-serif;color:#E2E8F0">
+      <div style="background:#080D18;border-bottom:1px solid rgba(255,255,255,.07);padding:0 24px;height:54px;display:flex;align-items:center;justify-content:space-between">
+        <div style="display:flex;align-items:center;gap:9px">
+          <div style="width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#6366F1,#8B5CF6);display:flex;align-items:center;justify-content:center;font-size:14px">⚡</div>
+          <span style="font-family:'Instrument Serif',serif;font-size:18px">GSTAgent</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <span style="font-size:13px;color:#64748B">${user.firm_name || user.name}</span>
+          <button onclick="logout()" style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:#94A3B8;border-radius:8px;padding:6px 14px;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif">Sign out</button>
+        </div>
+      </div>
+      <div style="max-width:800px;margin:60px auto;padding:0 24px;text-align:center">
+        <div style="font-size:48px;margin-bottom:20px">🎉</div>
+        <h1 style="font-family:'Instrument Serif',serif;font-size:32px;margin-bottom:12px">You're live, ${(user.name||'').split(' ')[0]}!</h1>
+        <p style="color:#64748B;font-size:16px;line-height:1.7;margin-bottom:36px">Your GSTAgent account is ready. The full dashboard is deploying now.</p>
+        <div style="background:#0D1117;border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:28px;text-align:left;margin-bottom:24px">
+          <div style="font-size:12px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.07em;margin-bottom:16px">Your account details</div>
+          <div style="font-size:14px;color:#94A3B8;margin-bottom:10px">✉ Email: <span style="color:#E2E8F0">${user.email}</span></div>
+          <div style="font-size:14px;color:#94A3B8;margin-bottom:10px">🏢 Firm: <span style="color:#E2E8F0">${user.firm_name || '—'}</span></div>
+          <div style="font-size:14px;color:#94A3B8">🎯 Plan: <span style="color:#4ADE80;font-weight:600">Free Trial (14 days)</span></div>
+        </div>
+        <div style="background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.2);border-radius:12px;padding:20px;text-align:left">
+          <div style="font-size:13px;font-weight:700;color:#818CF8;margin-bottom:12px">📱 To run your first reconciliation:</div>
+          <div style="font-size:13px;color:#94A3B8;line-height:1.8">
+            1. Download GSTR-2B JSON from GST Portal → Returns → GSTR-2B → Download<br/>
+            2. Export Purchase Register from Tally as Excel<br/>
+            3. WhatsApp both files to us: <strong style="color:#E2E8F0">+91 99999 99999</strong><br/>
+            4. We'll run your first reconciliation together on a call
+          </div>
+        </div>
+        <div style="margin-top:24px">
+          <a href="mailto:support@gstagent.co.in" style="display:inline-flex;align-items:center;gap:8px;background:#6366F1;color:#fff;border-radius:10px;padding:12px 24px;font-size:14px;font-weight:700;text-decoration:none;margin-right:10px">Email us to get started</a>
+          <a href="/" style="display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.06);color:#94A3B8;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:12px 24px;font-size:14px;font-weight:700;text-decoration:none">← Home</a>
+        </div>
+      </div>
+    </div>
+  `;
+}
+function logout(){localStorage.clear();window.location.href='/';}
+</script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:opsz,wght@9..40,400;9..40,600&display=swap"/>
+</body>
+</html>
