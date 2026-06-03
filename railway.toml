@@ -1,0 +1,5 @@
+[build]  
+builder = "NIXPACKS"  
+  
+[deploy]  
+startCommand = "cd backend && pip install -r requirements.txt && python init_db.py && uvicorn main_v2:app --host 0.0.0.0 --port $PORT" 
