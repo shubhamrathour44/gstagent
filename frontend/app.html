@@ -22,7 +22,7 @@
   </div>
 </div>
 <script>
-const API_BASE='https://api.gstagent.co.in';
+const API_BASE='https://gstagent-production.up.railway.app';
 const token=localStorage.getItem('gstagent_token');
 if(!token) location.href='/login';
 const headers=()=>({'Content-Type':'application/json','Authorization':'Bearer '+token});
