@@ -1,34 +1,42 @@
 """
-GSTAgent — Postgres Database Layer
-Replaces in-memory store with full persistence.
+GSTAgent database foundation.
 
-Requirements:
-    pip install sqlalchemy asyncpg alembic
-
-Setup:
-    export DATABASE_URL="postgresql+asyncpg://user:password@localhost:5432/gstagent"
-    python database.py  # creates all tables
+What this fixes:
+- Real persistence instead of in-memory dictionaries.
+- Works locally with SQLite when DATABASE_URL is missing.
+- Works on Railway/Postgres when DATABASE_URL is present.
+- All client/reconciliation data is scoped by firm_id for multi-tenancy.
 """
 
-from sqlalchemy import (
-    Column, String, Float, Boolean, Integer, DateTime, Text,
-    ForeignKey, Index, Enum as SAEnum, JSON
-)
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-from sqlalchemy.orm import DeclarativeBase, relationship
-from sqlalchemy.dialects.postgresql import UUID
-from datetime import datetime
-import uuid
+from __future__ import annotations
+
 import os
-import enum
+import uuid
+from datetime import datetime
+from typing import AsyncGenerator, Optional
+
+from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, JSON, String, Text, select, and_, desc
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
-DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    "postgresql+asyncpg://postgres:postgres@localhost:5432/gstagent"
-)
+def _normalise_database_url(url: Optional[str]) -> str:
+    if not url:
+        return "sqlite+aiosqlite:///./gstagent.db"
+    if url.startswith("postgres://"):
+        url = url.replace("postgres://", "postgresql://", 1)
+    if url.startswith("postgresql://") and "+asyncpg" not in url:
+        url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
+    return url
 
-engine = create_async_engine(DATABASE_URL, echo=False, pool_size=10, max_overflow=20)
+
+DATABASE_URL = _normalise_database_url(os.getenv("DATABASE_URL"))
+
+_engine_kwargs = {"echo": os.getenv("SQL_ECHO", "0") == "1", "pool_pre_ping": True}
+if DATABASE_URL.startswith("sqlite"):
+    _engine_kwargs = {"echo": os.getenv("SQL_ECHO", "0") == "1"}
+
+engine = create_async_engine(DATABASE_URL, **_engine_kwargs)
 AsyncSessionLocal = async_sessionmaker(engine, expire_on_commit=False)
 
 
@@ -36,266 +44,136 @@ class Base(DeclarativeBase):
     pass
 
 
-# ─── ENUMS ────────────────────────────────────────────────────────────────────
+def new_id() -> str:
+    return str(uuid.uuid4())
 
-class UserRole(str, enum.Enum):
-    SUPER_ADMIN = "super_admin"   # GSTAgent staff
-    CA_ADMIN    = "ca_admin"      # CA firm owner
-    CA_STAFF    = "ca_staff"      # Junior staff at CA firm
-    CLIENT      = "client"        # Client self-service (future)
-
-
-class MismatchSeverity(str, enum.Enum):
-    HIGH   = "high"
-    MEDIUM = "medium"
-    LOW    = "low"
-
-
-class MismatchStatus(str, enum.Enum):
-    OPEN     = "open"
-    RESOLVED = "resolved"
-    DEFERRED = "deferred"
-    INVALID  = "invalid"
-
-
-class IntegrationSource(str, enum.Enum):
-    FILE_UPLOAD = "file_upload"
-    TALLY       = "tally"
-    ZOHO        = "zoho"
-    GSP         = "gsp"
-
-
-# ─── MODELS ───────────────────────────────────────────────────────────────────
 
 class CAFirm(Base):
-    """
-    Top-level tenant. One CA firm = one tenant.
-    All data is scoped under firm_id.
-    """
     __tablename__ = "ca_firms"
 
-    id         = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    name       = Column(String(200), nullable=False)
-    email      = Column(String(200), unique=True, nullable=False)
-    phone      = Column(String(20))
-    city       = Column(String(100))
-    plan       = Column(String(50), default="starter")   # starter | growth | enterprise
-    is_active  = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    name: Mapped[str] = mapped_column(String(200), nullable=False)
+    email: Mapped[str] = mapped_column(String(200), unique=True, index=True, nullable=False)
+    phone: Mapped[Optional[str]] = mapped_column(String(30), nullable=True)
+    city: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    plan: Mapped[str] = mapped_column(String(50), default="starter")
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    users   = relationship("User", back_populates="firm", cascade="all, delete-orphan")
-    clients = relationship("GSTClient", back_populates="firm", cascade="all, delete-orphan")
+    users: Mapped[list["User"]] = relationship(back_populates="firm", cascade="all, delete-orphan")
+    clients: Mapped[list["GSTClient"]] = relationship(back_populates="firm", cascade="all, delete-orphan")
 
 
 class User(Base):
-    """
-    Staff members of a CA firm. Scoped to one firm.
-    """
     __tablename__ = "users"
 
-    id            = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    firm_id       = Column(UUID(as_uuid=True), ForeignKey("ca_firms.id"), nullable=False)
-    email         = Column(String(200), unique=True, nullable=False)
-    name          = Column(String(200), nullable=False)
-    hashed_password = Column(String(300), nullable=False)
-    role          = Column(SAEnum(UserRole), default=UserRole.CA_STAFF)
-    is_active     = Column(Boolean, default=True)
-    last_login    = Column(DateTime)
-    created_at    = Column(DateTime, default=datetime.utcnow)
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    firm_id: Mapped[str] = mapped_column(String(36), ForeignKey("ca_firms.id"), index=True, nullable=False)
+    email: Mapped[str] = mapped_column(String(200), unique=True, index=True, nullable=False)
+    name: Mapped[str] = mapped_column(String(200), nullable=False)
+    hashed_password: Mapped[str] = mapped_column(String(500), nullable=False)
+    role: Mapped[str] = mapped_column(String(50), default="ca_staff")
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    last_login: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
-    firm = relationship("CAFirm", back_populates="users")
-
-    __table_args__ = (Index("ix_users_firm_id", "firm_id"),)
+    firm: Mapped[CAFirm] = relationship(back_populates="users")
 
 
 class GSTClient(Base):
-    """
-    A single GSTIN managed by a CA firm.
-    One client can have multiple GSTINs (one row per GSTIN).
-    """
     __tablename__ = "gst_clients"
 
-    id           = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    firm_id      = Column(UUID(as_uuid=True), ForeignKey("ca_firms.id"), nullable=False)
-    name         = Column(String(200), nullable=False)
-    gstin        = Column(String(15), nullable=False)
-    trade_name   = Column(String(200))
-    city         = Column(String(100))
-    state_code   = Column(String(2))
-    business_type = Column(String(100))   # Manufacturing, Trading, Services etc.
-    contact_email = Column(String(200))
-    contact_phone = Column(String(20))
-    tally_company = Column(String(200))   # Tally company name for ODBC
-    zoho_org_id  = Column(String(100))    # Zoho Books org ID
-    is_active    = Column(Boolean, default=True)
-    created_at   = Column(DateTime, default=datetime.utcnow)
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    firm_id: Mapped[str] = mapped_column(String(36), ForeignKey("ca_firms.id"), index=True, nullable=False)
+    name: Mapped[str] = mapped_column(String(200), nullable=False)
+    gstin: Mapped[str] = mapped_column(String(15), index=True, nullable=False)
+    city: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    business_type: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    contact_email: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
+    tally_company: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
+    zoho_org_id: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
-    firm             = relationship("CAFirm", back_populates="clients")
-    reconciliations  = relationship("Reconciliation", back_populates="client", cascade="all, delete-orphan")
-    notices          = relationship("GSTNotice", back_populates="client", cascade="all, delete-orphan")
-
-    __table_args__ = (
-        Index("ix_gst_clients_firm_id", "firm_id"),
-        Index("ix_gst_clients_gstin", "gstin"),
-    )
+    firm: Mapped[CAFirm] = relationship(back_populates="clients")
+    reconciliations: Mapped[list["Reconciliation"]] = relationship(back_populates="client", cascade="all, delete-orphan")
 
 
 class Reconciliation(Base):
-    """
-    One reconciliation run = one row.
-    Contains summary stats. Mismatches stored in separate table.
-    """
     __tablename__ = "reconciliations"
 
-    id              = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    client_id       = Column(UUID(as_uuid=True), ForeignKey("gst_clients.id"), nullable=False)
-    firm_id         = Column(UUID(as_uuid=True), nullable=False)   # Denormalised for fast queries
-    period          = Column(String(6), nullable=False)   # MMYYYY e.g. 032025
-    source          = Column(SAEnum(IntegrationSource), default=IntegrationSource.FILE_UPLOAD)
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    firm_id: Mapped[str] = mapped_column(String(36), index=True, nullable=False)
+    client_id: Mapped[str] = mapped_column(String(36), ForeignKey("gst_clients.id"), index=True, nullable=False)
+    gstin: Mapped[str] = mapped_column(String(15), index=True, nullable=False)
+    company_name: Mapped[str] = mapped_column(String(200), nullable=False)
+    period: Mapped[str] = mapped_column(String(6), index=True, nullable=False)
+    source: Mapped[str] = mapped_column(String(50), default="file_upload")
+    result_json: Mapped[dict] = mapped_column(JSON, nullable=False)
 
-    # Summary stats
-    pr_count        = Column(Integer, default=0)
-    b2b_count       = Column(Integer, default=0)
-    matched         = Column(Integer, default=0)
-    mismatch_count  = Column(Integer, default=0)
-    match_rate      = Column(Float, default=0.0)
-    itc_as_per_2b   = Column(Float, default=0.0)
-    itc_as_per_pr   = Column(Float, default=0.0)
-    itc_difference  = Column(Float, default=0.0)
-    high_count      = Column(Integer, default=0)
-    medium_count    = Column(Integer, default=0)
-    low_count       = Column(Integer, default=0)
+    pr_count: Mapped[int] = mapped_column(Integer, default=0)
+    b2b_count: Mapped[int] = mapped_column(Integer, default=0)
+    matched_count: Mapped[int] = mapped_column(Integer, default=0)
+    mismatch_count: Mapped[int] = mapped_column(Integer, default=0)
+    match_rate: Mapped[float] = mapped_column(Float, default=0.0)
+    itc_difference: Mapped[float] = mapped_column(Float, default=0.0)
+    high_count: Mapped[int] = mapped_column(Integer, default=0)
+    medium_count: Mapped[int] = mapped_column(Integer, default=0)
+    low_count: Mapped[int] = mapped_column(Integer, default=0)
 
-    ai_summary      = Column(Text)          # Cached Claude summary
-    filing_qa       = Column(Text)          # Cached filing QA result
-    created_at      = Column(DateTime, default=datetime.utcnow)
-    created_by      = Column(UUID(as_uuid=True))   # User who ran it
+    ai_summary: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    filing_qa: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    created_by: Mapped[Optional[str]] = mapped_column(String(36), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
-    client     = relationship("GSTClient", back_populates="reconciliations")
-    mismatches = relationship("Mismatch", back_populates="reconciliation", cascade="all, delete-orphan")
-
-    __table_args__ = (
-        Index("ix_reconciliations_client_period", "client_id", "period"),
-        Index("ix_reconciliations_firm_id", "firm_id"),
-    )
+    client: Mapped[GSTClient] = relationship(back_populates="reconciliations")
+    mismatches: Mapped[list["Mismatch"]] = relationship(back_populates="reconciliation", cascade="all, delete-orphan")
 
 
 class Mismatch(Base):
-    """
-    Individual mismatch within a reconciliation.
-    """
     __tablename__ = "mismatches"
 
-    id                = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    reconciliation_id = Column(UUID(as_uuid=True), ForeignKey("reconciliations.id"), nullable=False)
-    mismatch_code     = Column(String(10))   # MM0001, MM0002 etc.
-    mismatch_type     = Column(String(100), nullable=False)
-    severity          = Column(SAEnum(MismatchSeverity), nullable=False)
-    status            = Column(SAEnum(MismatchStatus), default=MismatchStatus.OPEN)
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    firm_id: Mapped[str] = mapped_column(String(36), index=True, nullable=False)
+    reconciliation_id: Mapped[str] = mapped_column(String(36), ForeignKey("reconciliations.id"), index=True, nullable=False)
+    mismatch_id: Mapped[str] = mapped_column(String(20), index=True, nullable=False)  # MM0001 etc.
+    mismatch_type: Mapped[str] = mapped_column(String(200), nullable=False)
+    severity: Mapped[str] = mapped_column(String(20), index=True, nullable=False)
+    status: Mapped[str] = mapped_column(String(30), default="open")
 
-    supplier_name     = Column(String(200))
-    supplier_gstin    = Column(String(15))
-    invoice_number    = Column(String(100))
-    invoice_date      = Column(String(20))
-    pr_tax_amount     = Column(Float)
-    b2b_tax_amount    = Column(Float)
-    tax_impact        = Column(Float)
-    recommended_action = Column(String(300))
-    notes             = Column(Text)
+    supplier_name: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
+    supplier_gstin: Mapped[Optional[str]] = mapped_column(String(15), nullable=True)
+    invoice_number: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    invoice_date: Mapped[Optional[str]] = mapped_column(String(30), nullable=True)
+    tax_impact: Mapped[float] = mapped_column(Float, default=0.0)
+    recommended_action: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
+    raw_json: Mapped[dict] = mapped_column(JSON, nullable=False)
 
-    ai_explanation    = Column(Text)    # Cached Claude explanation
-    vendor_email_draft = Column(Text)   # Cached vendor email
+    ai_explanation: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    vendor_email_draft: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    resolution_notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    resolved_by: Mapped[Optional[str]] = mapped_column(String(36), nullable=True)
+    resolved_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
-    resolved_at       = Column(DateTime)
-    resolved_by       = Column(UUID(as_uuid=True))
-    resolution_notes  = Column(Text)
-    created_at        = Column(DateTime, default=datetime.utcnow)
-
-    reconciliation = relationship("Reconciliation", back_populates="mismatches")
-
-    __table_args__ = (
-        Index("ix_mismatches_reconciliation_id", "reconciliation_id"),
-        Index("ix_mismatches_severity", "severity"),
-        Index("ix_mismatches_status", "status"),
-    )
-
-
-class GSTNotice(Base):
-    """
-    GST notices received by a client. Tracks draft replies and status.
-    """
-    __tablename__ = "gst_notices"
-
-    id              = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    client_id       = Column(UUID(as_uuid=True), ForeignKey("gst_clients.id"), nullable=False)
-    firm_id         = Column(UUID(as_uuid=True), nullable=False)
-    notice_number   = Column(String(100), nullable=False)
-    notice_date     = Column(String(20))
-    notice_type     = Column(String(50))   # ASMT-10, DRC-01, etc.
-    notice_content  = Column(Text)
-    supporting_facts = Column(Text)
-    draft_reply     = Column(Text)         # Claude-generated reply
-    status          = Column(String(50), default="draft")   # draft | filed | closed
-    due_date        = Column(String(20))
-    created_at      = Column(DateTime, default=datetime.utcnow)
-    updated_at      = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    created_by      = Column(UUID(as_uuid=True))
-
-    client = relationship("GSTClient", back_populates="notices")
-
-    __table_args__ = (Index("ix_gst_notices_client_id", "client_id"),)
-
-
-class IntegrationConfig(Base):
-    """
-    Stores Tally / Zoho / GSP integration settings per client.
-    Credentials encrypted at rest (use AWS KMS or Vault in production).
-    """
-    __tablename__ = "integration_configs"
-
-    id           = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    client_id    = Column(UUID(as_uuid=True), ForeignKey("gst_clients.id"), nullable=False, unique=True)
-    tally_host   = Column(String(200), default="localhost")
-    tally_port   = Column(Integer, default=9000)
-    tally_company = Column(String(200))
-    zoho_client_id     = Column(String(200))
-    zoho_client_secret = Column(String(300))   # Encrypted in production
-    zoho_refresh_token = Column(String(500))   # Encrypted in production
-    zoho_org_id        = Column(String(100))
-    gsp_username       = Column(String(200))
-    gsp_password       = Column(String(300))   # Encrypted in production
-    created_at   = Column(DateTime, default=datetime.utcnow)
-    updated_at   = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    reconciliation: Mapped[Reconciliation] = relationship(back_populates="mismatches")
 
 
 class AuditLog(Base):
-    """
-    Immutable audit trail. Every significant action logged here.
-    Required for CA firm regulatory compliance.
-    """
     __tablename__ = "audit_logs"
 
-    id          = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    firm_id     = Column(UUID(as_uuid=True), nullable=False)
-    user_id     = Column(UUID(as_uuid=True))
-    action      = Column(String(100), nullable=False)   # reconciliation.run, notice.draft, etc.
-    entity_type = Column(String(50))    # reconciliation, mismatch, notice
-    entity_id   = Column(UUID(as_uuid=True))
-    details     = Column(JSON)          # Extra context
-    ip_address  = Column(String(50))
-    created_at  = Column(DateTime, default=datetime.utcnow)
-
-    __table_args__ = (
-        Index("ix_audit_logs_firm_id", "firm_id"),
-        Index("ix_audit_logs_created_at", "created_at"),
-    )
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    firm_id: Mapped[str] = mapped_column(String(36), index=True, nullable=False)
+    user_id: Mapped[Optional[str]] = mapped_column(String(36), nullable=True)
+    action: Mapped[str] = mapped_column(String(100), nullable=False)
+    entity_type: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    entity_id: Mapped[Optional[str]] = mapped_column(String(36), nullable=True)
+    details: Mapped[dict] = mapped_column(JSON, default=dict)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
 
-# ─── DATABASE HELPERS ─────────────────────────────────────────────────────────
-
-async def get_db():
-    """FastAPI dependency — yields a DB session per request."""
+async def get_db() -> AsyncGenerator[AsyncSession, None]:
     async with AsyncSessionLocal() as session:
         try:
             yield session
@@ -303,160 +181,149 @@ async def get_db():
         except Exception:
             await session.rollback()
             raise
-        finally:
-            await session.close()
 
 
-async def create_tables():
-    """Create all tables. Run once on startup."""
+async def create_tables() -> None:
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    print("All tables created.")
 
 
-async def drop_tables():
-    """Drop all tables. Use in dev only."""
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
-
-
-# ─── CRUD OPERATIONS ──────────────────────────────────────────────────────────
-
-from sqlalchemy import select, and_, desc
-
-
-class ReconciliationRepo:
-    """All DB operations for reconciliations."""
-
+class FirmRepo:
     @staticmethod
-    async def create(db: AsyncSession, data: dict) -> Reconciliation:
-        rec = Reconciliation(**{k: v for k, v in data.items() if k != "mismatches"})
-        db.add(rec)
-        await db.flush()   # Get the ID before inserting mismatches
-
-        for m_data in data.get("mismatches", []):
-            m = Mismatch(reconciliation_id=rec.id, **m_data)
-            db.add(m)
-
-        return rec
-
-    @staticmethod
-    async def get(db: AsyncSession, rec_id: str, firm_id: str) -> Reconciliation | None:
-        result = await db.execute(
-            select(Reconciliation).where(
-                and_(
-                    Reconciliation.id == rec_id,
-                    Reconciliation.firm_id == firm_id
-                )
-            )
-        )
+    async def get_by_email(db: AsyncSession, email: str) -> Optional[CAFirm]:
+        result = await db.execute(select(CAFirm).where(CAFirm.email == email.lower().strip()))
         return result.scalar_one_or_none()
 
     @staticmethod
-    async def list_for_client(
-        db: AsyncSession,
-        client_id: str,
-        firm_id: str,
-        limit: int = 20
-    ) -> list[Reconciliation]:
-        result = await db.execute(
-            select(Reconciliation)
-            .where(and_(
-                Reconciliation.client_id == client_id,
-                Reconciliation.firm_id == firm_id
-            ))
-            .order_by(desc(Reconciliation.created_at))
-            .limit(limit)
-        )
-        return result.scalars().all()
+    async def create(db: AsyncSession, name: str, email: str, phone: str | None, city: str | None) -> CAFirm:
+        firm = CAFirm(name=name, email=email.lower().strip(), phone=phone, city=city)
+        db.add(firm)
+        await db.flush()
+        return firm
+
+
+class UserRepo:
+    @staticmethod
+    async def get_by_email(db: AsyncSession, email: str) -> Optional[User]:
+        result = await db.execute(select(User).where(User.email == email.lower().strip()))
+        return result.scalar_one_or_none()
 
     @staticmethod
-    async def update_summary(db: AsyncSession, rec_id: str, ai_summary: str):
-        rec = await db.get(Reconciliation, rec_id)
-        if rec:
-            rec.ai_summary = ai_summary
-
-
-class MismatchRepo:
-    @staticmethod
-    async def resolve(
-        db: AsyncSession,
-        mismatch_id: str,
-        user_id: str,
-        notes: str,
-        status: MismatchStatus = MismatchStatus.RESOLVED
-    ):
-        m = await db.get(Mismatch, mismatch_id)
-        if m:
-            m.status = status
-            m.resolved_at = datetime.utcnow()
-            m.resolved_by = user_id
-            m.resolution_notes = notes
-
-    @staticmethod
-    async def save_ai_explanation(db: AsyncSession, mismatch_id: str, explanation: str):
-        m = await db.get(Mismatch, mismatch_id)
-        if m:
-            m.ai_explanation = explanation
-
-    @staticmethod
-    async def save_vendor_email(db: AsyncSession, mismatch_id: str, email_draft: str):
-        m = await db.get(Mismatch, mismatch_id)
-        if m:
-            m.vendor_email_draft = email_draft
+    async def create(db: AsyncSession, firm_id: str, email: str, name: str, hashed_password: str, role: str) -> User:
+        user = User(firm_id=firm_id, email=email.lower().strip(), name=name, hashed_password=hashed_password, role=role)
+        db.add(user)
+        await db.flush()
+        return user
 
 
 class ClientRepo:
     @staticmethod
     async def list_for_firm(db: AsyncSession, firm_id: str) -> list[GSTClient]:
         result = await db.execute(
-            select(GSTClient)
-            .where(and_(GSTClient.firm_id == firm_id, GSTClient.is_active == True))
-            .order_by(GSTClient.name)
+            select(GSTClient).where(and_(GSTClient.firm_id == firm_id, GSTClient.is_active == True)).order_by(GSTClient.created_at.desc())
         )
-        return result.scalars().all()
+        return list(result.scalars().all())
 
     @staticmethod
-    async def get(db: AsyncSession, client_id: str, firm_id: str) -> GSTClient | None:
-        result = await db.execute(
-            select(GSTClient).where(
-                and_(GSTClient.id == client_id, GSTClient.firm_id == firm_id)
-            )
-        )
+    async def get(db: AsyncSession, client_id: str, firm_id: str) -> Optional[GSTClient]:
+        result = await db.execute(select(GSTClient).where(and_(GSTClient.id == client_id, GSTClient.firm_id == firm_id)))
         return result.scalar_one_or_none()
 
     @staticmethod
-    async def create(db: AsyncSession, data: dict) -> GSTClient:
-        client = GSTClient(**data)
+    async def get_by_gstin(db: AsyncSession, gstin: str, firm_id: str) -> Optional[GSTClient]:
+        result = await db.execute(select(GSTClient).where(and_(GSTClient.gstin == gstin.upper().strip(), GSTClient.firm_id == firm_id, GSTClient.is_active == True)))
+        return result.scalar_one_or_none()
+
+    @staticmethod
+    async def create(db: AsyncSession, firm_id: str, data: dict) -> GSTClient:
+        client = GSTClient(firm_id=firm_id, **data)
         db.add(client)
+        await db.flush()
         return client
+
+
+class ReconciliationRepo:
+    @staticmethod
+    async def create(db: AsyncSession, *, firm_id: str, client_id: str, company_name: str, source: str, result_json: dict, created_by: str | None) -> Reconciliation:
+        summary = result_json.get("summary_stats", {}) or {}
+        rec = Reconciliation(
+            firm_id=firm_id,
+            client_id=client_id,
+            gstin=result_json.get("gstin", ""),
+            company_name=company_name,
+            period=result_json.get("period", ""),
+            source=source,
+            result_json=result_json,
+            pr_count=int(result_json.get("total_pr_invoices", 0) or 0),
+            b2b_count=int(result_json.get("total_2b_invoices", 0) or 0),
+            matched_count=int(result_json.get("matched_invoices", 0) or 0),
+            mismatch_count=int(result_json.get("mismatched_invoices", 0) or 0),
+            match_rate=float(summary.get("match_rate", 0.0) or 0.0),
+            itc_difference=float(result_json.get("itc_difference", 0.0) or 0.0),
+            high_count=int(result_json.get("high_severity_count", 0) or 0),
+            medium_count=int(result_json.get("medium_severity_count", 0) or 0),
+            low_count=int(result_json.get("low_severity_count", 0) or 0),
+            created_by=created_by,
+        )
+        db.add(rec)
+        await db.flush()
+        for item in result_json.get("mismatches", []) or []:
+            db.add(Mismatch(
+                firm_id=firm_id,
+                reconciliation_id=rec.id,
+                mismatch_id=str(item.get("mismatch_id", "")),
+                mismatch_type=str(item.get("mismatch_type", "")),
+                severity=str(item.get("severity", "low")),
+                supplier_name=item.get("supplier_name"),
+                supplier_gstin=item.get("supplier_gstin"),
+                invoice_number=item.get("invoice_number"),
+                invoice_date=item.get("invoice_date"),
+                tax_impact=float(item.get("tax_impact", 0.0) or 0.0),
+                recommended_action=item.get("recommended_action"),
+                raw_json=item,
+            ))
+        await db.flush()
+        return rec
+
+    @staticmethod
+    async def get(db: AsyncSession, rec_id: str, firm_id: str) -> Optional[Reconciliation]:
+        result = await db.execute(select(Reconciliation).where(and_(Reconciliation.id == rec_id, Reconciliation.firm_id == firm_id)))
+        return result.scalar_one_or_none()
+
+    @staticmethod
+    async def list_for_firm(db: AsyncSession, firm_id: str, limit: int = 50) -> list[Reconciliation]:
+        result = await db.execute(select(Reconciliation).where(Reconciliation.firm_id == firm_id).order_by(desc(Reconciliation.created_at)).limit(limit))
+        return list(result.scalars().all())
+
+
+class MismatchRepo:
+    @staticmethod
+    async def get_by_public_id(db: AsyncSession, firm_id: str, rec_id: str, mismatch_id: str) -> Optional[Mismatch]:
+        result = await db.execute(select(Mismatch).where(and_(Mismatch.firm_id == firm_id, Mismatch.reconciliation_id == rec_id, Mismatch.mismatch_id == mismatch_id)))
+        return result.scalar_one_or_none()
+
+    @staticmethod
+    async def save_ai_explanation(db: AsyncSession, mismatch: Mismatch, explanation: str) -> None:
+        mismatch.ai_explanation = explanation
+
+    @staticmethod
+    async def save_vendor_email(db: AsyncSession, mismatch: Mismatch, email_draft: str) -> None:
+        mismatch.vendor_email_draft = email_draft
+
+    @staticmethod
+    async def resolve(db: AsyncSession, mismatch: Mismatch, user_id: str, notes: str, status: str = "resolved") -> None:
+        mismatch.status = status
+        mismatch.resolution_notes = notes
+        mismatch.resolved_by = user_id
+        mismatch.resolved_at = datetime.utcnow()
 
 
 class AuditRepo:
     @staticmethod
-    async def log(
-        db: AsyncSession,
-        firm_id: str,
-        user_id: str,
-        action: str,
-        entity_type: str = None,
-        entity_id: str = None,
-        details: dict = None,
-        ip_address: str = None
-    ):
-        entry = AuditLog(
-            firm_id=firm_id,
-            user_id=user_id,
-            action=action,
-            entity_type=entity_type,
-            entity_id=entity_id,
-            details=details or {},
-            ip_address=ip_address
-        )
-        db.add(entry)
+    async def log(db: AsyncSession, firm_id: str, user_id: str | None, action: str, entity_type: str | None = None, entity_id: str | None = None, details: dict | None = None) -> None:
+        db.add(AuditLog(firm_id=firm_id, user_id=user_id, action=action, entity_type=entity_type, entity_id=entity_id, details=details or {}))
 
 
-# ─── RUN ONCE TO CREATE TABLES ────────────────────────────────────────────────
 if __name__ == "__main__":
     import asyncio
     asyncio.run(create_tables())
