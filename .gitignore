@@ -34,4 +34,9 @@ Thumbs.db
 # Uploads
 uploads/
 *.xlsx
-*.json
+
+# Ignore uploaded JSON files only
+uploads/*.json
+
+# Allow Vercel config
+!frontend/vercel.json
