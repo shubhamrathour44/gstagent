@@ -1,50 +1,12 @@
 {
-  "version": 2,
-  "builds": [
-    {
-      "src": "*.html",
-      "use": "@vercel/static"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/",
-      "dest": "/index.html"
-    },
-    {
-      "src": "/login",
-      "dest": "/login.html"
-    },
-    {
-      "src": "/signup",
-      "dest": "/signup.html"
-    },
-    {
-      "src": "/app",
-      "dest": "/app.html"
-    },
-    {
-      "src": "/tax",
-      "dest": "/tax.html"
-    }
-  ],
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        {
-          "key": "X-Frame-Options",
-          "value": "DENY"
-        },
-        {
-          "key": "X-Content-Type-Options",
-          "value": "nosniff"
-        },
-        {
-          "key": "Referrer-Policy",
-          "value": "strict-origin-when-cross-origin"
-        }
-      ]
-    }
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "rewrites": [
+    { "source": "/", "destination": "/index.html" },
+    { "source": "/login", "destination": "/login.html" },
+    { "source": "/signup", "destination": "/signup.html" },
+    { "source": "/app", "destination": "/app.html" },
+    { "source": "/tax", "destination": "/tax.html" },
+    { "source": "/clients", "destination": "/clients.html" }
   ]
 }
