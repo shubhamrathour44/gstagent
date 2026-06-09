@@ -1,73 +1,291 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>GSTAgent — Client CRM</title>
-  <style>
-    body{font-family:Inter,Arial,sans-serif;background:#0f172a;color:#e5e7eb;margin:0;padding:28px}.wrap{max-width:1180px;margin:auto}.card{background:#111827;border:1px solid #334155;border-radius:20px;padding:22px;margin-bottom:18px}.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}.form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}input,select,textarea,button{padding:12px;border-radius:10px;border:1px solid #475569;background:#020617;color:#e5e7eb}textarea{min-height:70px}.full{grid-column:1/-1}button{background:#4f46e5;border:none;cursor:pointer;font-weight:800}.secondary{background:#1f2937}.danger{background:#7f1d1d}.stat{background:#020617;border:1px solid #334155;border-radius:16px;padding:16px}.stat b{font-size:28px}.list{display:grid;gap:12px}.client{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr auto;gap:12px;align-items:center;background:#020617;border:1px solid #334155;border-radius:14px;padding:14px}.muted{color:#94a3b8}.result{white-space:pre-wrap;background:#020617;border:1px solid #334155;border-radius:14px;padding:14px;overflow:auto}.top{display:flex;justify-content:space-between;align-items:center;gap:12px}a{color:#93c5fd;text-decoration:none}@media(max-width:850px){.grid,.form,.client{grid-template-columns:1fr}.top{align-items:flex-start;flex-direction:column}}
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GSTAgent CRM</title>
+<script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-  <div class="wrap">
-    <div class="top">
-      <div><h1>Client Management CRM</h1><p class="muted">Manage CA firm clients, GSTIN/PAN, services, billing and notices.</p></div>
-      <div><a href="/app">Dashboard</a> · <a href="/tax">Income Tax</a></div>
-    </div>
 
-    <div class="grid" id="stats">
-      <div class="stat"><span class="muted">Total Clients</span><br><b id="total">0</b></div>
-      <div class="stat"><span class="muted">GST Clients</span><br><b id="gst">0</b></div>
-      <div class="stat"><span class="muted">ITR Clients</span><br><b id="itr">0</b></div>
-      <div class="stat"><span class="muted">Open Notices</span><br><b id="notices">0</b></div>
-    </div>
+<body class="bg-gray-100">
 
-    <div class="card">
-      <h2>Add / Update Client</h2>
-      <div class="form">
-        <input id="clientId" type="hidden" />
-        <input id="client_name" placeholder="Client name" />
-        <input id="trade_name" placeholder="Trade name" />
-        <input id="pan" placeholder="PAN" maxlength="10" />
-        <input id="gstin" placeholder="GSTIN" maxlength="15" />
-        <input id="mobile" placeholder="Mobile" />
-        <input id="email" placeholder="Email" />
-        <input id="city" placeholder="City" />
-        <input id="state" placeholder="State" />
-        <select id="business_type"><option value="proprietorship">Proprietorship</option><option value="partnership">Partnership</option><option value="llp">LLP</option><option value="private_limited">Private Limited</option><option value="individual">Individual</option></select>
-        <input id="assigned_staff" placeholder="Assigned staff" />
-        <input id="monthly_gst_fee" type="number" placeholder="Monthly GST fee" />
-        <input id="itr_fee" type="number" placeholder="ITR fee" />
-        <textarea id="address" class="full" placeholder="Address"></textarea>
-        <textarea id="notes" class="full" placeholder="Notes"></textarea>
-        <button onclick="saveClient()">Save Client</button>
-        <button class="secondary" onclick="resetForm()">Clear</button>
-      </div>
-    </div>
+<div class="max-w-7xl mx-auto p-6">
 
-    <div class="card">
-      <div class="top"><h2>Clients</h2><button class="secondary" onclick="loadAll()">Refresh</button></div>
-      <div class="form"><input id="search" placeholder="Search name / GSTIN / PAN" oninput="loadClients()"><select id="status" onchange="loadClients()"><option value="all">All</option><option value="active">Active</option><option value="inactive">Inactive</option></select></div>
-      <div class="list" id="clientList"></div>
-    </div>
+<div class="flex justify-between items-center mb-6">
+<h1 class="text-3xl font-bold">Client CRM</h1>
+<a href="/app" class="text-blue-600 font-semibold">Dashboard</a>
+</div>
 
-    <div class="card"><h2>Result</h2><div class="result" id="result">Ready.</div></div>
-  </div>
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+
+<div class="bg-white p-5 rounded shadow">
+<p>Total Clients</p>
+<h2 id="total_clients" class="text-3xl font-bold">0</h2>
+</div>
+
+<div class="bg-white p-5 rounded shadow">
+<p>Active Clients</p>
+<h2 id="active_clients" class="text-3xl font-bold text-green-600">0</h2>
+</div>
+
+<div class="bg-white p-5 rounded shadow">
+<p>GST Clients</p>
+<h2 id="gst_clients" class="text-3xl font-bold text-blue-600">0</h2>
+</div>
+
+<div class="bg-white p-5 rounded shadow">
+<p>Monthly Revenue</p>
+<h2 id="monthly_revenue" class="text-2xl font-bold text-purple-600">₹0</h2>
+</div>
+
+</div>
+
+<div class="bg-white p-6 rounded shadow mb-6">
+
+<h2 class="text-xl font-bold mb-4">Add Client</h2>
+
+<form id="clientForm" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+<input name="client_name" placeholder="Client Name" class="border p-3 rounded" required>
+
+<input name="trade_name" placeholder="Trade Name" class="border p-3 rounded">
+
+<input name="mobile" placeholder="Mobile" class="border p-3 rounded">
+
+<input name="email" placeholder="Email" class="border p-3 rounded">
+
+<input name="pan" placeholder="PAN" class="border p-3 rounded">
+
+<input name="gstin" placeholder="GSTIN" class="border p-3 rounded">
+
+<input name="monthly_gst_fee" type="number" placeholder="Monthly GST Fee" class="border p-3 rounded">
+
+<input name="itr_fee" type="number" placeholder="ITR Fee" class="border p-3 rounded">
+
+<input name="assigned_staff" placeholder="Assigned Staff" class="border p-3 rounded">
+
+<button class="bg-blue-600 text-white p-3 rounded font-bold">
+Save Client
+</button>
+
+</form>
+
+</div>
+
+<div class="bg-white p-6 rounded shadow mb-6">
+
+<div class="flex gap-3">
+
+<input
+id="search"
+placeholder="Search Client"
+class="border p-3 rounded flex-1">
+
+<button
+onclick="searchClients()"
+class="bg-indigo-600 text-white px-5 rounded">
+Search
+</button>
+
+<button
+onclick="loadClients()"
+class="bg-gray-800 text-white px-5 rounded">
+Refresh
+</button>
+
+</div>
+
+</div>
+
+<div class="bg-white p-6 rounded shadow">
+
+<h2 class="text-xl font-bold mb-4">Client List</h2>
+
+<div class="overflow-x-auto">
+
+<table class="w-full">
+
+<thead>
+<tr class="bg-gray-200">
+<th class="p-3 text-left">Client</th>
+<th class="p-3 text-left">PAN</th>
+<th class="p-3 text-left">GSTIN</th>
+<th class="p-3 text-left">Mobile</th>
+<th class="p-3 text-left">GST Fee</th>
+</tr>
+</thead>
+
+<tbody id="clientRows">
+<tr>
+<td colspan="5" class="p-4 text-center">
+No Clients
+</td>
+</tr>
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
+</div>
+
 <script>
-const API_BASE='https://gstagent-production.up.railway.app';
-function token(){return localStorage.getItem('gstagent_token')||localStorage.getItem('token')||localStorage.getItem('access_token')||''}
-async function api(path, options={}){const res=await fetch(API_BASE+path,{...options,headers:{'Content-Type':'application/json','Authorization':'Bearer '+token(),...(options.headers||{})}});const data=await res.json().catch(()=>({error:'Non JSON response'}));if(!res.ok)throw new Error(JSON.stringify(data));return data}
-function val(id){return document.getElementById(id).value.trim()}
-function num(id){return Number(document.getElementById(id).value||0)}
-function show(x){document.getElementById('result').textContent=typeof x==='string'?x:JSON.stringify(x,null,2)}
-function resetForm(){['clientId','client_name','trade_name','pan','gstin','mobile','email','city','state','assigned_staff','monthly_gst_fee','itr_fee','address','notes'].forEach(id=>document.getElementById(id).value='')}
-async function loadDashboard(){try{const d=await api('/crm/dashboard');document.getElementById('total').textContent=d.total_clients;document.getElementById('gst').textContent=d.gst_clients;document.getElementById('itr').textContent=d.itr_clients;document.getElementById('notices').textContent=d.open_notices}catch(e){show(e.message)}}
-async function loadClients(){try{const q=encodeURIComponent(val('search'));const status=val('status');const d=await api(`/crm/clients?q=${q}&status=${status}`);const el=document.getElementById('clientList');el.innerHTML='';if(!d.clients.length){el.innerHTML='<p class="muted">No clients yet.</p>';return}d.clients.forEach(c=>{const div=document.createElement('div');div.className='client';div.innerHTML=`<div><b>${c.client_name}</b><br><span class="muted">${c.trade_name||''}</span></div><div>PAN: ${c.pan||'-'}<br>GSTIN: ${c.gstin||'-'}</div><div>${c.mobile||'-'}<br>${c.email||'-'}</div><div>GST ₹${c.monthly_gst_fee||0}<br>ITR ₹${c.itr_fee||0}</div><div><button class="secondary" onclick='editClient(${JSON.stringify(c).replaceAll("'","&#39;")})'>Edit</button><button class="danger" onclick='deleteClient("${c.id}")'>Inactive</button></div>`;el.appendChild(div)})}catch(e){show(e.message)}}
-function editClient(c){document.getElementById('clientId').value=c.id;['client_name','trade_name','pan','gstin','mobile','email','city','state','business_type','assigned_staff','monthly_gst_fee','itr_fee','address','notes'].forEach(id=>{document.getElementById(id).value=c[id]||''});window.scrollTo({top:0,behavior:'smooth'})}
-async function saveClient(){try{const payload={client_name:val('client_name'),trade_name:val('trade_name'),pan:val('pan'),gstin:val('gstin'),mobile:val('mobile'),email:val('email'),address:val('address'),city:val('city'),state:val('state'),business_type:val('business_type'),assigned_staff:val('assigned_staff'),monthly_gst_fee:num('monthly_gst_fee'),itr_fee:num('itr_fee'),notes:val('notes')};if(!payload.client_name)throw new Error('Client name required');const id=val('clientId');const d=await api(id?`/crm/clients/${id}`:'/crm/clients',{method:id?'PUT':'POST',body:JSON.stringify(payload)});show(d);resetForm();loadAll()}catch(e){show(e.message)}}
-async function deleteClient(id){if(!confirm('Mark this client inactive?'))return;try{show(await api(`/crm/clients/${id}`,{method:'DELETE'}));loadAll()}catch(e){show(e.message)}}
-function loadAll(){loadDashboard();loadClients()}
-loadAll();
+
+const API_BASE = "https://gstagent-production.up.railway.app";
+
+function getToken(){
+return (
+localStorage.getItem("gstagent_token") ||
+localStorage.getItem("access_token") ||
+localStorage.getItem("token") ||
+""
+);
+}
+
+function headers(){
+return {
+"Content-Type":"application/json",
+"Authorization":"Bearer " + getToken()
+};
+}
+
+function rupee(v){
+return "₹" + Number(v || 0).toLocaleString("en-IN");
+}
+
+async function loadDashboard(){
+
+const res = await fetch(
+API_BASE + "/crm/dashboard",
+{headers:headers()}
+);
+
+if(!res.ok) return;
+
+const d = await res.json();
+
+document.getElementById("total_clients").innerText =
+d.total_clients || 0;
+
+document.getElementById("active_clients").innerText =
+d.active_clients || 0;
+
+document.getElementById("gst_clients").innerText =
+d.gst_clients || 0;
+
+document.getElementById("monthly_revenue").innerText =
+rupee(d.estimated_monthly_revenue);
+
+}
+
+async function loadClients(){
+
+const res = await fetch(
+API_BASE + "/crm/clients",
+{headers:headers()}
+);
+
+if(!res.ok) return;
+
+const data = await res.json();
+
+const rows =
+document.getElementById("clientRows");
+
+if(!data.clients || data.clients.length===0){
+rows.innerHTML =
+'<tr><td colspan="5" class="p-4 text-center">No Clients</td></tr>';
+return;
+}
+
+rows.innerHTML =
+data.clients.map(c=>`
+<tr class="border-b">
+<td class="p-3">${c.client_name || "-"}</td>
+<td class="p-3">${c.pan || "-"}</td>
+<td class="p-3">${c.gstin || "-"}</td>
+<td class="p-3">${c.mobile || "-"}</td>
+<td class="p-3">${rupee(c.monthly_gst_fee)}</td>
+</tr>
+`).join("");
+
+}
+
+async function searchClients(){
+
+const q =
+document.getElementById("search").value;
+
+const res = await fetch(
+API_BASE + "/crm/search?q=" + encodeURIComponent(q),
+{headers:headers()}
+);
+
+if(!res.ok) return;
+
+const data = await res.json();
+
+const rows =
+document.getElementById("clientRows");
+
+rows.innerHTML =
+data.clients.map(c=>`
+<tr class="border-b">
+<td class="p-3">${c.client_name || "-"}</td>
+<td class="p-3">${c.pan || "-"}</td>
+<td class="p-3">${c.gstin || "-"}</td>
+<td class="p-3">${c.mobile || "-"}</td>
+<td class="p-3">${rupee(c.monthly_gst_fee)}</td>
+</tr>
+`).join("");
+
+}
+
+document
+.getElementById("clientForm")
+.addEventListener("submit", async function(e){
+
+e.preventDefault();
+
+const fd = new FormData(e.target);
+
+const payload =
+Object.fromEntries(fd.entries());
+
+payload.monthly_gst_fee =
+Number(payload.monthly_gst_fee || 0);
+
+payload.itr_fee =
+Number(payload.itr_fee || 0);
+
+const res = await fetch(
+API_BASE + "/crm/clients",
+{
+method:"POST",
+headers:headers(),
+body:JSON.stringify(payload)
+}
+);
+
+if(res.ok){
+alert("Client Created");
+e.target.reset();
+loadDashboard();
+loadClients();
+}else{
+alert(await res.text());
+}
+
+});
+
+loadDashboard();
+loadClients();
+
 </script>
+
 </body>
 </html>
+```
