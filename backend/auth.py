@@ -16,7 +16,7 @@ from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database import Firm, FirmRepo, UserRepo, get_db
+from database import CAFirm, FirmRepo, UserRepo, get_db
 
 SECRET_KEY = os.getenv(
     "JWT_SECRET_KEY",
@@ -269,7 +269,7 @@ async def login(
         )
 
     result = await db.execute(
-        select(Firm).where(Firm.id == user.firm_id)
+        select(CAFirm).where(CAFirm.id == user.firm_id)
     )
 
     firm = result.scalar_one_or_none()
