@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Notice Management - GSTAgent</title>
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100">
+<div class="min-h-screen p-6">
+<div class="max-w-7xl mx-auto">
+
+<div class="flex justify-between items-center mb-6">
+<h1 class="text-3xl font-bold text-gray-800">Notice Management</h1>
+<div class="flex gap-4">
+<a href="/clients" class="text-green-600 font-semibold">CRM</a>
+<a href="/documents" class="text-purple-600 font-semibold">Documents</a>
+<a href="/compliance" class="text-orange-600 font-semibold">Compliance</a>
+<a href="/app" class="text-blue-600 font-semibold">Dashboard</a>
+</div>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+<div class="bg-white p-5 rounded-xl shadow"><p>Total Notices</p><h2 id="total_notices" class="text-3xl font-bold">0</h2></div>
+<div class="bg-white p-5 rounded-xl shadow"><p>Open</p><h2 id="open_notices" class="text-3xl font-bold text-red-600">0</h2></div>
+<div class="bg-white p-5 rounded-xl shadow"><p>Submitted</p><h2 id="submitted_notices" class="text-3xl font-bold text-blue-600">0</h2></div>
+<div class="bg-white p-5 rounded-xl shadow"><p>Closed</p><h2 id="closed_notices" class="text-3xl font-bold text-green-600">0</h2></div>
+<div class="bg-white p-5 rounded-xl shadow"><p>High Priority</p><h2 id="high_priority" class="text-3xl font-bold text-orange-600">0</h2></div>
+</div>
+
+<div class="bg-white p-6 rounded-xl shadow mb-6">
+<h2 class="text-xl font-bold mb-4">Add Notice</h2>
+
+<form id="noticeForm" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+<select id="clientSelect" class="border p-3 rounded">
+<option value="">Select CRM Client</option>
+</select>
+
+<input id="client_id" name="client_id" class="border p-3 rounded" placeholder="Client ID" readonly>
+<input id="client_name" name="client_name" class="border p-3 rounded" placeholder="Client Name" required>
+
+<select id="department" name="department" class="border p-3 rounded">
+<option value="GST">GST</option>
+<option value="Income Tax">Income Tax</option>
+<option value="TDS">TDS</option>
+<option value="ROC">ROC</option>
+<option value="Other">Other</option>
+</select>
+
+<select id="notice_type" name="notice_type" class="border p-3 rounded">
+<option value="scrutiny">Scrutiny</option>
+<option value="demand">Demand</option>
+<option value="mismatch">Mismatch</option>
+<option value="assessment">Assessment</option>
+<option value="audit">Audit</option>
+<option value="show_cause">Show Cause</option>
+<option value="other">Other</option>
+</select>
+
+<input id="notice_number" name="notice_number" class="border p-3 rounded" placeholder="Notice Number">
+
+<input id="subject" name="subject" class="border p-3 rounded md:col-span-2" placeholder="Subject" required>
+
+<select id="priority" name="priority" class="border p-3 rounded">
+<option value="low">Low</option>
+<option value="medium" selected>Medium</option>
+<option value="high">High</option>
+</select>
+
+<select id="status" name="status" class="border p-3 rounded">
+<option value="open">Open</option>
+<option value="drafting">Drafting</option>
+<option value="submitted">Submitted</option>
+<option value="closed">Closed</option>
+</select>
+
+<input id="due_date" name="due_date" type="datetime-local" class="border p-3 rounded">
+
+<input id="assigned_staff" name="assigned_staff" class="border p-3 rounded" placeholder="Assigned Staff">
+<input id="tax_demand" name="tax_demand" type="number" class="border p-3 rounded" placeholder="Tax Demand" value="0">
+
+<input id="notice_document_url" name="notice_document_url" class="border p-3 rounded md:col-span-2" placeholder="Notice Document URL">
+<input id="reply_document_url" name="reply_document_url" class="border p-3 rounded" placeholder="Reply Document URL">
+
+<textarea id="description" name="description" class="border p-3 rounded md:col-span-3" placeholder="Description / Remarks"></textarea>
+
+<button type="submit" class="bg-blue-600 text-white p-3 rounded font-semibold hover:bg-blue-700">
+Save Notice
+</button>
+
+</form>
+</div>
+
+<div class="bg-white p-6 rounded-xl shadow mb-6">
+<div class="flex flex-col md:flex-row justify-between gap-3 mb-4">
+<h2 class="text-xl font-bold">Search Notices</h2>
+<button onclick="refreshAll()" class="bg-gray-800 text-white px-4 py-2 rounded font-semibold">Refresh</button>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+<input id="searchInput" class="border p-3 rounded md:col-span-3" placeholder="Search client, subject, notice number, department">
+<button onclick="searchNotices()" class="bg-indigo-600 text-white px-4 py-2 rounded font-semibold">Search</button>
+</div>
+</div>
+
+<div class="bg-white p-6 rounded-xl shadow">
+<h2 class="text-xl font-bold mb-4">Notice List</h2>
+
+<div class="overflow-x-auto">
+<table class="w-full border-collapse">
+<thead>
+<tr class="bg-gray-200 text-left">
+<th class="p-3">Client</th>
+<th class="p-3">Department</th>
+<th class="p-3">Type</th>
+<th class="p-3">Subject</th>
+<th class="p-3">Priority</th>
+<th class="p-3">Status</th>
+<th class="p-3">Due Date</th>
+<th class="p-3">Demand</th>
+<th class="p-3">Actions</th>
+</tr>
+</thead>
+<tbody id="noticeRows">
+<tr><td colspan="9" class="p-4 text-center text-gray-500">No notices yet</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+
+</div>
+</div>
+
+<script>
+const API_BASE = "https://gstagent-production.up.railway.app";
+
+function getToken(){
+return localStorage.getItem("gstagent_token") || localStorage.getItem("access_token") || localStorage.getItem("token") || "";
+}
+
+function headers(){
+return {
+"Content-Type":"application/json",
+"Authorization":"Bearer " + getToken()
+};
+}
+
+function rupee(v){
+return "₹" + Number(v || 0).toLocaleString("en-IN");
+}
+
+function badge(text, kind){
+let color = "bg-gray-200 text-gray-700";
+if(kind === "high") color = "bg-red-100 text-red-700";
+if(kind === "medium") color = "bg-yellow-100 text-yellow-700";
+if(kind === "low") color = "bg-green-100 text-green-700";
+if(kind === "open") color = "bg-red-100 text-red-700";
+if(kind === "drafting") color = "bg-yellow-100 text-yellow-700";
+if(kind === "submitted") color = "bg-blue-100 text-blue-700";
+if(kind === "closed") color = "bg-green-100 text-green-700";
+return `<span class="px-3 py-1 rounded-full text-xs font-semibold ${color}">${text || "-"}</span>`;
+}
+
+async function loadCRMClients(){
+try{
+const res = await fetch(`${API_BASE}/crm/clients`, {headers: headers()});
+if(!res.ok) return;
+
+const data = await res.json();
+const clients = data.clients || [];
+const select = document.getElementById("clientSelect");
+
+select.innerHTML = `<option value="">Select CRM Client</option>`;
+
+clients.forEach(c=>{
+const opt = document.createElement("option");
+opt.value = JSON.stringify({
+id: c.id || "",
+client_name: c.client_name || ""
+});
+opt.textContent = c.client_name || "Unnamed Client";
+select.appendChild(opt);
+});
+}catch(e){
+console.error("CRM clients load failed", e);
+}
+}
+
+document.getElementById("clientSelect").addEventListener("change", function(){
+if(!this.value) return;
+const c = JSON.parse(this.value);
+document.getElementById("client_id").value = c.id || "";
+document.getElementById("client_name").value = c.client_name || "";
+});
+
+function renderNotices(notices){
+const rows = document.getElementById("noticeRows");
+
+if(!notices || notices.length === 0){
+rows.innerHTML = `<tr><td colspan="9" class="p-4 text-center text-gray-500">No notices found</td></tr>`;
+return;
+}
+
+rows.innerHTML = notices.map(n=>`
+<tr class="border-b hover:bg-gray-50">
+<td class="p-3">${n.client_name || "-"}</td>
+<td class="p-3">${n.department || "-"}</td>
+<td class="p-3">${n.notice_type || "-"}</td>
+<td class="p-3">
+<div class="font-semibold">${n.subject || "-"}</div>
+<div class="text-xs text-gray-500">${n.notice_number || ""}</div>
+</td>
+<td class="p-3">${badge(n.priority, n.priority)}</td>
+<td class="p-3">${badge(n.status, n.status)}</td>
+<td class="p-3">${n.due_date ? String(n.due_date).slice(0,10) : "-"}</td>
+<td class="p-3 font-semibold">${rupee(n.tax_demand)}</td>
+<td class="p-3">
+<div class="flex flex-wrap gap-2">
+${n.notice_document_url ? `<button onclick="window.open('${n.notice_document_url}','_blank')" class="bg-blue-600 text-white px-3 py-1 rounded text-sm">Notice</button>` : ""}
+${n.reply_document_url ? `<button onclick="window.open('${n.reply_document_url}','_blank')" class="bg-green-600 text-white px-3 py-1 rounded text-sm">Reply</button>` : ""}
+<button onclick="markSubmitted('${n.id}')" class="bg-indigo-600 text-white px-3 py-1 rounded text-sm">Submitted</button>
+<button onclick="markClosed('${n.id}')" class="bg-green-700 text-white px-3 py-1 rounded text-sm">Close</button>
+<button onclick="deleteNotice('${n.id}')" class="bg-red-600 text-white px-3 py-1 rounded text-sm">Delete</button>
+</div>
+</td>
+</tr>
+`).join("");
+}
+
+async function loadDashboard(){
+try{
+const res = await fetch(`${API_BASE}/notices/dashboard`, {headers: headers()});
+if(!res.ok) return;
+
+const data = await res.json();
+
+document.getElementById("total_notices").innerText = data.total_notices || 0;
+document.getElementById("open_notices").innerText = data.open_notices || 0;
+document.getElementById("submitted_notices").innerText = data.submitted_notices || 0;
+document.getElementById("closed_notices").innerText = data.closed_notices || 0;
+document.getElementById("high_priority").innerText = data.high_priority || 0;
+}catch(e){
+console.error("Dashboard load failed", e);
+}
+}
+
+async function loadNotices(){
+try{
+const res = await fetch(`${API_BASE}/notices/list`, {headers: headers()});
+if(!res.ok) return;
+
+const data = await res.json();
+renderNotices(data.notices || []);
+}catch(e){
+console.error("Notices load failed", e);
+}
+}
+
+async function searchNotices(){
+const q = document.getElementById("searchInput").value.trim();
+
+if(!q){
+await loadNotices();
+return;
+}
+
+const res = await fetch(`${API_BASE}/notices/search?q=${encodeURIComponent(q)}`, {headers: headers()});
+if(!res.ok){
+alert("Search failed");
+return;
+}
+
+const data = await res.json();
+renderNotices(data.notices || []);
+}
+
+document.getElementById("noticeForm").addEventListener("submit", async function(e){
+e.preventDefault();
+
+if(!getToken()){
+alert("Please login again");
+window.location.href = "/login";
+return;
+}
+
+const formData = new FormData(e.target);
+const payload = Object.fromEntries(formData.entries());
+
+payload.tax_demand = Number(payload.tax_demand || 0);
+
+if(payload.due_date){
+payload.due_date = new Date(payload.due_date).toISOString();
+}else{
+payload.due_date = null;
+}
+
+for(const key in payload){
+if(payload[key] === "") payload[key] = null;
+}
+
+const res = await fetch(`${API_BASE}/notices/create`, {
+method: "POST",
+headers: headers(),
+body: JSON.stringify(payload)
+});
+
+if(res.ok){
+alert("Notice saved successfully");
+e.target.reset();
+await refreshAll();
+}else{
+alert("Notice failed: " + await res.text());
+}
+});
+
+async function updateNotice(id, payload){
+const res = await fetch(`${API_BASE}/notices/update/${id}`, {
+method: "PUT",
+headers: headers(),
+body: JSON.stringify(payload)
+});
+
+if(res.ok){
+await refreshAll();
+}else{
+alert("Update failed: " + await res.text());
+}
+}
+
+async function markSubmitted(id){
+await updateNotice(id, {status: "submitted"});
+}
+
+async function markClosed(id){
+await updateNotice(id, {status: "closed"});
+}
+
+async function deleteNotice(id){
+if(!confirm("Delete this notice?")) return;
+
+const res = await fetch(`${API_BASE}/notices/delete/${id}`, {
+method: "DELETE",
+headers: headers()
+});
+
+if(res.ok){
+alert("Notice deleted");
+await refreshAll();
+}else{
+alert("Delete failed: " + await res.text());
+}
+}
+
+async function refreshAll(){
+await loadCRMClients();
+await loadDashboard();
+await loadNotices();
+}
+
+document.getElementById("searchInput").addEventListener("keydown", function(e){
+if(e.key === "Enter"){
+e.preventDefault();
+searchNotices();
+}
+});
+
+refreshAll();
+</script>
+
+</body>
+</html>
