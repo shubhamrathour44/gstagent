@@ -9,8 +9,6 @@ from integrations import tally_router, zoho_router
 from gsp.router import router as gsp_router
 from tax.router import router as tax_router
 from crm.router import crm_router
-
-# FIX: Added missing compliance router import
 from compliance.router import compliance_router
 
 # Setup Logging
@@ -23,7 +21,7 @@ app = FastAPI(
     version="2.0.0"
 )
 
-# CORS Configuration
+# FIXED: Explicitly defining precise origins to allow credentials securely without wildcard conflicts
 origins = [
     "http://localhost:3000",
     "http://localhost:5500",
@@ -34,7 +32,7 @@ origins = [
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Temporarily allow all origins to bypass preflight bugs completely
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -55,8 +53,6 @@ app.include_router(zoho_router)
 app.include_router(gsp_router)
 app.include_router(tax_router)
 app.include_router(crm_router)
-
-# Include New Compliance Tracker Router
 app.include_router(compliance_router)
 
 # Optional Billing Router Safeguard
