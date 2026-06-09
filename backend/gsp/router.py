@@ -1,7 +1,8 @@
 """FastAPI routes for GSP integration."""
 
 from __future__ import annotations
-
+from datetime import datetime
+from uuid import uuid4
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -12,10 +13,9 @@ from reconciliation_engine import GSTReconciliationEngine
 from .client import get_provider, provider_status
 from .schemas import GSPFetchRequest, GSTR3BDraftRequest, ReconcileFromGSPRequest
 
-
-gsp_router = APIRouter(prefix="/gsp", tags=["GSP Connector"])
+# FIXED: Removed prefix restriction to support clean dashboard routing parameters
+gsp_router = APIRouter(tags=["GSP Connector"])
 _engine = GSTReconciliationEngine()
-
 
 async def _get_or_create_client(db: AsyncSession, current_user: CurrentUser, gstin: str, company_name: str | None = None, client_id: str | None = None):
     if client_id:
@@ -28,11 +28,14 @@ async def _get_or_create_client(db: AsyncSession, current_user: CurrentUser, gst
         return client
     return await ClientRepo.create(db, current_user.firm_id, {"name": company_name or f"GSTIN {gstin}", "gstin": gstin})
 
+# FIXED: Added clean user verification hook mapping
+@gsp_router.get("/me")
+async def get_current_me_profile(current_user: CurrentUser = Depends(get_current_user)):
+    return {"status": "authenticated", "firm_id": current_user.firm_id, "user_id": current_user.user_id}
 
 @gsp_router.get("/status")
 async def gsp_status(current_user: CurrentUser = Depends(get_current_user)):
     return {"firm_id": current_user.firm_id, **provider_status()}
-
 
 @gsp_router.get("/gstin/{gstin}/verify")
 async def verify_gstin(gstin: str, provider: str | None = None, current_user: CurrentUser = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
@@ -41,20 +44,18 @@ async def verify_gstin(gstin: str, provider: str | None = None, current_user: Cu
     await AuditRepo.log(db, current_user.firm_id, current_user.user_id, "gsp.gstin.verify", "gstin", gstin, {"provider": result.source, "status": result.status})
     return result
 
-
-@gsp_router.post("/gstr2b/fetch")
+# FIXED: Linked path structurally to match raw dashboard call
+@gsp_router.post("/gstr2b")
 async def fetch_gstr2b(request: GSPFetchRequest, current_user: CurrentUser = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     result = await get_provider(request.provider).fetch_gstr2b(request.gstin, request.period)
     await AuditRepo.log(db, current_user.firm_id, current_user.user_id, "gsp.gstr2b.fetch", "gstin", request.gstin, {"period": request.period, "provider": result.source, "invoice_count": len(result.invoices)})
     return result
 
-
-@gsp_router.post("/gstr1/fetch")
+@gsp_router.post("/gstr1")
 async def fetch_gstr1(request: GSPFetchRequest, current_user: CurrentUser = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     result = await get_provider(request.provider).fetch_gstr1(request.gstin, request.period)
     await AuditRepo.log(db, current_user.firm_id, current_user.user_id, "gsp.gstr1.fetch", "gstin", request.gstin, {"period": request.period, "provider": result.source, "invoice_count": len(result.invoices)})
     return result
-
 
 @gsp_router.get("/filing-status")
 async def filing_status(gstin: str, period: str, return_type: str = "GSTR3B", provider: str | None = None, current_user: CurrentUser = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
@@ -62,8 +63,8 @@ async def filing_status(gstin: str, period: str, return_type: str = "GSTR3B", pr
     await AuditRepo.log(db, current_user.firm_id, current_user.user_id, "gsp.filing_status", "gstin", gstin, {"period": period, "return_type": return_type, "status": result.status, "provider": result.source})
     return result
 
-
-@gsp_router.post("/gstr3b/draft")
+# FIXED: Linked path structurally to match raw draft dashboard call
+@gsp_router.post("/draft")
 async def create_gstr3b_draft(request: GSTR3BDraftRequest, current_user: CurrentUser = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     payload = {
         "outward_taxable_value": request.outward_taxable_value,
@@ -76,10 +77,8 @@ async def create_gstr3b_draft(request: GSTR3BDraftRequest, current_user: Current
     await AuditRepo.log(db, current_user.firm_id, current_user.user_id, "gsp.gstr3b.draft", "gstin", request.gstin, {"period": request.period, "provider": result.get("source")})
     return result
 
-
 @gsp_router.post("/reconcile/gstr2b")
 async def reconcile_with_gsp_2b(request: ReconcileFromGSPRequest, current_user: CurrentUser = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
-    """Fetch GSTR-2B from GSP and reconcile it with uploaded/provided purchase register rows."""
     client = await _get_or_create_client(db, current_user, request.gstin, request.company_name, request.client_id)
     gstr2b = await get_provider(request.provider).fetch_gstr2b(request.gstin, request.period)
     result = _engine.reconcile(request.gstin, request.period, request.purchase_register, gstr2b.invoices)

@@ -3,7 +3,7 @@ import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-# FIXED: Aligned all core router names to match their exact definitions
+# Import active structural application module routers
 from auth import auth_router
 from integrations import tally_router, zoho_router
 from gsp.router import gsp_router
@@ -11,7 +11,6 @@ from tax.router import tax_router
 from crm.router import crm_router
 from compliance.router import compliance_router
 
-# Setup Logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("gstagent-backend")
 
@@ -21,7 +20,6 @@ app = FastAPI(
     version="2.0.0"
 )
 
-# Standard permissive setup for cross-routing safety
 origins = [
     "http://localhost:3000",
     "http://localhost:5500",
@@ -45,6 +43,11 @@ async def root():
         "status": "healthy",
         "version": "2.0.0"
     }
+
+# FIXED: Explicitly defined active health endpoints
+@app.get("/health")
+async def application_health_validation_node():
+    return {"status": "healthy", "service": "gstagent-backend"}
 
 # Include App Routers
 app.include_router(auth_router)
