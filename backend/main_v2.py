@@ -10,6 +10,7 @@ from gsp.router import gsp_router
 from tax.router import tax_router
 from crm.router import crm_router
 from compliance.router import compliance_router
+from billing import router as billing_router
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("gstagent-backend")
@@ -57,6 +58,7 @@ app.include_router(gsp_router)
 app.include_router(tax_router)
 app.include_router(crm_router)
 app.include_router(compliance_router)
+app.include_router(billing_router)
 
 if __name__ == "__main__":
     import uvicorn
