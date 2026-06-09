@@ -3,8 +3,8 @@ import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-# Import existing routers
-from auth import router as auth_router
+# FIXED: Corrected the import name to match how it's actually named in auth.py
+from auth import auth_router
 from integrations import tally_router, zoho_router
 from gsp.router import router as gsp_router
 from tax.router import router as tax_router
