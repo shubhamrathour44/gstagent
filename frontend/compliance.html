@@ -25,7 +25,7 @@
                     <i class="fa-solid fa-calendar-check w-5"></i> Compliance
                 </a>
                 <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-500 cursor-not-allowed">
-                    <i class="fa-solid fa-file-invoice-dollar w-5"></i> Billing <span class="text-xs bg-slate-800 text-gray-400 px-2 py-0.5 rounded">Soon</span>
+                    <i class="fa-solid fa-file-invoice-dollar w-5"></i> Billing
                 </a>
                 <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-500 cursor-not-allowed">
                     <i class="fa-solid fa-bell w-5"></i> Notices
@@ -39,7 +39,7 @@
         <div class="flex-1 flex flex-col overflow-y-auto">
             <header class="bg-white border-b border-gray-200 h-16 flex items-center justify-between px-8 sticky top-0 z-10">
                 <h1 class="text-xl font-bold text-gray-800">Practice Compliance Tracker</h1>
-                <button onclick="toggleModal(true)" class="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg flex items-center gap-2 shadow transition">
+                <button onclick="toggleModal(true)" class="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg flex items-center gap-2 shadow">
                     <i class="fa-solid fa-plus"></i> Add Compliance Record
                 </button>
             </header>
@@ -100,42 +100,42 @@
     <div id="modal-backdrop" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
         <div class="bg-white w-full max-w-lg rounded-xl shadow-xl overflow-hidden flex flex-col">
             <header class="p-5 border-b border-gray-200 flex items-center justify-between bg-gray-50">
-                <h3 class="font-bold text-gray-800 text-lg">New Compliance Metric Record</h3>
+                <h3 class="font-bold text-gray-800 text-lg">New Compliance Record</h3>
                 <button type="button" onclick="toggleModal(false)" class="text-gray-400 hover:text-gray-600 text-xl"><i class="fa-solid fa-xmark"></i></button>
             </header>
-            <form id="compliance-form" class="p-6 space-y-4 overflow-y-auto max-h-[75vh]">
+            <form id="compliance-form" class="p-6 space-y-4">
                 <div>
                     <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Client Name *</label>
-                    <input type="text" name="client_name" required class="w-full border border-gray-300 px-3 py-2 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none text-slate-900">
+                    <input type="text" id="client_name" required class="w-full border border-gray-300 px-3 py-2 rounded-md focus:outline-none text-slate-900">
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-bold text-gray-600 uppercase mb-1">GSTIN</label>
-                        <input type="text" name="gstin" class="w-full border border-gray-300 px-3 py-2 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none text-slate-900" maxlength="15">
+                        <input type="text" id="gstin" class="w-full border border-gray-300 px-3 py-2 rounded-md text-slate-900" maxlength="15">
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-600 uppercase mb-1">PAN</label>
-                        <input type="text" name="pan" class="w-full border border-gray-300 px-3 py-2 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none text-slate-900" maxlength="10">
+                        <input type="text" id="pan" class="w-full border border-gray-300 px-3 py-2 rounded-md text-slate-900" maxlength="10">
                     </div>
                 </div>
                 <div class="grid grid-cols-3 gap-2">
                     <div>
                         <label class="block text-xs font-bold text-gray-600 uppercase mb-1">GST Status</label>
-                        <select name="gst_status" class="w-full border border-gray-300 p-2 rounded-md bg-white text-slate-900">
+                        <select id="gst_status" class="w-full border border-gray-300 p-2 rounded-md bg-white text-slate-900">
                             <option value="pending">Pending</option>
                             <option value="filed">Filed</option>
                         </select>
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-600 uppercase mb-1">ITR Status</label>
-                        <select name="itr_status" class="w-full border border-gray-300 p-2 rounded-md bg-white text-slate-900">
+                        <select id="itr_status" class="w-full border border-gray-300 p-2 rounded-md bg-white text-slate-900">
                             <option value="pending">Pending</option>
                             <option value="filed">Filed</option>
                         </select>
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-600 uppercase mb-1">TDS Status</label>
-                        <select name="tds_status" class="w-full border border-gray-300 p-2 rounded-md bg-white text-slate-900">
+                        <select id="tds_status" class="w-full border border-gray-300 p-2 rounded-md bg-white text-slate-900">
                             <option value="pending">Pending</option>
                             <option value="filed">Filed</option>
                         </select>
@@ -143,7 +143,7 @@
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Notice Status</label>
-                    <select name="notice_status" class="w-full border border-gray-300 p-2 rounded-md bg-white text-slate-900">
+                    <select id="notice_status" class="w-full border border-gray-300 p-2 rounded-md bg-white text-slate-900">
                         <option value="none">None</option>
                         <option value="pending">Pending Action</option>
                         <option value="open">Open Dispute</option>
@@ -152,120 +152,124 @@
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Assigned Staff</label>
-                        <input type="text" name="assigned_staff" class="w-full border border-gray-300 px-3 py-2 rounded-md text-slate-900">
+                        <input type="text" id="assigned_staff" class="w-full border border-gray-300 px-3 py-2 rounded-md text-slate-900">
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Remarks</label>
-                        <input type="text" name="remarks" class="w-full border border-gray-300 px-3 py-2 rounded-md text-slate-900">
+                        <input type="text" id="remarks" class="w-full border border-gray-300 px-3 py-2 rounded-md text-slate-900">
                     </div>
                 </div>
                 <footer class="pt-4 border-t border-gray-100 flex justify-end gap-3">
                     <button type="button" onclick="toggleModal(false)" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50">Cancel</button>
-                    <button type="submit" class="px-5 py-2 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 shadow-sm">Save Tracker</button>
+                    <button type="submit" class="px-5 py-2 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 shadow shadow-blue-500/20">Save Tracker</button>
                 </footer>
             </form>
         </div>
     </div>
 
     <script>
-        const API_BASE_URL = window.location.origin + "/api";
+        const API_BASE = "https://gstagent-production.up.railway.app";
         
-        // Exact token resolution mechanism mirrored from working clients.html
         function token() {
             return localStorage.getItem('gstagent_token') || localStorage.getItem('token') || localStorage.getItem('access_token') || '';
         }
 
-        const getAuthHeaders = () => {
-            return {
-                "Content-Type": "application/json",
-                "Authorization": "Bearer " + token()
-            };
-        };
+        async function apiCall(path, options = {}) {
+            const response = await fetch(API_BASE + path, {
+                ...options,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token(),
+                    ...(options.headers || {})
+                }
+            });
+            const responseData = await response.json().catch(() => ({ error: 'Non-JSON layout data payload' }));
+            if (!response.ok) throw new Error(JSON.stringify(responseData));
+            return responseData;
+        }
 
         function toggleModal(show) {
             document.getElementById('modal-backdrop').classList.toggle('hidden', !show);
         }
 
+        function getVal(id) {
+            const value = document.getElementById(id).value.trim();
+            return value === "" ? null : value;
+        }
+
         async function fetchDashboardMetrics() {
-            console.log("Synchronizing compliance view lists...");
             try {
-                // Fetch Core Dashboard Metrics summary values
-                const dashRes = await fetch(`${API_BASE_URL}/compliance/dashboard`, { headers: getAuthHeaders() });
-                if (dashRes.ok) {
-                    const data = await dashRes.json();
-                    document.getElementById('stat-total').innerText = data.total_clients || 0;
-                    document.getElementById('stat-gst').innerText = data.gst_pending || 0;
-                    document.getElementById('stat-itr').innerText = data.itr_pending || 0;
-                    document.getElementById('stat-tds').innerText = data.tds_pending || 0;
-                    document.getElementById('stat-notices').innerText = data.open_notices || 0;
+                // Fetch Core Metrics Summary Counts
+                const summary = await apiCall('/compliance/dashboard');
+                document.getElementById('stat-total').innerText = summary.total_clients;
+                document.getElementById('stat-gst').innerText = summary.gst_pending;
+                document.getElementById('stat-itr').innerText = summary.itr_pending;
+                document.getElementById('stat-tds').innerText = summary.tds_pending;
+                document.getElementById('stat-notices').innerText = summary.open_notices;
+
+                // Fetch Data Grid Rows
+                const listData = await apiCall('/compliance/list');
+                const container = document.getElementById('compliance-rows');
+                container.innerHTML = "";
+
+                if (!listData.records || listData.records.length === 0) {
+                    container.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-gray-400 font-medium">No tracked records found. Create one above!</td></tr>`;
+                    return;
                 }
 
-                // Fetch data table rows grid
-                const listRes = await fetch(`${API_BASE_URL}/compliance/list`, { headers: getAuthHeaders() });
-                if (listRes.ok) {
-                    const listData = await listRes.json();
-                    const container = document.getElementById('compliance-rows');
-                    container.innerHTML = "";
-
-                    if(!listData.records || listData.records.length === 0) {
-                        container.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-gray-400 font-medium">No tracked records found. Create one above!</td></tr>`;
-                        return;
-                    }
-
-                    listData.records.forEach(row => {
-                        const tr = document.createElement('tr');
-                        tr.className = "hover:bg-gray-50/80 transition-colors border-b border-gray-200";
-                        tr.innerHTML = `
-                            <td class="p-4 font-semibold text-gray-900">${row.client_name}</td>
-                            <td class="p-4"><span class="px-2.5 py-1 text-xs font-semibold rounded-full ${row.gst_status === 'filed' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}">${row.gst_status.toUpperCase()}</span></td>
-                            <td class="p-4"><span class="px-2.5 py-1 text-xs font-semibold rounded-full ${row.itr_status === 'filed' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}">${row.itr_status.toUpperCase()}</span></td>
-                            <td class="p-4"><span class="px-2.5 py-1 text-xs font-semibold rounded-full ${row.tds_status === 'filed' ? 'bg-green-100 text-green-700' : 'bg-purple-100 text-purple-700'}">${row.tds_status.toUpperCase()}</span></td>
-                            <td class="p-4"><span class="px-2.5 py-1 text-xs font-semibold rounded-full ${row.notice_status === 'none' ? 'bg-gray-100 text-gray-600' : 'bg-red-100 text-red-700'}">${row.notice_status.toUpperCase()}</span></td>
-                            <td class="p-4 text-gray-600">${row.assigned_staff || 'Unassigned'}</td>
-                            <td class="p-4 text-gray-500 italic text-xs max-w-xs truncate">${row.remarks || '-'}</td>
-                        `;
-                        container.appendChild(tr);
-                    });
-                }
+                listData.records.forEach(row => {
+                    const tr = document.createElement('tr');
+                    tr.className = "hover:bg-gray-50/80 transition-colors border-b border-gray-200";
+                    tr.innerHTML = `
+                        <td class="p-4 font-semibold text-gray-900">${row.client_name}</td>
+                        <td class="p-4"><span class="px-2.5 py-1 text-xs font-semibold rounded-full ${row.gst_status === 'filed' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}">${row.gst_status.toUpperCase()}</span></td>
+                        <td class="p-4"><span class="px-2.5 py-1 text-xs font-semibold rounded-full ${row.itr_status === 'filed' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}">${row.itr_status.toUpperCase()}</span></td>
+                        <td class="p-4"><span class="px-2.5 py-1 text-xs font-semibold rounded-full ${row.tds_status === 'filed' ? 'bg-green-100 text-green-700' : 'bg-purple-100 text-purple-700'}">${row.tds_status.toUpperCase()}</span></td>
+                        <td class="p-4"><span class="px-2.5 py-1 text-xs font-semibold rounded-full ${row.notice_status === 'none' ? 'bg-gray-100 text-gray-600' : 'bg-red-100 text-red-700'}">${row.notice_status.toUpperCase()}</span></td>
+                        <td class="p-4 text-gray-600">${row.assigned_staff || 'Unassigned'}</td>
+                        <td class="p-4 text-gray-500 italic text-xs max-w-xs truncate">${row.remarks || '-'}</td>
+                    `;
+                    container.appendChild(tr);
+                });
             } catch (err) {
-                console.error("Layout data render connection failed:", err);
+                console.error("View sync failed:", err);
             }
         }
 
-        // Form interception management
         document.getElementById('compliance-form').addEventListener('submit', async function(event) {
             event.preventDefault();
-            
-            const formData = new FormData(this);
-            const rawPayload = Object.fromEntries(formData.entries());
-
-            // Convert blank text elements to explicit null primitives for backend payload matching
-            const cleanedPayload = {};
-            for (const [key, value] of Object.entries(rawPayload)) {
-                cleanedPayload[key] = (value && value.trim() === "") ? null : value;
-            }
-            
-            cleanedPayload["gst_due_date"] = null;
-            cleanedPayload["itr_due_date"] = null;
-            cleanedPayload["tds_due_date"] = null;
 
             try {
-                const response = await fetch(`${API_BASE_URL}/compliance/create`, {
+                const payload = {
+                    client_name: getVal('client_name'),
+                    gstin: getVal('gstin'),
+                    pan: getVal('pan'),
+                    gst_status: getVal('gst_status') || 'pending',
+                    itr_status: getVal('itr_status') || 'pending',
+                    tds_status: getVal('tds_status') || 'pending',
+                    notice_status: getVal('notice_status') || 'none',
+                    assigned_staff: getVal('assigned_staff'),
+                    remarks: getVal('remarks'),
+                    gst_due_date: null,
+                    itr_due_date: null,
+                    tds_due_date: null
+                };
+
+                if (!payload.client_name) {
+                    alert("Client name parameter is strictly required.");
+                    return;
+                }
+
+                await apiCall('/compliance/create', {
                     method: 'POST',
-                    headers: getAuthHeaders(),
-                    body: JSON.stringify(cleanedPayload)
+                    body: JSON.stringify(payload)
                 });
 
-                if (response.ok) {
-                    this.reset();
-                    toggleModal(false);
-                    await fetchDashboardMetrics(); // Trigger live data pull refresh
-                } else {
-                    const errPayload = await response.json();
-                    alert("Submission rejected: " + JSON.stringify(errPayload));
-                }
+                this.reset();
+                toggleModal(false);
+                await fetchDashboardMetrics(); // Instantly refresh
             } catch (error) {
-                console.error("Network request failed:", error);
+                alert("Submission rejected: " + error.message);
             }
         });
 
