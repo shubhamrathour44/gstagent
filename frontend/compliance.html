@@ -86,7 +86,10 @@
                                 </tr>
                             </thead>
                             <tbody id="compliance-rows" class="divide-y divide-gray-200 text-sm text-gray-700">
-                                </tbody>
+                                <tr>
+                                    <td colspan="7" class="p-8 text-center text-gray-400 font-medium">Loading tracking data...</td>
+                                </tr>
+                            </tbody>
                         </table>
                     </div>
                 </div>
@@ -98,9 +101,9 @@
         <div class="bg-white w-full max-w-lg rounded-xl shadow-xl overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-150">
             <header class="p-5 border-b border-gray-200 flex items-center justify-between bg-gray-50">
                 <h3 class="font-bold text-gray-800 text-lg">New Compliance Metric Record</h3>
-                <button onclick="toggleModal(false)" class="text-gray-400 hover:text-gray-600 text-xl"><i class="fa-solid fa-xmark"></i></button>
+                <button type="button" onclick="toggleModal(false)" class="text-gray-400 hover:text-gray-600 text-xl"><i class="fa-solid fa-xmark"></i></button>
             </header>
-            <form id="compliance-form" onsubmit="handleFormSubmit(event)" class="p-6 space-y-4 overflow-y-auto max-h-[75vh]">
+            <form id="compliance-form" class="p-6 space-y-4 overflow-y-auto max-h-[75vh]">
                 <div>
                     <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Client Name *</label>
                     <input type="text" name="client_name" required class="w-full border border-gray-300 px-3 py-2 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none">
@@ -167,7 +170,6 @@
     <script>
         const API_BASE_URL = "https://gstagent-production.up.railway.app";
         
-        // Simple auth mock retrieval token mechanism to secure communications
         const getAuthHeaders = () => {
             const token = localStorage.getItem("token") || "mock-valid-session-token"; 
             return {
@@ -181,26 +183,27 @@
         }
 
         async function fetchDashboardMetrics() {
+            console.log("Fetching metrics from backend...");
             try {
-                // Fetch Core Counts
+                // Fetch Core Dashboard Summary Numbers
                 const dashRes = await fetch(`${API_BASE_URL}/compliance/dashboard`, { headers: getAuthHeaders() });
                 if (dashRes.ok) {
                     const data = await dashRes.json();
-                    document.getElementById('stat-total').innerText = data.total_clients;
-                    document.getElementById('stat-gst').innerText = data.gst_pending;
-                    document.getElementById('stat-itr').innerText = data.itr_pending;
-                    document.getElementById('stat-tds').innerText = data.tds_pending;
-                    document.getElementById('stat-notices').innerText = data.open_notices;
+                    document.getElementById('stat-total').innerText = data.total_clients || 0;
+                    document.getElementById('stat-gst').innerText = data.gst_pending || 0;
+                    document.getElementById('stat-itr').innerText = data.itr_pending || 0;
+                    document.getElementById('stat-tds').innerText = data.tds_pending || 0;
+                    document.getElementById('stat-notices').innerText = data.open_notices || 0;
                 }
 
-                // Fetch Records Data Grid
+                // Fetch Full Grid Records
                 const listRes = await fetch(`${API_BASE_URL}/compliance/list`, { headers: getAuthHeaders() });
                 if (listRes.ok) {
                     const listData = await listRes.json();
                     const container = document.getElementById('compliance-rows');
                     container.innerHTML = "";
 
-                    if(listData.records.length === 0) {
+                    if(!listData.records || listData.records.length === 0) {
                         container.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-gray-400 font-medium">No tracked records found. Create one above!</td></tr>`;
                         return;
                     }
@@ -221,38 +224,55 @@
                     });
                 }
             } catch (err) {
-                console.error("Network synchronization anomaly identified:", err);
+                console.error("Data synchronization error:", err);
             }
         }
 
-       async function handleFormSubmit(event) {
-    event.preventDefault();
-    const formData = new FormData(event.target);
-    const rawPayload = Object.fromEntries(formData.entries());
+        // Properly register submit event listener to prevent structural failures
+        document.getElementById('compliance-form').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            console.log("Submitting form data...");
 
-    // Clean payload: Convert empty strings to null so FastAPI validation doesn't choke
-    const cleanedPayload = {};
-    for (const [key, value] of Object.entries(rawPayload)) {
-        cleanedPayload[key] = value.trim() === "" ? null : value;
-    }
+            const formData = new FormData(this);
+            const rawPayload = Object.fromEntries(formData.entries());
 
-    try {
-        const response = await fetch(`${API_BASE_URL}/compliance/create`, {
-            method: 'POST',
-            headers: getAuthHeaders(),
-            body: JSON.stringify(cleanedPayload)
+            // Convert blank text elements to explicit null primitives for Pydantic stability
+            const cleanedPayload = {};
+            for (const [key, value] of Object.entries(rawPayload)) {
+                cleanedPayload[key] = (value && value.trim() === "") ? null : value;
+            }
+            
+            // Map explicit dates as null since they are omitted inside basic dashboard setup
+            cleanedPayload["gst_due_date"] = null;
+            cleanedPayload["itr_due_date"] = null;
+            cleanedPayload["tds_due_date"] = null;
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/compliance/create`, {
+                    method: 'POST',
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify(cleanedPayload)
+                });
+
+                if (response.ok) {
+                    console.log("Record successfully added!");
+                    this.reset();
+                    toggleModal(false);
+                    await fetchDashboardMetrics(); // Instantly update view lists
+                } else {
+                    const errPayload = await response.json();
+                    console.error("Server validation response context:", errPayload);
+                    alert("Submission rejected by server. Check Developer Console logs.");
+                }
+            } catch (error) {
+                console.error("Network request transmission dropped:", error);
+            }
         });
 
-        if (response.ok) {
-            event.target.reset();
-            toggleModal(false);
-            fetchDashboardMetrics(); // Refresh table and stats automatically
-        } else {
-            const errorData = await response.json();
-            console.error("Validation Details:", errorData);
-            alert("Failed to submit the compliance entry. Check console for validation errors.");
-        }
-    } catch (error) {
-        console.error("Transmission error:", error);
-    }
-}
+        // Safe explicit initial layout loading
+        window.onload = function() {
+            fetchDashboardMetrics();
+        };
+    </script>
+</body>
+</html>
