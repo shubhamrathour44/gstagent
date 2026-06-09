@@ -24,7 +24,12 @@
   </div>
   <script>
     const API_BASE = 'https://gstagent-production.up.railway.app';
-    function token(){return localStorage.getItem('token') || localStorage.getItem('access_token') || ''}
+    function token(){
+  return localStorage.getItem('gstagent_token') 
+      || localStorage.getItem('token') 
+      || localStorage.getItem('access_token') 
+      || '';
+}
     async function api(path, options={}){
       const res = await fetch(API_BASE + path, { ...options, headers:{'Content-Type':'application/json','Authorization':'Bearer '+token(), ...(options.headers||{})}});
       const data = await res.json().catch(()=>({error:'Non JSON response'}));
