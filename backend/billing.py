@@ -266,6 +266,63 @@ async def billing_dashboard():
         "outstanding_amount": float(outstanding),
     }
 
+@router.get("/report")
+async def billing_report():
+    conn = get_db()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT COALESCE(SUM(total_amount), 0) AS today_collection
+        FROM invoices
+        WHERE status = 'paid'
+        AND paid_at::date = CURRENT_DATE
+    """)
+    today_collection = cur.fetchone()["today_collection"]
+
+    cur.execute("""
+        SELECT COALESCE(SUM(total_amount), 0) AS monthly_collection
+        FROM invoices
+        WHERE status = 'paid'
+        AND DATE_TRUNC('month', paid_at) = DATE_TRUNC('month', CURRENT_DATE)
+    """)
+    monthly_collection = cur.fetchone()["monthly_collection"]
+
+    cur.execute("""
+        SELECT COALESCE(SUM(total_amount), 0) AS outstanding_amount
+        FROM invoices
+        WHERE status IN ('unpaid', 'overdue')
+    """)
+    outstanding_amount = cur.fetchone()["outstanding_amount"]
+
+    cur.execute("SELECT COUNT(*) AS total FROM invoices")
+    total = cur.fetchone()["total"]
+
+    cur.execute("SELECT COUNT(*) AS paid FROM invoices WHERE status = 'paid'")
+    paid = cur.fetchone()["paid"]
+
+    cur.execute("SELECT COUNT(*) AS unpaid FROM invoices WHERE status = 'unpaid'")
+    unpaid = cur.fetchone()["unpaid"]
+
+    cur.execute("SELECT COUNT(*) AS overdue FROM invoices WHERE status = 'overdue'")
+    overdue = cur.fetchone()["overdue"]
+
+    cur.close()
+    conn.close()
+
+    collection_rate = 0
+    if total > 0:
+        collection_rate = round((paid / total) * 100, 2)
+
+    return {
+        "today_collection": float(today_collection),
+        "monthly_collection": float(monthly_collection),
+        "outstanding_amount": float(outstanding_amount),
+        "total_invoices": total,
+        "paid_invoices": paid,
+        "unpaid_invoices": unpaid,
+        "overdue_invoices": overdue,
+        "collection_rate": collection_rate
+    }
 
 @router.get("/outstanding")
 async def outstanding_invoices():
