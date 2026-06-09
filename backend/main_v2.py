@@ -4,10 +4,6 @@ import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-# Database startup
-from database import init_db
-
-# Routers
 from auth import auth_router
 from integrations import tally_router, zoho_router
 from gsp.router import gsp_router
@@ -15,7 +11,6 @@ from tax.router import tax_router
 from crm.router import crm_router
 from compliance.router import compliance_router
 from billing import router as billing_router
-
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("gstagent-backend")
@@ -42,16 +37,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
-@app.on_event("startup")
-async def startup_create_tables():
-    try:
-        await init_db()
-        logger.info("Database tables created successfully.")
-    except Exception as e:
-        logger.exception(f"Database startup failed: {e}")
-
-
 @app.get("/")
 async def root():
     return {
@@ -60,17 +45,15 @@ async def root():
         "version": "2.1.0"
     }
 
-
 @app.get("/health")
-async def application_health_validation_node():
+async def health():
     return {
         "status": "healthy",
         "service": "gstagent-backend"
     }
 
-
 @app.get("/modules")
-async def active_modules():
+async def modules():
     return {
         "modules": [
             "auth",
@@ -84,8 +67,6 @@ async def active_modules():
         ]
     }
 
-
-# Router Registration
 app.include_router(auth_router)
 app.include_router(tally_router)
 app.include_router(zoho_router)
@@ -95,15 +76,7 @@ app.include_router(crm_router)
 app.include_router(compliance_router)
 app.include_router(billing_router)
 
-
 if __name__ == "__main__":
     import uvicorn
-
     port = int(os.environ.get("PORT", 8000))
-
-    uvicorn.run(
-        "main_v2:app",
-        host="0.0.0.0",
-        port=port,
-        reload=True
-    )
+    uvicorn.run("main_v2:app", host="0.0.0.0", port=port, reload=True)
