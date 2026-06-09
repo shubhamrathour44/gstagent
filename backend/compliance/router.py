@@ -4,12 +4,12 @@ from fastapi import APIRouter, Depends, HTTPException
 from auth import CurrentUser, get_current_user
 from compliance.schemas import ComplianceCreate, ComplianceUpdate
 
-# Note the variable name must match what main_v2 imports!
-compliance_router = APIRouter(prefix="/compliance", tags=["Compliance"])
+# Removed the inline prefix to prevent path duplication conflicts with main_v2
+compliance_router = APIRouter(tags=["Compliance"])
 
 COMPLIANCE_STORE = {}
 
-@compliance_router.get("/status")
+@compliance_router.get("/compliance/status")
 async def compliance_status(current_user: CurrentUser = Depends(get_current_user)):
     return {
         "status": "ok",
@@ -18,7 +18,7 @@ async def compliance_status(current_user: CurrentUser = Depends(get_current_user
         "firm_id": current_user.firm_id
     }
 
-@compliance_router.post("/create")
+@compliance_router.post("/compliance/create")
 async def create_compliance(payload: ComplianceCreate, current_user: CurrentUser = Depends(get_current_user)):
     item_id = str(uuid4())
     item = {
@@ -42,12 +42,12 @@ async def create_compliance(payload: ComplianceCreate, current_user: CurrentUser
     COMPLIANCE_STORE[item_id] = item
     return {"message": "Compliance record created", "record": item}
 
-@compliance_router.get("/list")
+@compliance_router.get("/compliance/list")
 async def list_compliance(current_user: CurrentUser = Depends(get_current_user)):
     records = [item for item in COMPLIANCE_STORE.values() if item["firm_id"] == current_user.firm_id]
     return {"records": records, "count": len(records)}
 
-@compliance_router.get("/dashboard")
+@compliance_router.get("/compliance/dashboard")
 async def compliance_dashboard(current_user: CurrentUser = Depends(get_current_user)):
     records = [item for item in COMPLIANCE_STORE.values() if item["firm_id"] == current_user.firm_id]
     return {

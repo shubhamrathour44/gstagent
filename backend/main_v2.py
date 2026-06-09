@@ -9,8 +9,6 @@ from integrations import tally_router, zoho_router
 from gsp.router import router as gsp_router
 from tax.router import router as tax_router
 from crm.router import crm_router
-
-# FIX: Notice that your compliance router exports itself as 'compliance_router'
 from compliance.router import compliance_router
 
 # Setup Logging
@@ -55,17 +53,7 @@ app.include_router(zoho_router)
 app.include_router(gsp_router)
 app.include_router(tax_router)
 app.include_router(crm_router)
-
-# Include Compliance Router
 app.include_router(compliance_router)
-
-# Optional Billing Router Safeguard
-try:
-    from billing import router as billing_router
-    app.include_router(billing_router)
-    logger.info("Billing router integrated successfully.")
-except ImportError:
-    logger.warning("Billing module not found. Skipping billing router initialization.")
 
 if __name__ == "__main__":
     import uvicorn
