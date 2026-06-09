@@ -80,6 +80,8 @@ app.include_router(zoho_router)
 app.include_router(gsp_router)
 app.include_router(tax_router)
 app.include_router(crm_router)
+app.include_router(compliance_router)
+
 if billing_router is not None:
     app.include_router(billing_router)
 
