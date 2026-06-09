@@ -10,9 +10,10 @@
 <body class="bg-gray-100">
   <div class="min-h-screen p-6">
     <div class="max-w-7xl mx-auto">
+
       <div class="flex justify-between items-center mb-6">
         <h1 class="text-3xl font-bold text-gray-800">Billing & Invoice Management</h1>
-        <a href="/dashboard" class="text-blue-600 font-semibold">Back to Dashboard</a>
+        <a href="/app" class="text-blue-600 font-semibold">Back to Dashboard</a>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
@@ -46,7 +47,7 @@
           <input class="border p-3 rounded" name="service_name" placeholder="Service Name" required />
           <input class="border p-3 rounded" name="amount" type="number" placeholder="Amount" required />
           <input class="border p-3 rounded" name="tax_amount" type="number" placeholder="Tax Amount" value="0" />
-          
+
           <select class="border p-3 rounded" name="status">
             <option value="unpaid">Unpaid</option>
             <option value="paid">Paid</option>
@@ -56,10 +57,31 @@
           <input class="border p-3 rounded" name="due_date" type="date" />
           <input class="border p-3 rounded md:col-span-2" name="remarks" placeholder="Remarks" />
 
-          <button class="bg-blue-600 text-white p-3 rounded font-semibold hover:bg-blue-700">
+          <button type="submit" class="bg-blue-600 text-white p-3 rounded font-semibold hover:bg-blue-700">
             Save Invoice
           </button>
         </form>
+      </div>
+
+      <div class="bg-white p-6 rounded-xl shadow mb-6">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-xl font-bold">Outstanding Fees</h2>
+          <button onclick="loadOutstanding()" class="bg-red-600 text-white px-4 py-2 rounded font-semibold">
+            Refresh Outstanding
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="bg-red-50 p-4 rounded border border-red-200">
+            <p class="text-gray-600">Outstanding Clients</p>
+            <h3 id="outstanding_count" class="text-2xl font-bold text-red-600">0</h3>
+          </div>
+
+          <div class="bg-red-50 p-4 rounded border border-red-200">
+            <p class="text-gray-600">Outstanding Amount</p>
+            <h3 id="outstanding_total" class="text-2xl font-bold text-red-600">₹0</h3>
+          </div>
+        </div>
       </div>
 
       <div class="bg-white p-6 rounded-xl shadow">
@@ -69,14 +91,14 @@
           <table class="w-full border-collapse">
             <thead>
               <tr class="bg-gray-200 text-left">
+                <th class="p-3">Invoice No</th>
                 <th class="p-3">Client</th>
                 <th class="p-3">Service</th>
-                <th class="p-3">Amount</th>
-                <th class="p-3">Tax</th>
                 <th class="p-3">Total</th>
                 <th class="p-3">Status</th>
+                <th class="p-3">Payment</th>
                 <th class="p-3">Due Date</th>
-                <th class="p-3">Remarks</th>
+                <th class="p-3">Actions</th>
               </tr>
             </thead>
             <tbody id="invoiceRows">
@@ -87,116 +109,209 @@
           </table>
         </div>
       </div>
+
     </div>
   </div>
 
 <script>
 const API_BASE = "https://gstagent-production.up.railway.app";
 
-function getToken() {
-  return (
-    localStorage.getItem("access_token") ||
-    localStorage.getItem("token") ||
-    localStorage.getItem("jwt") ||
-    localStorage.getItem("authToken") ||
-    sessionStorage.getItem("access_token") ||
-    sessionStorage.getItem("token") ||
-    ""
-  );
-}
-
-function headers() {
-  console.log("Billing token found:", getToken() ? "YES" : "NO");
-
-  return {
-    "Content-Type": "application/json",
-    "Authorization": "Bearer " + getToken()
-  };
-}
-
 function rupee(value) {
   return "₹" + Number(value || 0).toLocaleString("en-IN");
 }
 
+function jsonHeaders() {
+  return {
+    "Content-Type": "application/json"
+  };
+}
+
 async function loadDashboard() {
-  const res = await fetch(`${API_BASE}/billing/dashboard`, { headers: headers() });
+  try {
+    const res = await fetch(`${API_BASE}/billing/dashboard`);
+    if (!res.ok) return;
 
-  if (!res.ok) return;
+    const data = await res.json();
 
-  const data = await res.json();
+    document.getElementById("total_invoices").innerText = data.total_invoices || 0;
+    document.getElementById("paid_invoices").innerText = data.paid_invoices || 0;
+    document.getElementById("unpaid_invoices").innerText = data.unpaid_invoices || 0;
+    document.getElementById("total_revenue").innerText = rupee(data.total_revenue);
+    document.getElementById("outstanding_amount").innerText = rupee(data.outstanding_amount);
+  } catch (error) {
+    console.error("Dashboard load failed:", error);
+  }
+}
 
-  document.getElementById("total_invoices").innerText = data.total_invoices || 0;
-  document.getElementById("paid_invoices").innerText = data.paid_invoices || 0;
-  document.getElementById("unpaid_invoices").innerText = data.unpaid_invoices || 0;
-  document.getElementById("total_revenue").innerText = rupee(data.total_revenue);
-  document.getElementById("outstanding_amount").innerText = rupee(data.outstanding_amount);
+async function loadOutstanding() {
+  try {
+    const res = await fetch(`${API_BASE}/billing/outstanding`);
+    if (!res.ok) return;
+
+    const data = await res.json();
+
+    document.getElementById("outstanding_count").innerText = data.outstanding_count || 0;
+    document.getElementById("outstanding_total").innerText = rupee(data.outstanding_amount);
+  } catch (error) {
+    console.error("Outstanding load failed:", error);
+  }
 }
 
 async function loadInvoices() {
-  const res = await fetch(`${API_BASE}/billing/list`, { headers: headers() });
+  try {
+    const res = await fetch(`${API_BASE}/billing/list`);
+    if (!res.ok) return;
 
-  if (!res.ok) return;
+    const data = await res.json();
+    const rows = document.getElementById("invoiceRows");
 
-  const data = await res.json();
-  const rows = document.getElementById("invoiceRows");
+    if (!data.invoices || data.invoices.length === 0) {
+      rows.innerHTML = `<tr><td colspan="8" class="p-4 text-center text-gray-500">No invoices yet</td></tr>`;
+      return;
+    }
 
-  if (!data.invoices || data.invoices.length === 0) {
-    rows.innerHTML = `<tr><td colspan="8" class="p-4 text-center text-gray-500">No invoices yet</td></tr>`;
-    return;
+    rows.innerHTML = data.invoices.map(inv => `
+      <tr class="border-b hover:bg-gray-50">
+        <td class="p-3 font-semibold">${inv.invoice_number || "-"}</td>
+        <td class="p-3">${inv.client_name || "-"}</td>
+        <td class="p-3">${inv.service_name || "-"}</td>
+        <td class="p-3 font-bold">${rupee(inv.total_amount)}</td>
+        <td class="p-3">
+          <span class="px-3 py-1 rounded text-white text-sm ${
+            inv.status === "paid" ? "bg-green-600" :
+            inv.status === "overdue" ? "bg-red-600" :
+            "bg-yellow-600"
+          }">${inv.status || "unpaid"}</span>
+        </td>
+        <td class="p-3 text-sm">
+          ${inv.payment_mode ? inv.payment_mode : "-"}
+          ${inv.paid_at ? `<br><span class="text-gray-500">${inv.paid_at.slice(0,10)}</span>` : ""}
+        </td>
+        <td class="p-3">${inv.due_date || "-"}</td>
+        <td class="p-3">
+          <div class="flex flex-wrap gap-2">
+            <button onclick="downloadPDF('${inv.id}')" class="bg-blue-600 text-white px-3 py-1 rounded text-sm">
+              PDF
+            </button>
+
+            ${
+              inv.status !== "paid"
+              ? `<button onclick="markPaid('${inv.id}')" class="bg-green-600 text-white px-3 py-1 rounded text-sm">
+                  Mark Paid
+                </button>`
+              : ""
+            }
+
+            <button onclick="deleteInvoice('${inv.id}')" class="bg-red-600 text-white px-3 py-1 rounded text-sm">
+              Delete
+            </button>
+          </div>
+        </td>
+      </tr>
+    `).join("");
+  } catch (error) {
+    console.error("Invoice load failed:", error);
   }
-
-  rows.innerHTML = data.invoices.map(inv => `
-    <tr class="border-b">
-      <td class="p-3">${inv.client_name}</td>
-      <td class="p-3">${inv.service_name}</td>
-      <td class="p-3">${rupee(inv.amount)}</td>
-      <td class="p-3">${rupee(inv.tax_amount)}</td>
-      <td class="p-3 font-bold">${rupee(inv.total_amount)}</td>
-      <td class="p-3">
-        <span class="px-3 py-1 rounded text-white text-sm ${
-          inv.status === "paid" ? "bg-green-600" :
-          inv.status === "overdue" ? "bg-red-600" :
-          "bg-yellow-600"
-        }">${inv.status}</span>
-      </td>
-      <td class="p-3">${inv.due_date || "-"}</td>
-      <td class="p-3">${inv.remarks || "-"}</td>
-    </tr>
-  `).join("");
 }
 
-document.getElementById("invoiceForm").addEventListener("submit", async function(e) {
-  e.preventDefault();
+document.addEventListener("DOMContentLoaded", function () {
+  const form = document.getElementById("invoiceForm");
 
-  const formData = new FormData(e.target);
-  const payload = Object.fromEntries(formData.entries());
+  form.addEventListener("submit", async function(e) {
+    e.preventDefault();
 
-  payload.amount = Number(payload.amount || 0);
-  payload.tax_amount = Number(payload.tax_amount || 0);
+    const formData = new FormData(e.target);
+    const payload = Object.fromEntries(formData.entries());
 
-  for (const key in payload) {
-    if (payload[key] === "") payload[key] = null;
-  }
+    payload.amount = Number(payload.amount || 0);
+    payload.tax_amount = Number(payload.tax_amount || 0);
 
-  const res = await fetch(`${API_BASE}/billing/create`, {
-    method: "POST",
-    headers: headers(),
-    body: JSON.stringify(payload)
+    for (const key in payload) {
+      if (payload[key] === "") payload[key] = null;
+    }
+
+    try {
+      const res = await fetch(`${API_BASE}/billing/create`, {
+        method: "POST",
+        headers: jsonHeaders(),
+        body: JSON.stringify(payload)
+      });
+
+      if (res.ok) {
+        alert("Invoice created successfully");
+        e.target.reset();
+        await refreshAll();
+      } else {
+        const err = await res.text();
+        alert("Invoice failed: " + err);
+      }
+    } catch (error) {
+      alert("Network error while creating invoice");
+      console.error(error);
+    }
   });
 
-  if (res.ok) {
-    alert("Invoice created successfully");
-    e.target.reset();
-    await loadDashboard();
-    await loadInvoices();
-  } else {
-    const err = await res.text();
-    alert("Invoice failed: " + err);
-  }
+  refreshAll();
 });
 
-loadDashboard();
-loadInvoices();
+async function markPaid(invoiceId) {
+  const paymentMode = prompt("Payment mode? Example: UPI, Cash, Bank Transfer, Cheque", "UPI");
+  if (!paymentMode) return;
+
+  const paymentReference = prompt("Payment reference / transaction ID?", "");
+
+  try {
+    const res = await fetch(`${API_BASE}/billing/mark-paid/${invoiceId}`, {
+      method: "PUT",
+      headers: jsonHeaders(),
+      body: JSON.stringify({
+        payment_mode: paymentMode,
+        payment_reference: paymentReference,
+        remarks: "Payment received"
+      })
+    });
+
+    if (res.ok) {
+      alert("Invoice marked as paid");
+      await refreshAll();
+    } else {
+      alert("Failed to mark paid: " + await res.text());
+    }
+  } catch (error) {
+    alert("Network error while marking paid");
+    console.error(error);
+  }
+}
+
+async function deleteInvoice(invoiceId) {
+  if (!confirm("Delete this invoice?")) return;
+
+  try {
+    const res = await fetch(`${API_BASE}/billing/delete/${invoiceId}`, {
+      method: "DELETE"
+    });
+
+    if (res.ok) {
+      alert("Invoice deleted");
+      await refreshAll();
+    } else {
+      alert("Delete failed: " + await res.text());
+    }
+  } catch (error) {
+    alert("Network error while deleting invoice");
+    console.error(error);
+  }
+}
+
+function downloadPDF(invoiceId) {
+  window.open(`${API_BASE}/billing/pdf/${invoiceId}`, "_blank");
+}
+
+async function refreshAll() {
+  await loadDashboard();
+  await loadOutstanding();
+  await loadInvoices();
+}
 </script>
 </body>
 </html>
