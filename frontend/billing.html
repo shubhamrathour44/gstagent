@@ -105,7 +105,14 @@ function getToken() {
   );
 }
 
-function headers()console.log("Billing token found:", getToken() ? "YES" : "NO"); {
+function headers() {
+  console.log("Billing token found:", getToken() ? "YES" : "NO");
+
+  return {
+    "Content-Type": "application/json",
+    "Authorization": "Bearer " + getToken()
+  };
+}
   return {
     "Content-Type": "application/json",
     "Authorization": "Bearer " + getToken()
