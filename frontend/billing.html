@@ -1,393 +1,374 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Billing - GSTAgent</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Billing - GSTAgent</title>
+<script src="https://cdn.tailwindcss.com"></script>
 </head>
 
 <body class="bg-gray-100">
-  <div class="min-h-screen p-6">
-    <div class="max-w-7xl mx-auto">
+<div class="min-h-screen p-6">
+<div class="max-w-7xl mx-auto">
 
-      <div class="flex justify-between items-center mb-6">
-        <h1 class="text-3xl font-bold text-gray-800">Billing & Invoice Management</h1>
-        <a href="/app" class="text-blue-600 font-semibold">Back to Dashboard</a>
-      </div>
+<div class="flex justify-between items-center mb-6">
+<h1 class="text-3xl font-bold text-gray-800">Billing & Invoice Management</h1>
+<div class="flex gap-4">
+<a href="/clients" class="text-green-600 font-semibold">Client CRM</a>
+<a href="/app" class="text-blue-600 font-semibold">Dashboard</a>
+</div>
+</div>
 
-      <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
-        <div class="bg-white p-5 rounded-xl shadow">
-          <p class="text-gray-500">Total Invoices</p>
-          <h2 id="total_invoices" class="text-3xl font-bold">0</h2>
-        </div>
-        <div class="bg-white p-5 rounded-xl shadow">
-          <p class="text-gray-500">Paid</p>
-          <h2 id="paid_invoices" class="text-3xl font-bold text-green-600">0</h2>
-        </div>
-        <div class="bg-white p-5 rounded-xl shadow">
-          <p class="text-gray-500">Unpaid</p>
-          <h2 id="unpaid_invoices" class="text-3xl font-bold text-yellow-600">0</h2>
-        </div>
-        <div class="bg-white p-5 rounded-xl shadow">
-          <p class="text-gray-500">Revenue</p>
-          <h2 id="total_revenue" class="text-2xl font-bold text-blue-600">₹0</h2>
-        </div>
-        <div class="bg-white p-5 rounded-xl shadow">
-          <p class="text-gray-500">Outstanding</p>
-          <h2 id="outstanding_amount" class="text-2xl font-bold text-red-600">₹0</h2>
-        </div>
-      </div>
+<div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+<div class="bg-white p-5 rounded-xl shadow"><p>Total Invoices</p><h2 id="total_invoices" class="text-3xl font-bold">0</h2></div>
+<div class="bg-white p-5 rounded-xl shadow"><p>Paid</p><h2 id="paid_invoices" class="text-3xl font-bold text-green-600">0</h2></div>
+<div class="bg-white p-5 rounded-xl shadow"><p>Unpaid</p><h2 id="unpaid_invoices" class="text-3xl font-bold text-yellow-600">0</h2></div>
+<div class="bg-white p-5 rounded-xl shadow"><p>Revenue</p><h2 id="total_revenue" class="text-2xl font-bold text-blue-600">₹0</h2></div>
+<div class="bg-white p-5 rounded-xl shadow"><p>Outstanding</p><h2 id="outstanding_amount" class="text-2xl font-bold text-red-600">₹0</h2></div>
+</div>
 
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div class="bg-white p-5 rounded-xl shadow">
-          <p class="text-gray-500">Today Collection</p>
-          <h2 id="today_collection" class="text-2xl font-bold text-green-700">₹0</h2>
-        </div>
-        <div class="bg-white p-5 rounded-xl shadow">
-          <p class="text-gray-500">Monthly Collection</p>
-          <h2 id="monthly_collection" class="text-2xl font-bold text-blue-700">₹0</h2>
-        </div>
-        <div class="bg-white p-5 rounded-xl shadow">
-          <p class="text-gray-500">Collection Rate</p>
-          <h2 id="collection_rate" class="text-2xl font-bold text-purple-700">0%</h2>
-        </div>
-        <div class="bg-white p-5 rounded-xl shadow">
-          <p class="text-gray-500">Overdue</p>
-          <h2 id="overdue_invoices" class="text-2xl font-bold text-red-700">0</h2>
-        </div>
-      </div>
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+<div class="bg-white p-5 rounded-xl shadow"><p>Today Collection</p><h2 id="today_collection" class="text-2xl font-bold text-green-700">₹0</h2></div>
+<div class="bg-white p-5 rounded-xl shadow"><p>Monthly Collection</p><h2 id="monthly_collection" class="text-2xl font-bold text-blue-700">₹0</h2></div>
+<div class="bg-white p-5 rounded-xl shadow"><p>Collection Rate</p><h2 id="collection_rate" class="text-2xl font-bold text-purple-700">0%</h2></div>
+<div class="bg-white p-5 rounded-xl shadow"><p>Overdue</p><h2 id="overdue_invoices" class="text-2xl font-bold text-red-700">0</h2></div>
+</div>
 
-      <div class="bg-white p-6 rounded-xl shadow mb-6">
-        <h2 class="text-xl font-bold mb-4">Create Invoice</h2>
+<div class="bg-white p-6 rounded-xl shadow mb-6">
+<h2 class="text-xl font-bold mb-4">Create Invoice from CRM Client</h2>
 
-        <form id="invoiceForm" class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <input class="border p-3 rounded" name="client_name" placeholder="Client Name" required />
-          <input class="border p-3 rounded" name="service_name" placeholder="Service Name" required />
-          <input class="border p-3 rounded" name="amount" type="number" placeholder="Amount" required />
-          <input class="border p-3 rounded" name="tax_amount" type="number" placeholder="Tax Amount" value="0" />
+<form id="invoiceForm" class="grid grid-cols-1 md:grid-cols-3 gap-4">
 
-          <select class="border p-3 rounded" name="status">
-            <option value="unpaid">Unpaid</option>
-            <option value="paid">Paid</option>
-            <option value="overdue">Overdue</option>
-          </select>
+<select id="clientSelect" class="border p-3 rounded">
+<option value="">Select CRM Client</option>
+</select>
 
-          <input class="border p-3 rounded" name="due_date" type="date" />
-          <input class="border p-3 rounded md:col-span-2" name="remarks" placeholder="Remarks" />
+<input class="border p-3 rounded" name="client_name" id="client_name" placeholder="Client Name" required>
+<input class="border p-3 rounded" name="service_name" id="service_name" placeholder="Service Name" value="GST Filing" required>
 
-          <button type="submit" class="bg-blue-600 text-white p-3 rounded font-semibold hover:bg-blue-700">
-            Save Invoice
-          </button>
-        </form>
-      </div>
+<input class="border p-3 rounded" name="amount" id="amount" type="number" placeholder="Amount" required>
+<input class="border p-3 rounded" name="tax_amount" id="tax_amount" type="number" placeholder="Tax Amount" value="0">
 
-      <div class="bg-white p-6 rounded-xl shadow mb-6">
-        <div class="flex flex-col md:flex-row justify-between gap-3 mb-4">
-          <h2 class="text-xl font-bold">Search Invoices</h2>
-          <button onclick="refreshAll()" class="bg-gray-800 text-white px-4 py-2 rounded font-semibold">
-            Refresh All
-          </button>
-        </div>
+<select class="border p-3 rounded" name="status">
+<option value="unpaid">Unpaid</option>
+<option value="paid">Paid</option>
+<option value="overdue">Overdue</option>
+</select>
 
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
-          <input id="searchInput" class="border p-3 rounded md:col-span-3" placeholder="Search by client, invoice no, service, status, payment ref" />
-          <button onclick="searchInvoices()" class="bg-indigo-600 text-white px-4 py-2 rounded font-semibold">
-            Search
-          </button>
-        </div>
-      </div>
+<input class="border p-3 rounded" name="due_date" type="date">
+<input class="border p-3 rounded md:col-span-2" name="remarks" placeholder="Remarks">
 
-      <div class="bg-white p-6 rounded-xl shadow mb-6">
-        <div class="flex justify-between items-center mb-4">
-          <h2 class="text-xl font-bold">Outstanding Fees</h2>
-          <button onclick="loadOutstanding()" class="bg-red-600 text-white px-4 py-2 rounded font-semibold">
-            Refresh Outstanding
-          </button>
-        </div>
+<button type="submit" class="bg-blue-600 text-white p-3 rounded font-semibold hover:bg-blue-700">
+Save Invoice
+</button>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div class="bg-red-50 p-4 rounded border border-red-200">
-            <p class="text-gray-600">Outstanding Clients</p>
-            <h3 id="outstanding_count" class="text-2xl font-bold text-red-600">0</h3>
-          </div>
+</form>
+</div>
 
-          <div class="bg-red-50 p-4 rounded border border-red-200">
-            <p class="text-gray-600">Outstanding Amount</p>
-            <h3 id="outstanding_total" class="text-2xl font-bold text-red-600">₹0</h3>
-          </div>
-        </div>
-      </div>
+<div class="bg-white p-6 rounded-xl shadow mb-6">
+<div class="flex flex-col md:flex-row justify-between gap-3 mb-4">
+<h2 class="text-xl font-bold">Search Invoices</h2>
+<button onclick="refreshAll()" class="bg-gray-800 text-white px-4 py-2 rounded font-semibold">Refresh All</button>
+</div>
 
-      <div class="bg-white p-6 rounded-xl shadow">
-        <h2 class="text-xl font-bold mb-4">Invoice List</h2>
+<div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+<input id="searchInput" class="border p-3 rounded md:col-span-3" placeholder="Search by client, invoice no, service, status">
+<button onclick="searchInvoices()" class="bg-indigo-600 text-white px-4 py-2 rounded font-semibold">Search</button>
+</div>
+</div>
 
-        <div class="overflow-x-auto">
-          <table class="w-full border-collapse">
-            <thead>
-              <tr class="bg-gray-200 text-left">
-                <th class="p-3">Invoice No</th>
-                <th class="p-3">Client</th>
-                <th class="p-3">Service</th>
-                <th class="p-3">Total</th>
-                <th class="p-3">Status</th>
-                <th class="p-3">Payment</th>
-                <th class="p-3">Due Date</th>
-                <th class="p-3">Actions</th>
-              </tr>
-            </thead>
-            <tbody id="invoiceRows">
-              <tr>
-                <td colspan="8" class="p-4 text-center text-gray-500">No invoices yet</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
+<div class="bg-white p-6 rounded-xl shadow mb-6">
+<div class="flex justify-between items-center mb-4">
+<h2 class="text-xl font-bold">Outstanding Fees</h2>
+<button onclick="loadOutstanding()" class="bg-red-600 text-white px-4 py-2 rounded font-semibold">Refresh Outstanding</button>
+</div>
 
-    </div>
-  </div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<div class="bg-red-50 p-4 rounded border border-red-200">
+<p>Outstanding Clients</p>
+<h3 id="outstanding_count" class="text-2xl font-bold text-red-600">0</h3>
+</div>
+<div class="bg-red-50 p-4 rounded border border-red-200">
+<p>Outstanding Amount</p>
+<h3 id="outstanding_total" class="text-2xl font-bold text-red-600">₹0</h3>
+</div>
+</div>
+</div>
+
+<div class="bg-white p-6 rounded-xl shadow">
+<h2 class="text-xl font-bold mb-4">Invoice List</h2>
+
+<div class="overflow-x-auto">
+<table class="w-full border-collapse">
+<thead>
+<tr class="bg-gray-200 text-left">
+<th class="p-3">Invoice No</th>
+<th class="p-3">Client</th>
+<th class="p-3">Service</th>
+<th class="p-3">Total</th>
+<th class="p-3">Status</th>
+<th class="p-3">Payment</th>
+<th class="p-3">Due Date</th>
+<th class="p-3">Actions</th>
+</tr>
+</thead>
+<tbody id="invoiceRows">
+<tr><td colspan="8" class="p-4 text-center text-gray-500">No invoices yet</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+
+</div>
+</div>
 
 <script>
 const API_BASE = "https://gstagent-production.up.railway.app";
 
-function rupee(value) {
-  return "₹" + Number(value || 0).toLocaleString("en-IN");
+function getToken(){
+return localStorage.getItem("gstagent_token") || localStorage.getItem("access_token") || localStorage.getItem("token") || "";
 }
 
-function jsonHeaders() {
-  return { "Content-Type": "application/json" };
+function headers(){
+return {
+"Content-Type":"application/json",
+"Authorization":"Bearer " + getToken()
+};
 }
 
-function renderInvoices(invoices) {
-  const rows = document.getElementById("invoiceRows");
-
-  if (!invoices || invoices.length === 0) {
-    rows.innerHTML = `<tr><td colspan="8" class="p-4 text-center text-gray-500">No invoices found</td></tr>`;
-    return;
-  }
-
-  rows.innerHTML = invoices.map(inv => `
-    <tr class="border-b hover:bg-gray-50">
-      <td class="p-3 font-semibold">${inv.invoice_number || "-"}</td>
-      <td class="p-3">${inv.client_name || "-"}</td>
-      <td class="p-3">${inv.service_name || "-"}</td>
-      <td class="p-3 font-bold">${rupee(inv.total_amount)}</td>
-      <td class="p-3">
-        <span class="px-3 py-1 rounded text-white text-sm ${
-          inv.status === "paid" ? "bg-green-600" :
-          inv.status === "overdue" ? "bg-red-600" :
-          "bg-yellow-600"
-        }">${inv.status || "unpaid"}</span>
-      </td>
-      <td class="p-3 text-sm">
-        ${inv.payment_mode ? inv.payment_mode : "-"}
-        ${inv.paid_at ? `<br><span class="text-gray-500">${String(inv.paid_at).slice(0,10)}</span>` : ""}
-      </td>
-      <td class="p-3">${inv.due_date || "-"}</td>
-      <td class="p-3">
-        <div class="flex flex-wrap gap-2">
-          <button onclick="downloadPDF('${inv.id}')" class="bg-blue-600 text-white px-3 py-1 rounded text-sm">PDF</button>
-          ${
-            inv.status !== "paid"
-            ? `<button onclick="markPaid('${inv.id}')" class="bg-green-600 text-white px-3 py-1 rounded text-sm">Mark Paid</button>`
-            : ""
-          }
-          <button onclick="deleteInvoice('${inv.id}')" class="bg-red-600 text-white px-3 py-1 rounded text-sm">Delete</button>
-        </div>
-      </td>
-    </tr>
-  `).join("");
+function rupee(value){
+return "₹" + Number(value || 0).toLocaleString("en-IN");
 }
 
-async function loadDashboard() {
-  try {
-    const res = await fetch(`${API_BASE}/billing/dashboard`);
-    if (!res.ok) return;
+async function loadCRMClients(){
+try{
+const res = await fetch(`${API_BASE}/crm/clients`, {headers: headers()});
+if(!res.ok) return;
 
-    const data = await res.json();
+const data = await res.json();
+const clients = data.clients || [];
+const select = document.getElementById("clientSelect");
 
-    document.getElementById("total_invoices").innerText = data.total_invoices || 0;
-    document.getElementById("paid_invoices").innerText = data.paid_invoices || 0;
-    document.getElementById("unpaid_invoices").innerText = data.unpaid_invoices || 0;
-    document.getElementById("total_revenue").innerText = rupee(data.total_revenue);
-    document.getElementById("outstanding_amount").innerText = rupee(data.outstanding_amount);
-    document.getElementById("overdue_invoices").innerText = data.overdue_invoices || 0;
-  } catch (error) {
-    console.error("Dashboard load failed:", error);
-  }
+select.innerHTML = `<option value="">Select CRM Client</option>`;
+
+clients.forEach(c=>{
+const fee = Number(c.monthly_gst_fee || c.gst_fee || 0);
+const opt = document.createElement("option");
+opt.value = JSON.stringify({
+client_name: c.client_name || "",
+fee: fee
+});
+opt.textContent = `${c.client_name || "Unnamed"} — ${rupee(fee)}`;
+select.appendChild(opt);
+});
+}catch(e){
+console.error("CRM clients load failed", e);
+}
 }
 
-async function loadReport() {
-  try {
-    const res = await fetch(`${API_BASE}/billing/report`);
-    if (!res.ok) return;
+document.getElementById("clientSelect").addEventListener("change", function(){
+if(!this.value) return;
 
-    const data = await res.json();
-
-    document.getElementById("today_collection").innerText = rupee(data.today_collection);
-    document.getElementById("monthly_collection").innerText = rupee(data.monthly_collection);
-    document.getElementById("collection_rate").innerText = `${data.collection_rate || 0}%`;
-  } catch (error) {
-    console.error("Report load failed:", error);
-  }
-}
-
-async function loadOutstanding() {
-  try {
-    const res = await fetch(`${API_BASE}/billing/outstanding`);
-    if (!res.ok) return;
-
-    const data = await res.json();
-
-    document.getElementById("outstanding_count").innerText = data.outstanding_count || 0;
-    document.getElementById("outstanding_total").innerText = rupee(data.outstanding_amount);
-  } catch (error) {
-    console.error("Outstanding load failed:", error);
-  }
-}
-
-async function loadInvoices() {
-  try {
-    const res = await fetch(`${API_BASE}/billing/list`);
-    if (!res.ok) return;
-
-    const data = await res.json();
-    renderInvoices(data.invoices);
-  } catch (error) {
-    console.error("Invoice load failed:", error);
-  }
-}
-
-async function searchInvoices() {
-  const q = document.getElementById("searchInput").value.trim();
-
-  if (!q) {
-    await loadInvoices();
-    return;
-  }
-
-  try {
-    const res = await fetch(`${API_BASE}/billing/search?q=${encodeURIComponent(q)}`);
-    if (!res.ok) {
-      alert("Search failed");
-      return;
-    }
-
-    const data = await res.json();
-    renderInvoices(data.invoices);
-  } catch (error) {
-    alert("Search error");
-    console.error(error);
-  }
-}
-
-document.addEventListener("DOMContentLoaded", function () {
-  const form = document.getElementById("invoiceForm");
-
-  form.addEventListener("submit", async function(e) {
-    e.preventDefault();
-
-    const formData = new FormData(e.target);
-    const payload = Object.fromEntries(formData.entries());
-
-    payload.amount = Number(payload.amount || 0);
-    payload.tax_amount = Number(payload.tax_amount || 0);
-
-    for (const key in payload) {
-      if (payload[key] === "") payload[key] = null;
-    }
-
-    try {
-      const res = await fetch(`${API_BASE}/billing/create`, {
-        method: "POST",
-        headers: jsonHeaders(),
-        body: JSON.stringify(payload)
-      });
-
-      if (res.ok) {
-        alert("Invoice created successfully");
-        e.target.reset();
-        await refreshAll();
-      } else {
-        const err = await res.text();
-        alert("Invoice failed: " + err);
-      }
-    } catch (error) {
-      alert("Network error while creating invoice");
-      console.error(error);
-    }
-  });
-
-  document.getElementById("searchInput").addEventListener("keydown", function(e) {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      searchInvoices();
-    }
-  });
-
-  refreshAll();
+const c = JSON.parse(this.value);
+document.getElementById("client_name").value = c.client_name;
+document.getElementById("amount").value = c.fee || 0;
+document.getElementById("tax_amount").value = Math.round((Number(c.fee || 0) * 18) / 100);
 });
 
-async function markPaid(invoiceId) {
-  const paymentMode = prompt("Payment mode? Example: UPI, Cash, Bank Transfer, Cheque", "UPI");
-  if (!paymentMode) return;
+function renderInvoices(invoices){
+const rows = document.getElementById("invoiceRows");
 
-  const paymentReference = prompt("Payment reference / transaction ID?", "");
-
-  try {
-    const res = await fetch(`${API_BASE}/billing/mark-paid/${invoiceId}`, {
-      method: "PUT",
-      headers: jsonHeaders(),
-      body: JSON.stringify({
-        payment_mode: paymentMode,
-        payment_reference: paymentReference,
-        remarks: "Payment received"
-      })
-    });
-
-    if (res.ok) {
-      alert("Invoice marked as paid");
-      await refreshAll();
-    } else {
-      alert("Failed to mark paid: " + await res.text());
-    }
-  } catch (error) {
-    alert("Network error while marking paid");
-    console.error(error);
-  }
+if(!invoices || invoices.length === 0){
+rows.innerHTML = `<tr><td colspan="8" class="p-4 text-center text-gray-500">No invoices found</td></tr>`;
+return;
 }
 
-async function deleteInvoice(invoiceId) {
-  if (!confirm("Delete this invoice?")) return;
-
-  try {
-    const res = await fetch(`${API_BASE}/billing/delete/${invoiceId}`, {
-      method: "DELETE"
-    });
-
-    if (res.ok) {
-      alert("Invoice deleted");
-      await refreshAll();
-    } else {
-      alert("Delete failed: " + await res.text());
-    }
-  } catch (error) {
-    alert("Network error while deleting invoice");
-    console.error(error);
-  }
+rows.innerHTML = invoices.map(inv=>`
+<tr class="border-b hover:bg-gray-50">
+<td class="p-3 font-semibold">${inv.invoice_number || "-"}</td>
+<td class="p-3">${inv.client_name || "-"}</td>
+<td class="p-3">${inv.service_name || "-"}</td>
+<td class="p-3 font-bold">${rupee(inv.total_amount)}</td>
+<td class="p-3">
+<span class="px-3 py-1 rounded text-white text-sm ${
+inv.status === "paid" ? "bg-green-600" :
+inv.status === "overdue" ? "bg-red-600" :
+"bg-yellow-600"
+}">${inv.status || "unpaid"}</span>
+</td>
+<td class="p-3 text-sm">${inv.payment_mode || "-"} ${inv.paid_at ? `<br><span class="text-gray-500">${String(inv.paid_at).slice(0,10)}</span>` : ""}</td>
+<td class="p-3">${inv.due_date || "-"}</td>
+<td class="p-3">
+<div class="flex flex-wrap gap-2">
+<button onclick="downloadPDF('${inv.id}')" class="bg-blue-600 text-white px-3 py-1 rounded text-sm">PDF</button>
+${inv.status !== "paid" ? `<button onclick="markPaid('${inv.id}')" class="bg-green-600 text-white px-3 py-1 rounded text-sm">Mark Paid</button>` : ""}
+<button onclick="deleteInvoice('${inv.id}')" class="bg-red-600 text-white px-3 py-1 rounded text-sm">Delete</button>
+</div>
+</td>
+</tr>
+`).join("");
 }
 
-function downloadPDF(invoiceId) {
-  window.open(`${API_BASE}/billing/pdf/${invoiceId}`, "_blank");
+async function loadDashboard(){
+try{
+const res = await fetch(`${API_BASE}/billing/dashboard`, {headers: headers()});
+if(!res.ok) return;
+const data = await res.json();
+
+document.getElementById("total_invoices").innerText = data.total_invoices || 0;
+document.getElementById("paid_invoices").innerText = data.paid_invoices || 0;
+document.getElementById("unpaid_invoices").innerText = data.unpaid_invoices || 0;
+document.getElementById("total_revenue").innerText = rupee(data.total_revenue);
+document.getElementById("outstanding_amount").innerText = rupee(data.outstanding_amount);
+document.getElementById("overdue_invoices").innerText = data.overdue_invoices || 0;
+}catch(e){console.error(e);}
 }
 
-async function refreshAll() {
-  await loadDashboard();
-  await loadReport();
-  await loadOutstanding();
-  await loadInvoices();
+async function loadReport(){
+try{
+const res = await fetch(`${API_BASE}/billing/report`, {headers: headers()});
+if(!res.ok) return;
+const data = await res.json();
+
+document.getElementById("today_collection").innerText = rupee(data.today_collection);
+document.getElementById("monthly_collection").innerText = rupee(data.monthly_collection);
+document.getElementById("collection_rate").innerText = `${data.collection_rate || 0}%`;
+}catch(e){console.error(e);}
 }
+
+async function loadOutstanding(){
+try{
+const res = await fetch(`${API_BASE}/billing/outstanding`, {headers: headers()});
+if(!res.ok) return;
+const data = await res.json();
+
+document.getElementById("outstanding_count").innerText = data.outstanding_count || 0;
+document.getElementById("outstanding_total").innerText = rupee(data.outstanding_amount);
+}catch(e){console.error(e);}
+}
+
+async function loadInvoices(){
+try{
+const res = await fetch(`${API_BASE}/billing/list`, {headers: headers()});
+if(!res.ok) return;
+const data = await res.json();
+renderInvoices(data.invoices);
+}catch(e){console.error(e);}
+}
+
+async function searchInvoices(){
+const q = document.getElementById("searchInput").value.trim();
+
+if(!q){
+await loadInvoices();
+return;
+}
+
+const res = await fetch(`${API_BASE}/billing/search?q=${encodeURIComponent(q)}`, {headers: headers()});
+if(!res.ok){
+alert("Search failed");
+return;
+}
+
+const data = await res.json();
+renderInvoices(data.invoices);
+}
+
+document.getElementById("invoiceForm").addEventListener("submit", async function(e){
+e.preventDefault();
+
+if(!getToken()){
+alert("Please login again");
+window.location.href = "/login";
+return;
+}
+
+const formData = new FormData(e.target);
+const payload = Object.fromEntries(formData.entries());
+
+payload.amount = Number(payload.amount || 0);
+payload.tax_amount = Number(payload.tax_amount || 0);
+
+for(const key in payload){
+if(payload[key] === "") payload[key] = null;
+}
+
+const res = await fetch(`${API_BASE}/billing/create`, {
+method:"POST",
+headers:headers(),
+body:JSON.stringify(payload)
+});
+
+if(res.ok){
+alert("Invoice created successfully");
+e.target.reset();
+await refreshAll();
+}else{
+alert("Invoice failed: " + await res.text());
+}
+});
+
+async function markPaid(invoiceId){
+const paymentMode = prompt("Payment mode?", "UPI");
+if(!paymentMode) return;
+
+const paymentReference = prompt("Payment reference?", "");
+
+const res = await fetch(`${API_BASE}/billing/mark-paid/${invoiceId}`, {
+method:"PUT",
+headers:headers(),
+body:JSON.stringify({
+payment_mode: paymentMode,
+payment_reference: paymentReference,
+remarks: "Payment received"
+})
+});
+
+if(res.ok){
+alert("Invoice marked paid");
+await refreshAll();
+}else{
+alert("Failed: " + await res.text());
+}
+}
+
+async function deleteInvoice(invoiceId){
+if(!confirm("Delete this invoice?")) return;
+
+const res = await fetch(`${API_BASE}/billing/delete/${invoiceId}`, {
+method:"DELETE",
+headers:headers()
+});
+
+if(res.ok){
+alert("Invoice deleted");
+await refreshAll();
+}else{
+alert("Delete failed: " + await res.text());
+}
+}
+
+function downloadPDF(invoiceId){
+window.open(`${API_BASE}/billing/pdf/${invoiceId}`, "_blank");
+}
+
+async function refreshAll(){
+await loadCRMClients();
+await loadDashboard();
+await loadReport();
+await loadOutstanding();
+await loadInvoices();
+}
+
+document.getElementById("searchInput").addEventListener("keydown", function(e){
+if(e.key === "Enter"){
+e.preventDefault();
+searchInvoices();
+}
+});
+
+refreshAll();
 </script>
+
 </body>
 </html>
