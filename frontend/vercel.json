@@ -1,7 +1,12 @@
 {
   "cleanUrls": true,
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://gstagent-production.up.railway.app/:path*"
+    }
+  ],
   "routes": [
-    { "source": "/(.*)", "headers": { "Access-Control-Allow-Origin": "*" } },
     { "source": "/compliance", "destination": "/compliance.html" }
   ]
 }

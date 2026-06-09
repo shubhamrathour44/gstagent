@@ -168,7 +168,8 @@
     </div>
 
     <script>
-        const API_BASE_URL = "https://gstagent-production.up.railway.app";
+        // Change this line near the top of your <script> tag:
+const API_BASE_URL = window.location.origin + "/api";
         
         const getAuthHeaders = () => {
             const token = localStorage.getItem("token") || "mock-valid-session-token"; 
