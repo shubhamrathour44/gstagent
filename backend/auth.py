@@ -153,12 +153,18 @@ async def register_firm(request: RegisterFirmRequest, db: AsyncSession = Depends
 @auth_router.post("/login", response_model=TokenResponse)
 async def login(request: LoginRequest, db: AsyncSession = Depends(get_db)):
     user = await UserRepo.get_by_email(db, request.email)
+
     if not user or not user.is_active or not verify_password(request.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid email or password")
-    firm = user.firm
+
+    firm = await FirmRepo.get_by_id(db, user.firm_id)
+
     if not firm or not firm.is_active:
         raise HTTPException(status_code=403, detail="Firm account is inactive")
+
     user.last_login = __import__("datetime").datetime.datetime.utcnow()
+    await db.commit()
+
     return _token_for(user, firm)
 
 
