@@ -94,10 +94,18 @@
 const API_BASE = "https://gstagent-production.up.railway.app";
 
 function getToken() {
-  return localStorage.getItem("token") || localStorage.getItem("access_token") || "";
+  return (
+    localStorage.getItem("access_token") ||
+    localStorage.getItem("token") ||
+    localStorage.getItem("jwt") ||
+    localStorage.getItem("authToken") ||
+    sessionStorage.getItem("access_token") ||
+    sessionStorage.getItem("token") ||
+    ""
+  );
 }
 
-function headers() {
+function headers()console.log("Billing token found:", getToken() ? "YES" : "NO"); {
   return {
     "Content-Type": "application/json",
     "Authorization": "Bearer " + getToken()
