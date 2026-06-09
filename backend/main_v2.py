@@ -1,9 +1,10 @@
 import os
 import logging
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-# Import active structural application module routers
+# Routers
 from auth import auth_router
 from integrations import tally_router, zoho_router
 from gsp.router import gsp_router
@@ -12,13 +13,14 @@ from crm.router import crm_router
 from compliance.router import compliance_router
 from billing import router as billing_router
 
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("gstagent-backend")
 
 app = FastAPI(
     title="GSTAgent API",
     description="Backend API engine for GSTAgent CA Practice Management Platform",
-    version="2.0.0"
+    version="2.1.0"
 )
 
 origins = [
@@ -37,30 +39,66 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 @app.get("/")
 async def root():
     return {
         "message": "Welcome to GSTAgent Core API Engine",
         "status": "healthy",
-        "version": "2.0.0"
+        "version": "2.1.0"
     }
 
-# FIXED: Explicitly defined active health endpoints
+
 @app.get("/health")
 async def application_health_validation_node():
-    return {"status": "healthy", "service": "gstagent-backend"}
+    return {
+        "status": "healthy",
+        "service": "gstagent-backend"
+    }
 
-# Include App Routers
+
+@app.get("/modules")
+async def active_modules():
+    return {
+        "modules": [
+            "auth",
+            "billing",
+            "crm",
+            "tax",
+            "gsp",
+            "compliance",
+            "tally",
+            "zoho"
+        ]
+    }
+
+
+# -----------------------------
+# Router Registration
+# -----------------------------
+
 app.include_router(auth_router)
+
 app.include_router(tally_router)
 app.include_router(zoho_router)
+
 app.include_router(gsp_router)
 app.include_router(tax_router)
+
 app.include_router(crm_router)
 app.include_router(compliance_router)
+
 app.include_router(billing_router)
+
 
 if __name__ == "__main__":
     import uvicorn
+
     port = int(os.environ.get("PORT", 8000))
-    uvicorn.run("main_v2.py:app", host="0.0.0.0", port=port, reload=True)
+
+    uvicorn.run(
+        "main_v2:app",
+        host="0.0.0.0",
+        port=port,
+        reload=True
+    )
