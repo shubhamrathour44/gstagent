@@ -1,12 +1,26 @@
 from pydantic import BaseModel
 from typing import Optional
+from datetime import date
 
-class ComplianceRecord(BaseModel):
+class ComplianceCreate(BaseModel):
     client_name: str
-    gst_status: str = "Pending"
-    itr_status: str = "Pending"
-    tds_status: str = "Pending"
-    notice_status: str = "None"
-    assigned_staff: Optional[str] = ""
-    due_date: Optional[str] = ""
-    remarks: Optional[str] = ""
+    gstin: Optional[str] = None
+    pan: Optional[str] = None
+    gst_status: str = "pending"
+    itr_status: str = "pending"
+    tds_status: str = "pending"
+    notice_status: str = "none"
+    gst_due_date: Optional[date] = None
+    itr_due_date: Optional[date] = None
+    tds_due_date: Optional[date] = None
+    assigned_staff: Optional[str] = None
+    remarks: Optional[str] = None
+
+class ComplianceUpdate(BaseModel):
+    client_name: Optional[str] = None
+    gst_status: Optional[str] = None
+    itr_status: Optional[str] = None
+    tds_status: Optional[str] = None
+    notice_status: Optional[str] = None
+    assigned_staff: Optional[str] = None
+    remarks: Optional[str] = None
