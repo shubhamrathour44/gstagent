@@ -1,14 +1,13 @@
 from datetime import datetime
 from uuid import uuid4
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-
-from auth import CurrentUser, get_current_user
 
 router = APIRouter(prefix="/billing", tags=["Billing"])
 
 BILLING_STORE = {}
+DEFAULT_FIRM_ID = "default_firm"
 
 
 class InvoiceCreate(BaseModel):
@@ -32,22 +31,21 @@ class InvoiceUpdate(BaseModel):
 
 
 @router.get("/status")
-async def billing_status(current_user: CurrentUser = Depends(get_current_user)):
+async def billing_status():
     return {
         "status": "ok",
-        "module": "billing_invoice_management",
-        "firm_id": current_user.firm_id
+        "module": "billing_invoice_management"
     }
 
 
 @router.post("/create")
-async def create_invoice(payload: InvoiceCreate, current_user: CurrentUser = Depends(get_current_user)):
+async def create_invoice(payload: InvoiceCreate):
     invoice_id = str(uuid4())
     total_amount = payload.amount + payload.tax_amount
 
     invoice = {
         "id": invoice_id,
-        "firm_id": current_user.firm_id,
+        "firm_id": DEFAULT_FIRM_ID,
         "client_name": payload.client_name,
         "service_name": payload.service_name,
         "amount": payload.amount,
@@ -65,19 +63,19 @@ async def create_invoice(payload: InvoiceCreate, current_user: CurrentUser = Dep
 
 
 @router.get("/list")
-async def list_invoices(current_user: CurrentUser = Depends(get_current_user)):
+async def list_invoices():
     invoices = [
         item for item in BILLING_STORE.values()
-        if item["firm_id"] == current_user.firm_id
+        if item["firm_id"] == DEFAULT_FIRM_ID
     ]
     return {"invoices": invoices, "count": len(invoices)}
 
 
 @router.get("/dashboard")
-async def billing_dashboard(current_user: CurrentUser = Depends(get_current_user)):
+async def billing_dashboard():
     invoices = [
         item for item in BILLING_STORE.values()
-        if item["firm_id"] == current_user.firm_id
+        if item["firm_id"] == DEFAULT_FIRM_ID
     ]
 
     return {
@@ -91,10 +89,10 @@ async def billing_dashboard(current_user: CurrentUser = Depends(get_current_user
 
 
 @router.put("/update/{invoice_id}")
-async def update_invoice(invoice_id: str, payload: InvoiceUpdate, current_user: CurrentUser = Depends(get_current_user)):
+async def update_invoice(invoice_id: str, payload: InvoiceUpdate):
     invoice = BILLING_STORE.get(invoice_id)
 
-    if not invoice or invoice["firm_id"] != current_user.firm_id:
+    if not invoice:
         raise HTTPException(status_code=404, detail="Invoice not found")
 
     updates = payload.dict(exclude_unset=True)
@@ -109,10 +107,10 @@ async def update_invoice(invoice_id: str, payload: InvoiceUpdate, current_user: 
 
 
 @router.delete("/delete/{invoice_id}")
-async def delete_invoice(invoice_id: str, current_user: CurrentUser = Depends(get_current_user)):
+async def delete_invoice(invoice_id: str):
     invoice = BILLING_STORE.get(invoice_id)
 
-    if not invoice or invoice["firm_id"] != current_user.firm_id:
+    if not invoice:
         raise HTTPException(status_code=404, detail="Invoice not found")
 
     del BILLING_STORE[invoice_id]
