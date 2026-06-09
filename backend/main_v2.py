@@ -4,6 +4,9 @@ import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+# Database startup
+from database import init_db
+
 # Routers
 from auth import auth_router
 from integrations import tally_router, zoho_router
@@ -40,6 +43,15 @@ app.add_middleware(
 )
 
 
+@app.on_event("startup")
+async def startup_create_tables():
+    try:
+        await init_db()
+        logger.info("Database tables created successfully.")
+    except Exception as e:
+        logger.exception(f"Database startup failed: {e}")
+
+
 @app.get("/")
 async def root():
     return {
@@ -73,21 +85,14 @@ async def active_modules():
     }
 
 
-# -----------------------------
 # Router Registration
-# -----------------------------
-
 app.include_router(auth_router)
-
 app.include_router(tally_router)
 app.include_router(zoho_router)
-
 app.include_router(gsp_router)
 app.include_router(tax_router)
-
 app.include_router(crm_router)
 app.include_router(compliance_router)
-
 app.include_router(billing_router)
 
 
