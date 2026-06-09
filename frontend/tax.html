@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GSTAgent — Income Tax Assistant</title>
+  <style>
+    body{font-family:Inter,Arial,sans-serif;background:#0f172a;color:#e5e7eb;margin:0;padding:32px} .card{max-width:980px;margin:auto;background:#111827;border:1px solid #334155;border-radius:20px;padding:28px} h1{margin-top:0} input,select,button{padding:12px;border-radius:10px;border:1px solid #475569;background:#020617;color:#e5e7eb;margin:6px 0;width:100%} button{background:#4f46e5;border:none;cursor:pointer;font-weight:700}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.result{white-space:pre-wrap;background:#020617;border:1px solid #334155;border-radius:14px;padding:18px;margin-top:18px;overflow:auto}.muted{color:#94a3b8}@media(max-width:720px){.grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Income Tax Assistant</h1>
+    <p class="muted">Upload structured AIS/TIS/26AS files or run the sample analyzer. Login token is read from localStorage.</p>
+    <div class="grid">
+      <input id="clientName" placeholder="Client name" value="Demo Taxpayer" />
+      <input id="pan" placeholder="PAN" value="ABCDE1234F" />
+      <input id="assessmentYear" placeholder="Assessment Year" value="2026-27" />
+      <input id="age" placeholder="Age" type="number" value="35" />
+    </div>
+    <button onclick="runSample()">Run Sample Tax Analysis</button>
+    <button onclick="checkStatus()">Check Tax Module Status</button>
+    <div id="result" class="result">Result will appear here.</div>
+  </div>
+  <script>
+    const API_BASE = 'https://gstagent-production.up.railway.app';
+    function token(){return localStorage.getItem('token') || localStorage.getItem('access_token') || ''}
+    async function api(path, options={}){
+      const res = await fetch(API_BASE + path, { ...options, headers:{'Content-Type':'application/json','Authorization':'Bearer '+token(), ...(options.headers||{})}});
+      const data = await res.json().catch(()=>({error:'Non JSON response'}));
+      if(!res.ok) throw new Error(JSON.stringify(data));
+      return data;
+    }
+    async function checkStatus(){
+      try{ document.getElementById('result').textContent = JSON.stringify(await api('/tax/status'), null, 2); }
+      catch(e){ document.getElementById('result').textContent = e.message; }
+    }
+    async function runSample(){
+      try{
+        const sample = await api('/tax/templates/sample');
+        sample.profile.client_name = document.getElementById('clientName').value;
+        sample.profile.pan = document.getElementById('pan').value;
+        sample.profile.assessment_year = document.getElementById('assessmentYear').value;
+        sample.profile.age = Number(document.getElementById('age').value || 30);
+        const result = await api('/tax/analyze', {method:'POST', body:JSON.stringify(sample)});
+        document.getElementById('result').textContent = JSON.stringify(result, null, 2);
+      }catch(e){ document.getElementById('result').textContent = e.message; }
+    }
+  </script>
+</body>
+</html>

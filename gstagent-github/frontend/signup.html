@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Start Free Trial — GSTAgent</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:#07090F;color:#E2E8F0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.bg{position:fixed;inset:0;background-image:radial-gradient(circle at 1px 1px,rgba(99,102,241,.07) 1px,transparent 0);background-size:40px 40px;pointer-events:none}
+.card{background:#0D1117;border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:36px;width:100%;max-width:460px;box-shadow:0 40px 80px rgba(0,0,0,.5);position:relative;z-index:1}
+.logo{display:flex;align-items:center;gap:9px;margin-bottom:28px}
+.lm{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,#6366F1,#8B5CF6);display:flex;align-items:center;justify-content:center;font-size:15px}
+.lt{font-family:'Instrument Serif',serif;font-size:19px}
+h2{font-family:'Instrument Serif',serif;font-size:26px;letter-spacing:-.02em;margin-bottom:6px}
+p{color:#64748B;font-size:13px;margin-bottom:24px}
+label{display:block;font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px}
+input{width:100%;background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.1);border-radius:10px;padding:11px 13px;color:#E2E8F0;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .15s;margin-bottom:16px}
+input:focus{border-color:#6366F1}
+input::placeholder{color:#334155}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.btn{width:100%;background:#6366F1;color:#fff;border:none;border-radius:10px;padding:12px;font-size:15px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .15s;margin-top:4px}
+.btn:hover{background:#5254CC;transform:translateY(-1px)}
+.btn:disabled{opacity:.6;cursor:not-allowed;transform:none}
+.err{color:#FCA5A5;font-size:13px;padding:9px 12px;background:rgba(239,68,68,.08);border-radius:8px;margin-bottom:14px}
+.badge{display:flex;align-items:center;gap:7px;background:rgba(34,197,94,.07);border:1px solid rgba(34,197,94,.15);border-radius:8px;padding:10px 12px;font-size:12px;color:#86EFAC;margin-bottom:20px}
+.link{text-align:center;font-size:13px;color:#475569;margin-top:18px}
+.link a{color:#818CF8;text-decoration:none;font-weight:600}
+</style>
+</head>
+<body>
+<div class="bg"></div>
+<div class="card">
+  <div class="logo"><div class="lm">⚡</div><span class="lt">GSTAgent</span></div>
+  <h2>Start free trial</h2>
+  <p>14 days free · No credit card · Setup in 5 minutes</p>
+  <div class="badge">🚀 Launch offer: 50% off first 3 months for first 20 firms</div>
+  <div id="err" class="err" style="display:none"></div>
+  <div class="row">
+    <div><label>Firm Name</label><input id="firm" placeholder="Mehta & Associates"/></div>
+    <div><label>Your Name</label><input id="name" placeholder="CA Rahul Mehta"/></div>
+  </div>
+  <label>Work Email</label>
+  <input type="email" id="email" placeholder="ca@yourfirm.in"/>
+  <label>Password</label>
+  <input type="password" id="pass" placeholder="At least 8 characters"/>
+  <button class="btn" onclick="signup()" id="btn">Create account →</button>
+  <div style="font-size:11px;color:#334155;text-align:center;margin-top:12px">By signing up you agree to our Terms of Service and Privacy Policy</div>
+  <div class="link">Already have an account? <a href="/login">Sign in</a></div>
+</div>
+<script>
+const API = "https://api.gstagent.co.in";
+// Pre-fill email from URL param
+const urlEmail = new URLSearchParams(window.location.search).get('email');
+if(urlEmail) document.getElementById('email').value = urlEmail;
+
+async function signup(){
+  const firm=document.getElementById('firm').value;
+  const name=document.getElementById('name').value;
+  const email=document.getElementById('email').value;
+  const pass=document.getElementById('pass').value;
+  const btn=document.getElementById('btn');
+  const err=document.getElementById('err');
+  if(!firm||!name||!email||!pass){err.style.display='block';err.textContent='Please fill all fields';return;}
+  if(pass.length<8){err.style.display='block';err.textContent='Password must be at least 8 characters';return;}
+  btn.disabled=true;btn.textContent='Creating account...';err.style.display='none';
+  try{
+    const res=await fetch(API+'/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pass,firm_name:firm,admin_name:name})});
+    const data=await res.json();
+    if(!res.ok)throw new Error(data.detail||'Signup failed');
+    localStorage.setItem('gstagent_token',data.access_token);
+    localStorage.setItem('gstagent_user',JSON.stringify(data));
+    window.location.href='/app';
+  }catch(e){err.style.display='block';err.textContent=e.message;btn.disabled=false;btn.textContent='Create account →';}
+}
+if(localStorage.getItem('gstagent_token')) window.location.href='/app';
+</script>
+</body>
+</html>
