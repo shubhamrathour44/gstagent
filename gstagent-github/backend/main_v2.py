@@ -43,6 +43,7 @@ from database import (
 from excel_export import generate_to_bytes
 from integrations import TallyConfig, TallyConnector, tally_router, zoho_router
 from gsp.router import gsp_router
+from crm.router import crm_router
 from tax.router import tax_router
 from reconciliation_engine import GSTReconciliationEngine
 
@@ -77,6 +78,7 @@ app.include_router(auth_router)
 app.include_router(tally_router)
 app.include_router(zoho_router)
 app.include_router(gsp_router)
+app.include_router(crm_router)
 app.include_router(tax_router)
 if billing_router is not None:
     app.include_router(billing_router)
