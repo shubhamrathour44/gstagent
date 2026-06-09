@@ -45,6 +45,7 @@ from integrations import TallyConfig, TallyConnector, tally_router, zoho_router
 from gsp.router import gsp_router
 from tax.router import tax_router
 from crm.router import crm_router
+from compliance.router import compliance_router
 from reconciliation_engine import GSTReconciliationEngine
 
 try:
