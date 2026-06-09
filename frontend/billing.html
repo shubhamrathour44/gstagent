@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Billing - GSTAgent</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100">
+  <div class="min-h-screen p-6">
+    <div class="max-w-7xl mx-auto">
+      <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold text-gray-800">Billing & Invoice Management</h1>
+        <a href="/dashboard" class="text-blue-600 font-semibold">Back to Dashboard</a>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+        <div class="bg-white p-5 rounded-xl shadow">
+          <p class="text-gray-500">Total Invoices</p>
+          <h2 id="total_invoices" class="text-3xl font-bold">0</h2>
+        </div>
+        <div class="bg-white p-5 rounded-xl shadow">
+          <p class="text-gray-500">Paid</p>
+          <h2 id="paid_invoices" class="text-3xl font-bold text-green-600">0</h2>
+        </div>
+        <div class="bg-white p-5 rounded-xl shadow">
+          <p class="text-gray-500">Unpaid</p>
+          <h2 id="unpaid_invoices" class="text-3xl font-bold text-yellow-600">0</h2>
+        </div>
+        <div class="bg-white p-5 rounded-xl shadow">
+          <p class="text-gray-500">Revenue</p>
+          <h2 id="total_revenue" class="text-2xl font-bold text-blue-600">₹0</h2>
+        </div>
+        <div class="bg-white p-5 rounded-xl shadow">
+          <p class="text-gray-500">Outstanding</p>
+          <h2 id="outstanding_amount" class="text-2xl font-bold text-red-600">₹0</h2>
+        </div>
+      </div>
+
+      <div class="bg-white p-6 rounded-xl shadow mb-6">
+        <h2 class="text-xl font-bold mb-4">Create Invoice</h2>
+
+        <form id="invoiceForm" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <input class="border p-3 rounded" name="client_name" placeholder="Client Name" required />
+          <input class="border p-3 rounded" name="service_name" placeholder="Service Name" required />
+          <input class="border p-3 rounded" name="amount" type="number" placeholder="Amount" required />
+          <input class="border p-3 rounded" name="tax_amount" type="number" placeholder="Tax Amount" value="0" />
+          
+          <select class="border p-3 rounded" name="status">
+            <option value="unpaid">Unpaid</option>
+            <option value="paid">Paid</option>
+            <option value="overdue">Overdue</option>
+          </select>
+
+          <input class="border p-3 rounded" name="due_date" type="date" />
+          <input class="border p-3 rounded md:col-span-2" name="remarks" placeholder="Remarks" />
+
+          <button class="bg-blue-600 text-white p-3 rounded font-semibold hover:bg-blue-700">
+            Save Invoice
+          </button>
+        </form>
+      </div>
+
+      <div class="bg-white p-6 rounded-xl shadow">
+        <h2 class="text-xl font-bold mb-4">Invoice List</h2>
+
+        <div class="overflow-x-auto">
+          <table class="w-full border-collapse">
+            <thead>
+              <tr class="bg-gray-200 text-left">
+                <th class="p-3">Client</th>
+                <th class="p-3">Service</th>
+                <th class="p-3">Amount</th>
+                <th class="p-3">Tax</th>
+                <th class="p-3">Total</th>
+                <th class="p-3">Status</th>
+                <th class="p-3">Due Date</th>
+                <th class="p-3">Remarks</th>
+              </tr>
+            </thead>
+            <tbody id="invoiceRows">
+              <tr>
+                <td colspan="8" class="p-4 text-center text-gray-500">No invoices yet</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+const API_BASE = "https://gstagent-production.up.railway.app";
+
+function getToken() {
+  return localStorage.getItem("token") || localStorage.getItem("access_token") || "";
+}
+
+function headers() {
+  return {
+    "Content-Type": "application/json",
+    "Authorization": "Bearer " + getToken()
+  };
+}
+
+function rupee(value) {
+  return "₹" + Number(value || 0).toLocaleString("en-IN");
+}
+
+async function loadDashboard() {
+  const res = await fetch(`${API_BASE}/billing/dashboard`, { headers: headers() });
+
+  if (!res.ok) return;
+
+  const data = await res.json();
+
+  document.getElementById("total_invoices").innerText = data.total_invoices || 0;
+  document.getElementById("paid_invoices").innerText = data.paid_invoices || 0;
+  document.getElementById("unpaid_invoices").innerText = data.unpaid_invoices || 0;
+  document.getElementById("total_revenue").innerText = rupee(data.total_revenue);
+  document.getElementById("outstanding_amount").innerText = rupee(data.outstanding_amount);
+}
+
+async function loadInvoices() {
+  const res = await fetch(`${API_BASE}/billing/list`, { headers: headers() });
+
+  if (!res.ok) return;
+
+  const data = await res.json();
+  const rows = document.getElementById("invoiceRows");
+
+  if (!data.invoices || data.invoices.length === 0) {
+    rows.innerHTML = `<tr><td colspan="8" class="p-4 text-center text-gray-500">No invoices yet</td></tr>`;
+    return;
+  }
+
+  rows.innerHTML = data.invoices.map(inv => `
+    <tr class="border-b">
+      <td class="p-3">${inv.client_name}</td>
+      <td class="p-3">${inv.service_name}</td>
+      <td class="p-3">${rupee(inv.amount)}</td>
+      <td class="p-3">${rupee(inv.tax_amount)}</td>
+      <td class="p-3 font-bold">${rupee(inv.total_amount)}</td>
+      <td class="p-3">
+        <span class="px-3 py-1 rounded text-white text-sm ${
+          inv.status === "paid" ? "bg-green-600" :
+          inv.status === "overdue" ? "bg-red-600" :
+          "bg-yellow-600"
+        }">${inv.status}</span>
+      </td>
+      <td class="p-3">${inv.due_date || "-"}</td>
+      <td class="p-3">${inv.remarks || "-"}</td>
+    </tr>
+  `).join("");
+}
+
+document.getElementById("invoiceForm").addEventListener("submit", async function(e) {
+  e.preventDefault();
+
+  const formData = new FormData(e.target);
+  const payload = Object.fromEntries(formData.entries());
+
+  payload.amount = Number(payload.amount || 0);
+  payload.tax_amount = Number(payload.tax_amount || 0);
+
+  for (const key in payload) {
+    if (payload[key] === "") payload[key] = null;
+  }
+
+  const res = await fetch(`${API_BASE}/billing/create`, {
+    method: "POST",
+    headers: headers(),
+    body: JSON.stringify(payload)
+  });
+
+  if (res.ok) {
+    alert("Invoice created successfully");
+    e.target.reset();
+    await loadDashboard();
+    await loadInvoices();
+  } else {
+    const err = await res.text();
+    alert("Invoice failed: " + err);
+  }
+});
+
+loadDashboard();
+loadInvoices();
+</script>
+</body>
+</html>
