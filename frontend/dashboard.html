@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>GSTAgent — Practice Dashboard</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#07090F;--s1:#0D1117;--s2:#161B22;--bd:rgba(255,255,255,.07);--bd2:rgba(255,255,255,.12);--ind:#6366F1;--grn:#22C55E;--red:#EF4444;--amb:#F59E0B;--txt:#E2E8F0;--t2:#94A3B8;--t3:#475569;--serif:'Instrument Serif',serif;--sans:'DM Sans',sans-serif;--mono:'DM Mono',monospace}
+body{font-family:var(--sans);background:var(--bg);color:var(--txt);min-height:100vh}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}
+@keyframes spin{to{transform:rotate(360deg)}}
+.anim{animation:fadeUp .4s ease both}
+
+/* Layout */
+.layout{display:flex;min-height:100vh}
+.sidebar{width:220px;background:#080D18;border-right:1px solid var(--bd);height:100vh;position:sticky;top:0;display:flex;flex-direction:column;flex-shrink:0}
+.main{flex:1;display:flex;flex-direction:column;min-width:0}
+.topbar{background:#080D18;border-bottom:1px solid var(--bd);height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:sticky;top:0;z-index:50}
+.content{flex:1;overflow-y:auto;padding:28px 28px}
+
+/* Sidebar */
+.logo{display:flex;align-items:center;gap:9px;padding:18px 16px;border-bottom:1px solid var(--bd)}
+.lm{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#6366F1,#8B5CF6);display:flex;align-items:center;justify-content:center;font-size:13px}
+.lt{font-family:var(--serif);font-size:17px}
+nav{flex:1;padding:12px 10px;overflow-y:auto}
+.nav-item{display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:9px;cursor:pointer;font-size:13px;font-weight:500;color:var(--t3);transition:all .15s;border:none;background:transparent;width:100%;text-align:left;font-family:var(--sans)}
+.nav-item:hover{background:rgba(255,255,255,.05);color:var(--t2)}
+.nav-item.active{background:rgba(99,102,241,.12);color:#A5B4FC}
+.nav-section{font-size:10px;font-weight:700;color:#1E293B;text-transform:uppercase;letter-spacing:.08em;padding:12px 12px 4px}
+
+/* Cards */
+.card{background:var(--s1);border:1px solid var(--bd);border-radius:14px;padding:20px}
+.stat-card{background:var(--s1);border:1px solid var(--bd);border-radius:14px;padding:18px;position:relative;overflow:hidden;transition:transform .2s}
+.stat-card:hover{transform:translateY(-2px)}
+.stat-val{font-family:var(--mono);font-size:26px;font-weight:800;margin-top:8px}
+.stat-label{font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.07em}
+
+/* Grid */
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 16px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;border:none;font-family:var(--sans);transition:all .15s}
+.btn-primary{background:var(--ind);color:#fff;box-shadow:0 4px 12px rgba(99,102,241,.3)}
+.btn-primary:hover{background:#5254CC;transform:translateY(-1px)}
+.btn-ghost{background:rgba(255,255,255,.05);color:var(--t2);border:1px solid var(--bd2)}
+.btn-ghost:hover{background:rgba(255,255,255,.08);color:var(--txt)}
+.btn-danger{background:rgba(239,68,68,.15);color:#FCA5A5;border:1px solid rgba(239,68,68,.2)}
+.btn-success{background:rgba(34,197,94,.15);color:#86EFAC;border:1px solid rgba(34,197,94,.2)}
+
+/* Inputs */
+.input{width:100%;background:rgba(255,255,255,.04);border:1.5px solid var(--bd2);border-radius:9px;padding:10px 13px;color:var(--txt);font-size:13px;font-family:var(--sans);outline:none;transition:border-color .15s}
+.input:focus{border-color:var(--ind)}
+.input::placeholder{color:var(--t3)}
+
+/* Tags */
+.tag{display:inline-flex;align-items:center;padding:2px 8px;border-radius:5px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.tag-red{background:rgba(239,68,68,.12);color:#FCA5A5;border:1px solid rgba(239,68,68,.2)}
+.tag-green{background:rgba(34,197,94,.12);color:#86EFAC;border:1px solid rgba(34,197,94,.2)}
+.tag-amber{background:rgba(245,158,11,.12);color:#FCD34D;border:1px solid rgba(245,158,11,.2)}
+.tag-blue{background:rgba(99,102,241,.12);color:#A5B4FC;border:1px solid rgba(99,102,241,.2)}
+
+/* Table */
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--bd)}
+td{padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.03);color:var(--t2)}
+tr:hover td{background:rgba(255,255,255,.02)}
+
+/* Deadline pill */
+.deadline-pill{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--s2);border-radius:10px;margin-bottom:8px;border:1px solid var(--bd)}
+.urgent{border-color:rgba(239,68,68,.3);background:rgba(239,68,68,.05)}
+
+/* Spinner */
+.spin{animation:spin .7s linear infinite;width:16px;height:16px;border:2px solid rgba(99,102,241,.3);border-top-color:var(--ind);border-radius:50%;display:inline-block}
+
+/* Page sections */
+.page{display:none}.page.active{display:block}
+h1{font-family:var(--serif);font-size:26px;letter-spacing:-.02em;margin-bottom:6px}
+.page-sub{color:var(--t3);font-size:13px;margin-bottom:24px}
+
+/* Notification dot */
+.notif{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--red);margin-left:auto;animation:pulse 2s infinite}
+
+@media(max-width:768px){.sidebar{display:none}.grid-4{grid-template-columns:1fr 1fr}.grid-3{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="layout">
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="logo"><div class="lm">⚡</div><span class="lt">GSTAgent</span></div>
+  <nav>
+    <div class="nav-section">Main</div>
+    <button class="nav-item active" onclick="showPage('dashboard')">📊 Dashboard</button>
+    <button class="nav-item" onclick="showPage('clients')">👥 Clients</button>
+    <button class="nav-item" onclick="showPage('reconciliation')">🔍 Reconciliation</button>
+    <button class="nav-item" onclick="showPage('compliance')">✅ Compliance</button>
+
+    <div class="nav-section">New Features</div>
+    <button class="nav-item" onclick="showPage('client-portal')">🌐 Client Portal</button>
+    <button class="nav-item" onclick="showPage('reminders')">📨 Reminders<span class="notif"></span></button>
+    <button class="nav-item" onclick="showPage('analytics')">📈 Analytics</button>
+    <button class="nav-item" onclick="showPage('attendance')">🕐 Attendance</button>
+    <button class="nav-item" onclick="showPage('calendar')">📅 GST Calendar</button>
+
+    <div class="nav-section">More</div>
+    <button class="nav-item" onclick="showPage('notices')">⚠️ Notices</button>
+    <button class="nav-item" onclick="showPage('documents')">📁 Documents</button>
+    <button class="nav-item" onclick="showPage('tasks')">✔️ Tasks</button>
+    <button class="nav-item" onclick="showPage('billing')">💳 Billing</button>
+  </nav>
+  <div style="padding:12px;border-top:1px solid var(--bd)">
+    <div style="font-size:11px;color:var(--t3);padding:8px 12px">v3.0 · All modules active</div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div style="font-size:13px;color:var(--t3)" id="page-title">Dashboard</div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <button class="btn btn-primary" style="font-size:12px;padding:7px 14px" onclick="showPage('reminders')">📨 Send Reminder</button>
+      <div style="width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#6366F1,#8B5CF6);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff">CA</div>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <h1>Good morning 👋</h1>
+      <p class="page-sub">Here's your practice overview for today</p>
+      <div class="grid-4" style="margin-bottom:24px">
+        <div class="stat-card anim"><div class="stat-label">Total Clients</div><div class="stat-val" style="color:#A5B4FC" id="stat-clients">—</div><div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#6366F140,#6366F1)"></div></div>
+        <div class="stat-card anim"><div class="stat-label">Filings Due (7 days)</div><div class="stat-val" style="color:#FCD34D" id="stat-filings">—</div><div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#F59E0B40,#F59E0B)"></div></div>
+        <div class="stat-card anim"><div class="stat-label">Open Notices</div><div class="stat-val" style="color:#FCA5A5" id="stat-notices">—</div><div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#EF444440,#EF4444)"></div></div>
+        <div class="stat-card anim"><div class="stat-label">Tasks Pending</div><div class="stat-val" style="color:#86EFAC" id="stat-tasks">—</div><div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#22C55E40,#22C55E)"></div></div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div style="font-weight:700;font-size:14px;margin-bottom:16px">📅 Upcoming Deadlines</div>
+          <div id="upcoming-deadlines">
+            <div class="deadline-pill urgent"><div><div style="font-weight:600;font-size:13px">GSTR-1</div><div style="font-size:11px;color:var(--t3)">Jul 2025</div></div><div><span class="tag tag-red">3 days left</span></div></div>
+            <div class="deadline-pill"><div><div style="font-weight:600;font-size:13px">GSTR-3B</div><div style="font-size:11px;color:var(--t3)">Jul 2025</div></div><div><span class="tag tag-amber">12 days left</span></div></div>
+            <div class="deadline-pill"><div><div style="font-weight:600;font-size:13px">GSTR-2B Available</div><div style="font-size:11px;color:var(--t3)">Jul 2025</div></div><div><span class="tag tag-blue">7 days left</span></div></div>
+          </div>
+        </div>
+        <div class="card">
+          <div style="font-weight:700;font-size:14px;margin-bottom:16px">⚡ Quick Actions</div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <button class="btn btn-ghost" style="width:100%;justify-content:flex-start" onclick="showPage('reconciliation')">🔍 Run Reconciliation</button>
+            <button class="btn btn-ghost" style="width:100%;justify-content:flex-start" onclick="showPage('reminders')">📨 Send Bulk Reminder</button>
+            <button class="btn btn-ghost" style="width:100%;justify-content:flex-start" onclick="showPage('calendar')">📅 View GST Calendar</button>
+            <button class="btn btn-ghost" style="width:100%;justify-content:flex-start" onclick="showPage('client-portal')">🌐 Invite Client to Portal</button>
+            <button class="btn btn-ghost" style="width:100%;justify-content:flex-start" onclick="showPage('attendance')">🕐 Mark Attendance</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CLIENT PORTAL -->
+    <div class="page" id="page-client-portal">
+      <h1>🌐 Client Portal</h1>
+      <p class="page-sub">Invite clients to self-serve — view notices, documents, compliance status</p>
+      <div class="card" style="margin-bottom:16px">
+        <div style="font-weight:700;font-size:14px;margin-bottom:16px">Invite a Client</div>
+        <div class="grid-2" style="gap:12px;margin-bottom:12px">
+          <div><label style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;display:block;margin-bottom:5px">Client Name</label><input class="input" id="portal-name" placeholder="Sharma Industries"/></div>
+          <div><label style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;display:block;margin-bottom:5px">Client Email</label><input class="input" id="portal-email" type="email" placeholder="cfo@sharma.com"/></div>
+          <div><label style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;display:block;margin-bottom:5px">GSTIN</label><input class="input" id="portal-gstin" placeholder="27XXXXX1234X1Z5" style="font-family:var(--mono)"/></div>
+          <div><label style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;display:block;margin-bottom:5px">Client ID</label><input class="input" id="portal-client-id" placeholder="Client ID from CRM"/></div>
+        </div>
+        <button class="btn btn-primary" onclick="inviteClient()">🌐 Send Portal Invite</button>
+        <div id="portal-result" style="margin-top:12px"></div>
+      </div>
+      <div class="card">
+        <div style="font-weight:700;font-size:14px;margin-bottom:14px">What clients can do in the portal</div>
+        <div class="grid-3">
+          <div style="background:var(--s2);border-radius:10px;padding:14px"><div style="font-size:18px;margin-bottom:8px">📋</div><div style="font-weight:600;font-size:13px;margin-bottom:4px">View Notices</div><div style="font-size:12px;color:var(--t3)">See all GST notices and their status</div></div>
+          <div style="background:var(--s2);border-radius:10px;padding:14px"><div style="font-size:18px;margin-bottom:8px">📁</div><div style="font-weight:600;font-size:13px;margin-bottom:4px">View Documents</div><div style="font-size:12px;color:var(--t3)">Download reports and filings</div></div>
+          <div style="background:var(--s2);border-radius:10px;padding:14px"><div style="font-size:18px;margin-bottom:8px">✅</div><div style="font-weight:600;font-size:13px;margin-bottom:4px">Compliance Status</div><div style="font-size:12px;color:var(--t3)">See upcoming deadlines</div></div>
+          <div style="background:var(--s2);border-radius:10px;padding:14px"><div style="font-size:18px;margin-bottom:8px">📤</div><div style="font-weight:600;font-size:13px;margin-bottom:4px">Upload Documents</div><div style="font-size:12px;color:var(--t3)">Send files to CA firm</div></div>
+          <div style="background:var(--s2);border-radius:10px;padding:14px"><div style="font-size:18px;margin-bottom:8px">📋</div><div style="font-weight:600;font-size:13px;margin-bottom:4px">View Tasks</div><div style="font-size:12px;color:var(--t3)">See pending actions required</div></div>
+          <div style="background:var(--s2);border-radius:10px;padding:14px"><div style="font-size:18px;margin-bottom:8px">🔒</div><div style="font-weight:600;font-size:13px;margin-bottom:4px">Secure & Isolated</div><div style="font-size:12px;color:var(--t3)">Each client sees only their data</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- REMINDERS -->
+    <div class="page" id="page-reminders">
+      <h1>📨 Reminders</h1>
+      <p class="page-sub">Send email and WhatsApp reminders to clients for filings and notices</p>
+      <div class="grid-2" style="margin-bottom:16px">
+        <div class="card">
+          <div style="font-weight:700;font-size:14px;margin-bottom:16px">Send Single Reminder</div>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div><label style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;display:block;margin-bottom:5px">Client Name</label><input class="input" id="rem-client" placeholder="Sharma Industries"/></div>
+            <div><label style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;display:block;margin-bottom:5px">Email</label><input class="input" id="rem-email" type="email" placeholder="cfo@sharma.com"/></div>
+            <div><label style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;display:block;margin-bottom:5px">WhatsApp Number</label><input class="input" id="rem-phone" placeholder="+91 98765 43210"/></div>
+            <div><label style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;display:block;margin-bottom:5px">Reminder Type</label>
+              <select class="input" id="rem-type">
+                <option value="gstr1">GSTR-1 Filing Due</option>
+                <option value="gstr3b">GSTR-3B Filing Due</option>
+                <option value="notice_reply">Notice Reply Deadline</option>
+                <option value="document_pending">Documents Pending</option>
+                <option value="itc_risk">ITC at Risk Alert</option>
+              </select></div>
+            <div><label style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;display:block;margin-bottom:5px">Channel</label>
+              <select class="input" id="rem-channel">
+                <option value="both">Email + WhatsApp</option>
+                <option value="email">Email only</option>
+                <option value="whatsapp">WhatsApp only</option>
+              </select></div>
+            <div><label style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;display:block;margin-bottom:5px">Due Date</label><input class="input" id="rem-due" type="date"/></div>
+            <button class="btn btn-primary" onclick="sendReminder()">📨 Send Reminder</button>
+            <div id="rem-result"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div style="font-weight:700;font-size:14px;margin-bottom:16px">Bulk Reminders</div>
+          <p style="font-size:13px;color:var(--t3);margin-bottom:16px">Send to all clients at once for a filing deadline</p>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div><label style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;display:block;margin-bottom:5px">Filing Type</label>
+              <select class="input" id="bulk-type"><option value="gstr1">GSTR-1</option><option value="gstr3b">GSTR-3B</option></select></div>
+            <div><label style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;display:block;margin-bottom:5px">Due Date</label><input class="input" id="bulk-due" type="date"/></div>
+            <button class="btn btn-primary" onclick="sendBulkReminder()">📨 Send to All Clients</button>
+          </div>
+          <div style="margin-top:20px;padding:14px;background:var(--s2);border-radius:10px">
+            <div style="font-size:12px;font-weight:700;color:var(--amb);margin-bottom:8px">⚙️ Setup Required</div>
+            <div style="font-size:12px;color:var(--t3);line-height:1.6">
+              <strong style="color:var(--txt)">Email:</strong> Add SMTP_HOST, SMTP_USER, SMTP_PASSWORD in Railway<br/>
+              <strong style="color:var(--txt)">WhatsApp:</strong> Add WHATSAPP_API_KEY (get from WATI or Twilio)
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ANALYTICS -->
+    <div class="page" id="page-analytics">
+      <h1>📈 Practice Analytics</h1>
+      <p class="page-sub">Complete overview of your CA firm performance</p>
+      <div class="grid-4" style="margin-bottom:24px">
+        <div class="stat-card"><div class="stat-label">Total Clients</div><div class="stat-val" style="color:#A5B4FC" id="a-clients">—</div></div>
+        <div class="stat-card"><div class="stat-label">Filings This Month</div><div class="stat-val" style="color:#86EFAC" id="a-filings">—</div></div>
+        <div class="stat-card"><div class="stat-label">ITC Recovered</div><div class="stat-val" style="color:#FCD34D" id="a-itc">—</div></div>
+        <div class="stat-card"><div class="stat-label">Reconciliations Run</div><div class="stat-val" style="color:#818CF8" id="a-recon">—</div></div>
+      </div>
+      <div class="card">
+        <div style="font-weight:700;font-size:14px;margin-bottom:16px">Client Health Overview</div>
+        <table>
+          <thead><tr><th>Client</th><th>GSTIN</th><th>Filings</th><th>Notices</th><th>ITC Risk</th><th>Health</th></tr></thead>
+          <tbody id="client-health-table"><tr><td colspan="6" style="text-align:center;padding:24px;color:var(--t3)">Loading client data...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ATTENDANCE -->
+    <div class="page" id="page-attendance">
+      <h1>🕐 Staff Attendance & Payroll</h1>
+      <p class="page-sub">Track staff attendance and generate monthly payroll</p>
+      <div class="grid-2">
+        <div class="card">
+          <div style="font-weight:700;font-size:14px;margin-bottom:16px">Mark Attendance</div>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div><label style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;display:block;margin-bottom:5px">Staff Name</label><input class="input" id="att-name" placeholder="CA Priya Sharma"/></div>
+            <div><label style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;display:block;margin-bottom:5px">Date</label><input class="input" id="att-date" type="date"/></div>
+            <div><label style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;display:block;margin-bottom:5px">Status</label>
+              <select class="input" id="att-status">
+                <option value="present">Present</option>
+                <option value="absent">Absent</option>
+                <option value="half_day">Half Day</option>
+                <option value="leave">Leave</option>
+              </select></div>
+            <div class="grid-2" style="gap:10px">
+              <div><label style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;display:block;margin-bottom:5px">Check In</label><input class="input" id="att-in" type="time"/></div>
+              <div><label style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;display:block;margin-bottom:5px">Check Out</label><input class="input" id="att-out" type="time"/></div>
+            </div>
+            <button class="btn btn-primary" onclick="markAttendance()">✓ Mark Attendance</button>
+            <div id="att-result"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div style="font-weight:700;font-size:14px;margin-bottom:16px">Generate Payroll</div>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div><label style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;display:block;margin-bottom:5px">Month</label><input class="input" id="pay-month" type="month"/></div>
+            <p style="font-size:12px;color:var(--t3);line-height:1.6">Payroll is calculated based on attendance records. Add staff basic salary in their profile.</p>
+            <button class="btn btn-primary" onclick="generatePayroll()">💰 Generate Payroll</button>
+            <div id="pay-result"></div>
+          </div>
+          <div style="margin-top:16px;padding:12px;background:var(--s2);border-radius:9px">
+            <div style="font-size:12px;font-weight:700;color:var(--txt);margin-bottom:6px">Monthly Summary</div>
+            <div style="font-size:12px;color:var(--t3)">Working days this month: <strong style="color:var(--txt)" id="working-days">—</strong></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GST CALENDAR -->
+    <div class="page" id="page-calendar">
+      <h1>📅 GST Return Calendar</h1>
+      <p class="page-sub">All filing deadlines in one view — never miss a due date</p>
+      <div class="grid-3" style="margin-bottom:20px">
+        <div class="card" style="border-color:rgba(239,68,68,.2);background:rgba(239,68,68,.05)">
+          <div style="font-size:11px;font-weight:700;color:#FCA5A5;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">🚨 Overdue</div>
+          <div style="font-family:var(--mono);font-size:28px;font-weight:800;color:#FCA5A5" id="cal-overdue">0</div>
+          <div style="font-size:12px;color:var(--t3);margin-top:4px">Filings past due date</div>
+        </div>
+        <div class="card" style="border-color:rgba(245,158,11,.2);background:rgba(245,158,11,.05)">
+          <div style="font-size:11px;font-weight:700;color:#FCD34D;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">⚠️ Due This Week</div>
+          <div style="font-family:var(--mono);font-size:28px;font-weight:800;color:#FCD34D" id="cal-week">0</div>
+          <div style="font-size:12px;color:var(--t3);margin-top:4px">Due in next 7 days</div>
+        </div>
+        <div class="card" style="border-color:rgba(34,197,94,.2);background:rgba(34,197,94,.05)">
+          <div style="font-size:11px;font-weight:700;color:#86EFAC;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">✅ Upcoming</div>
+          <div style="font-family:var(--mono);font-size:28px;font-weight:800;color:#86EFAC" id="cal-upcoming">0</div>
+          <div style="font-size:12px;color:var(--t3);margin-top:4px">Due in next 30 days</div>
+        </div>
+      </div>
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <div style="font-weight:700;font-size:14px">Standard GST Deadlines</div>
+          <button class="btn btn-primary" style="font-size:12px;padding:7px 14px" onclick="generateDeadlines()">+ Generate This Month</button>
+        </div>
+        <div id="deadline-list">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- PLACEHOLDER PAGES -->
+    <div class="page" id="page-clients"><h1>👥 Clients</h1><p class="page-sub">Manage all client GSTINs</p><div class="card"><p style="color:var(--t3);font-size:14px;text-align:center;padding:40px">Client management module — connect to /crm API endpoints</p></div></div>
+    <div class="page" id="page-reconciliation"><h1>🔍 Reconciliation</h1><p class="page-sub">AI GST Reconciliation Engine</p><div class="card"><p style="color:var(--t3);font-size:14px;text-align:center;padding:40px">Reconciliation module — connect to /reconciliation API endpoints</p></div></div>
+    <div class="page" id="page-compliance"><h1>✅ Compliance</h1><p class="page-sub">Compliance tracker</p><div class="card"><p style="color:var(--t3);font-size:14px;text-align:center;padding:40px">Compliance module — connect to /compliance API endpoints</p></div></div>
+    <div class="page" id="page-notices"><h1>⚠️ Notices</h1><p class="page-sub">GST notice management</p><div class="card"><p style="color:var(--t3);font-size:14px;text-align:center;padding:40px">Notices module — connect to /notices API endpoints</p></div></div>
+    <div class="page" id="page-documents"><h1>📁 Documents</h1><p class="page-sub">Document vault</p><div class="card"><p style="color:var(--t3);font-size:14px;text-align:center;padding:40px">Documents module — connect to /documents API endpoints</p></div></div>
+    <div class="page" id="page-tasks"><h1>✔️ Tasks</h1><p class="page-sub">Task management</p><div class="card"><p style="color:var(--t3);font-size:14px;text-align:center;padding:40px">Tasks module — connect to /tasks API endpoints</p></div></div>
+    <div class="page" id="page-billing"><h1>💳 Billing</h1><p class="page-sub">Subscription management</p><div class="card"><p style="color:var(--t3);font-size:14px;text-align:center;padding:40px">Billing module — connect to /billing API endpoints</p></div></div>
+
+  </div><!-- end content -->
+</div><!-- end main -->
+</div><!-- end layout -->
+
+<script>
+const API = "https://gstagent-production.up.railway.app";
+const token = localStorage.getItem("gstagent_token");
+const headers = {"Content-Type":"application/json","Authorization":"Bearer "+token};
+
+// ── PAGE NAVIGATION ────────────────────────────────────────────────────────────
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+id)?.classList.add('active');
+  event?.currentTarget?.classList.add('active');
+  document.getElementById('page-title').textContent = id.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+
+  // Load data for specific pages
+  if(id==='calendar') loadCalendar();
+  if(id==='analytics') loadAnalytics();
+}
+
+// ── GST CALENDAR ──────────────────────────────────────────────────────────────
+function loadCalendar() {
+  // Standard GST deadlines
+  const today = new Date();
+  const deadlines = [
+    {type:"GSTR-1", period:"Jun 2025", due:"2025-07-11", days:getDaysLeft("2025-07-11")},
+    {type:"GSTR-2B Available", period:"Jun 2025", due:"2025-07-14", days:getDaysLeft("2025-07-14")},
+    {type:"GSTR-3B", period:"Jun 2025", due:"2025-07-20", days:getDaysLeft("2025-07-20")},
+    {type:"GSTR-1", period:"Jul 2025", due:"2025-08-11", days:getDaysLeft("2025-08-11")},
+    {type:"GSTR-3B", period:"Jul 2025", due:"2025-08-20", days:getDaysLeft("2025-08-20")},
+  ];
+
+  let overdue=0, week=0, upcoming=0;
+  let html = '';
+  deadlines.forEach(d => {
+    if(d.days < 0) overdue++;
+    else if(d.days <= 7) week++;
+    else upcoming++;
+
+    const urgent = d.days <= 5 && d.days >= 0;
+    const overdueCls = d.days < 0;
+    html += `<div class="deadline-pill ${urgent?'urgent':''}">
+      <div>
+        <div style="font-weight:600;font-size:13px">${d.type}</div>
+        <div style="font-size:11px;color:var(--t3)">${d.period} · Due: ${d.due}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        ${overdueCls?'<span class="tag tag-red">Overdue</span>':urgent?`<span class="tag tag-red">${d.days} days left</span>`:`<span class="tag tag-amber">${d.days} days left</span>`}
+        <button class="btn btn-success" style="font-size:11px;padding:4px 10px" onclick="this.textContent='✓ Filed';this.disabled=true">Mark Filed</button>
+      </div>
+    </div>`;
+  });
+
+  document.getElementById('deadline-list').innerHTML = html;
+  document.getElementById('cal-overdue').textContent = overdue;
+  document.getElementById('cal-week').textContent = week;
+  document.getElementById('cal-upcoming').textContent = upcoming;
+}
+
+function getDaysLeft(dateStr) {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const due = new Date(dateStr);
+  return Math.floor((due-today)/(1000*60*60*24));
+}
+
+function generateDeadlines() {
+  const month = new Date().toISOString().slice(0,7);
+  fetch(`${API}/gst-calendar/bulk-generate?period=${month}`, {method:'POST',headers})
+    .then(r=>r.json())
+    .then(d=>{ alert(`✅ Generated ${d.deadlines?.length} deadlines for ${month}`); loadCalendar(); })
+    .catch(()=>{ alert("API not connected yet — deadlines shown above are standard GST dates"); });
+}
+
+// ── REMINDERS ─────────────────────────────────────────────────────────────────
+async function sendReminder() {
+  const btn = event.currentTarget;
+  btn.innerHTML='<span class="spin"></span> Sending...';
+  const data = {
+    client_id: "demo-client",
+    client_name: document.getElementById('rem-client').value,
+    client_email: document.getElementById('rem-email').value,
+    client_phone: document.getElementById('rem-phone').value,
+    reminder_type: document.getElementById('rem-type').value,
+    channel: document.getElementById('rem-channel').value,
+    due_date: document.getElementById('rem-due').value
+  };
+  try {
+    const r = await fetch(`${API}/reminders/send`, {method:'POST',headers,body:JSON.stringify(data)});
+    const d = await r.json();
+    document.getElementById('rem-result').innerHTML = `<div style="background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2);border-radius:8px;padding:10px;font-size:12px;color:#86EFAC;margin-top:8px">✅ Reminder sent! Email: ${d.results?.email||'—'}, WhatsApp: ${d.results?.whatsapp||'—'}</div>`;
+  } catch(e) {
+    document.getElementById('rem-result').innerHTML = `<div style="background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:8px;padding:10px;font-size:12px;color:#FCD34D;margin-top:8px">⚠️ API not connected yet. Setup SMTP in Railway env vars to enable email sending.</div>`;
+  }
+  btn.innerHTML='📨 Send Reminder';
+}
+
+async function sendBulkReminder() {
+  alert("Bulk reminder will send to all clients with contact details. Setup SMTP and WhatsApp API keys in Railway first.");
+}
+
+// ── CLIENT PORTAL ─────────────────────────────────────────────────────────────
+async function inviteClient() {
+  const data = {
+    client_id: document.getElementById('portal-client-id').value || 'demo-client',
+    client_name: document.getElementById('portal-name').value,
+    email: document.getElementById('portal-email').value,
+    gstin: document.getElementById('portal-gstin').value
+  };
+  try {
+    const r = await fetch(`${API}/client-portal/invite`, {method:'POST',headers,body:JSON.stringify(data)});
+    const d = await r.json();
+    document.getElementById('portal-result').innerHTML = `<div style="background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2);border-radius:9px;padding:14px;margin-top:10px"><div style="font-weight:700;color:#86EFAC;margin-bottom:8px">✅ Portal access created!</div><div style="font-size:12px;color:var(--t2)">Email: ${d.email}<br/>Temp Password: <strong style="color:var(--txt);font-family:var(--mono)">${d.temp_password}</strong><br/>Portal URL: ${d.portal_url}</div></div>`;
+  } catch(e) {
+    document.getElementById('portal-result').innerHTML = `<div style="background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:9px;padding:14px;margin-top:10px;font-size:12px;color:#FCD34D">⚠️ Deploy backend first. Run: git push from your terminal.</div>`;
+  }
+}
+
+// ── ATTENDANCE ────────────────────────────────────────────────────────────────
+async function markAttendance() {
+  const data = {
+    staff_id: "staff-001",
+    staff_name: document.getElementById('att-name').value,
+    date: document.getElementById('att-date').value,
+    status: document.getElementById('att-status').value,
+    check_in: document.getElementById('att-in').value || null,
+    check_out: document.getElementById('att-out').value || null
+  };
+  try {
+    const r = await fetch(`${API}/attendance/mark`, {method:'POST',headers,body:JSON.stringify(data)});
+    const d = await r.json();
+    document.getElementById('att-result').innerHTML = `<div style="background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2);border-radius:8px;padding:10px;font-size:12px;color:#86EFAC;margin-top:8px">✅ ${d.message} · Hours: ${d.hours_worked?.toFixed(1)||0}</div>`;
+  } catch(e) {
+    document.getElementById('att-result').innerHTML = `<div style="background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:8px;padding:10px;font-size:12px;color:#FCD34D;margin-top:8px">⚠️ API not connected yet</div>`;
+  }
+}
+
+async function generatePayroll() {
+  alert("Payroll will be generated based on attendance records. Feature fully functional once attendance data is collected.");
+}
+
+// ── ANALYTICS ─────────────────────────────────────────────────────────────────
+async function loadAnalytics() {
+  try {
+    const r = await fetch(`${API}/analytics/dashboard`, {headers});
+    const d = await r.json();
+    document.getElementById('a-clients').textContent = d.client_metrics?.total_clients || 0;
+    document.getElementById('a-filings').textContent = d.compliance_metrics?.filings_completed || 0;
+    document.getElementById('a-itc').textContent = '₹' + (d.reconciliation_metrics?.total_itc_recovered || 0).toLocaleString('en-IN');
+    document.getElementById('a-recon').textContent = d.reconciliation_metrics?.total_runs || 0;
+  } catch(e) {
+    // Show demo data
+    document.getElementById('a-clients').textContent = '—';
+    document.getElementById('a-filings').textContent = '—';
+    document.getElementById('a-itc').textContent = '—';
+    document.getElementById('a-recon').textContent = '—';
+  }
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+if (!token) window.location.href = '/login.html';
+
+// Load calendar on dashboard
+loadCalendar();
+
+// Set today's date on attendance
+document.getElementById('att-date').valueAsDate = new Date();
+document.getElementById('rem-due').valueAsDate = new Date(Date.now() + 7*24*60*60*1000);
+const now = new Date();
+document.getElementById('pay-month').value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+</script>
+</body>
+</html>
