@@ -4,6 +4,8 @@ import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from database import create_tables
+
 from auth import auth_router
 from integrations import tally_router, zoho_router
 from gsp.router import gsp_router
@@ -37,6 +39,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+@app.on_event("startup")
+async def startup_create_tables():
+    try:
+        await create_tables()
+        logger.info("Database tables created successfully.")
+    except Exception as e:
+        logger.exception(f"Database startup failed: {e}")
+
+
 @app.get("/")
 async def root():
     return {
@@ -45,12 +57,14 @@ async def root():
         "version": "2.1.0"
     }
 
+
 @app.get("/health")
 async def health():
     return {
         "status": "healthy",
         "service": "gstagent-backend"
     }
+
 
 @app.get("/modules")
 async def modules():
@@ -67,6 +81,7 @@ async def modules():
         ]
     }
 
+
 app.include_router(auth_router)
 app.include_router(tally_router)
 app.include_router(zoho_router)
@@ -76,7 +91,15 @@ app.include_router(crm_router)
 app.include_router(compliance_router)
 app.include_router(billing_router)
 
+
 if __name__ == "__main__":
     import uvicorn
+
     port = int(os.environ.get("PORT", 8000))
-    uvicorn.run("main_v2:app", host="0.0.0.0", port=port, reload=True)
+
+    uvicorn.run(
+        "main_v2:app",
+        host="0.0.0.0",
+        port=port,
+        reload=True
+    )
