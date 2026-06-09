@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Document Vault - GSTAgent</title>
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100">
+<div class="min-h-screen p-6">
+<div class="max-w-7xl mx-auto">
+
+<div class="flex justify-between items-center mb-6">
+<h1 class="text-3xl font-bold text-gray-800">Document Vault</h1>
+<div class="flex gap-4">
+<a href="/clients" class="text-green-600 font-semibold">Client CRM</a>
+<a href="/billing" class="text-purple-600 font-semibold">Billing</a>
+<a href="/compliance" class="text-orange-600 font-semibold">Compliance</a>
+<a href="/app" class="text-blue-600 font-semibold">Dashboard</a>
+</div>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+<div class="bg-white p-5 rounded-xl shadow">
+<p class="text-gray-500">Total Documents</p>
+<h2 id="total_documents" class="text-3xl font-bold">0</h2>
+</div>
+
+<div class="bg-white p-5 rounded-xl shadow">
+<p class="text-gray-500">GST Documents</p>
+<h2 id="gst_documents" class="text-3xl font-bold text-blue-600">0</h2>
+</div>
+
+<div class="bg-white p-5 rounded-xl shadow">
+<p class="text-gray-500">ITR Documents</p>
+<h2 id="itr_documents" class="text-3xl font-bold text-green-600">0</h2>
+</div>
+
+<div class="bg-white p-5 rounded-xl shadow">
+<p class="text-gray-500">Notice Documents</p>
+<h2 id="notice_documents" class="text-3xl font-bold text-red-600">0</h2>
+</div>
+</div>
+
+<div class="bg-white p-6 rounded-xl shadow mb-6">
+<h2 class="text-xl font-bold mb-4">Add Document</h2>
+
+<form id="documentForm" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+<select id="clientSelect" class="border p-3 rounded">
+<option value="">Select CRM Client</option>
+</select>
+
+<input id="client_name" name="client_name" class="border p-3 rounded" placeholder="Client Name">
+<input id="client_id" name="client_id" class="border p-3 rounded" placeholder="Client ID" readonly>
+
+<select id="category" name="category" class="border p-3 rounded">
+<option value="general">General</option>
+<option value="gst">GST</option>
+<option value="itr">ITR</option>
+<option value="tds">TDS</option>
+<option value="notice">Notice</option>
+<option value="audit">Audit</option>
+<option value="bank">Bank</option>
+</select>
+
+<select id="document_type" name="document_type" class="border p-3 rounded">
+<option value="other">Other</option>
+<option value="gst_certificate">GST Certificate</option>
+<option value="pan_card">PAN Card</option>
+<option value="aadhaar">Aadhaar</option>
+<option value="cancelled_cheque">Cancelled Cheque</option>
+<option value="gstr1">GSTR-1</option>
+<option value="gstr3b">GSTR-3B</option>
+<option value="itr_ack">ITR Acknowledgement</option>
+<option value="notice">Notice</option>
+<option value="reply">Reply</option>
+<option value="balance_sheet">Balance Sheet</option>
+<option value="bank_statement">Bank Statement</option>
+</select>
+
+<input id="file_name" name="file_name" class="border p-3 rounded" placeholder="File Name" required>
+<input id="file_url" name="file_url" class="border p-3 rounded md:col-span-2" placeholder="File URL / Google Drive Link / Storage Link">
+
+<input id="file_size" name="file_size" class="border p-3 rounded" placeholder="File Size e.g. 2 MB">
+<input id="mime_type" name="mime_type" class="border p-3 rounded" placeholder="File Type e.g. application/pdf">
+
+<input id="remarks" name="remarks" class="border p-3 rounded md:col-span-2" placeholder="Remarks">
+
+<button type="submit" class="bg-blue-600 text-white p-3 rounded font-semibold hover:bg-blue-700">
+Save Document
+</button>
+
+</form>
+</div>
+
+<div class="bg-white p-6 rounded-xl shadow mb-6">
+<div class="flex flex-col md:flex-row justify-between gap-3 mb-4">
+<h2 class="text-xl font-bold">Search Documents</h2>
+<button onclick="refreshAll()" class="bg-gray-800 text-white px-4 py-2 rounded font-semibold">Refresh</button>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+<input id="searchInput" class="border p-3 rounded md:col-span-3" placeholder="Search client, file name, type, category, remarks">
+<button onclick="searchDocuments()" class="bg-indigo-600 text-white px-4 py-2 rounded font-semibold">
+Search
+</button>
+</div>
+</div>
+
+<div class="bg-white p-6 rounded-xl shadow">
+<h2 class="text-xl font-bold mb-4">Document List</h2>
+
+<div class="overflow-x-auto">
+<table class="w-full border-collapse">
+<thead>
+<tr class="bg-gray-200 text-left">
+<th class="p-3">Client</th>
+<th class="p-3">Category</th>
+<th class="p-3">Type</th>
+<th class="p-3">File</th>
+<th class="p-3">Size</th>
+<th class="p-3">Uploaded</th>
+<th class="p-3">Remarks</th>
+<th class="p-3">Actions</th>
+</tr>
+</thead>
+<tbody id="documentRows">
+<tr>
+<td colspan="8" class="p-4 text-center text-gray-500">No documents yet</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+</div>
+</div>
+
+<script>
+const API_BASE = "https://gstagent-production.up.railway.app";
+
+function getToken(){
+return localStorage.getItem("gstagent_token") || localStorage.getItem("access_token") || localStorage.getItem("token") || "";
+}
+
+function headers(){
+return {
+"Content-Type":"application/json",
+"Authorization":"Bearer " + getToken()
+};
+}
+
+function badge(text, type){
+let color = "bg-gray-200 text-gray-700";
+if(type === "gst") color = "bg-blue-100 text-blue-700";
+if(type === "itr") color = "bg-green-100 text-green-700";
+if(type === "notice") color = "bg-red-100 text-red-700";
+if(type === "tds") color = "bg-purple-100 text-purple-700";
+if(type === "audit") color = "bg-yellow-100 text-yellow-700";
+return `<span class="px-3 py-1 rounded-full text-xs font-semibold ${color}">${text || "-"}</span>`;
+}
+
+async function loadCRMClients(){
+try{
+const res = await fetch(`${API_BASE}/crm/clients`, {headers: headers()});
+if(!res.ok) return;
+
+const data = await res.json();
+const clients = data.clients || [];
+const select = document.getElementById("clientSelect");
+
+select.innerHTML = `<option value="">Select CRM Client</option>`;
+
+clients.forEach(c=>{
+const opt = document.createElement("option");
+opt.value = JSON.stringify({
+id: c.id || "",
+client_name: c.client_name || ""
+});
+opt.textContent = c.client_name || "Unnamed Client";
+select.appendChild(opt);
+});
+}catch(e){
+console.error("CRM clients load failed", e);
+}
+}
+
+document.getElementById("clientSelect").addEventListener("change", function(){
+if(!this.value) return;
+const c = JSON.parse(this.value);
+document.getElementById("client_id").value = c.id || "";
+document.getElementById("client_name").value = c.client_name || "";
+});
+
+function renderDocuments(documents){
+const rows = document.getElementById("documentRows");
+
+if(!documents || documents.length === 0){
+rows.innerHTML = `<tr><td colspan="8" class="p-4 text-center text-gray-500">No documents found</td></tr>`;
+return;
+}
+
+rows.innerHTML = documents.map(d=>`
+<tr class="border-b hover:bg-gray-50">
+<td class="p-3">${d.client_name || "-"}</td>
+<td class="p-3">${badge(d.category, d.category)}</td>
+<td class="p-3">${d.document_type || "-"}</td>
+<td class="p-3 font-semibold">
+${d.file_url ? `<a href="${d.file_url}" target="_blank" class="text-blue-600 hover:underline">${d.file_name || "Open File"}</a>` : (d.file_name || "-")}
+</td>
+<td class="p-3">${d.file_size || "-"}</td>
+<td class="p-3">${d.uploaded_at ? String(d.uploaded_at).slice(0,10) : "-"}</td>
+<td class="p-3">${d.remarks || "-"}</td>
+<td class="p-3">
+<div class="flex gap-2">
+${d.file_url ? `<button onclick="window.open('${d.file_url}','_blank')" class="bg-blue-600 text-white px-3 py-1 rounded text-sm">Open</button>` : ""}
+<button onclick="deleteDocument('${d.id}')" class="bg-red-600 text-white px-3 py-1 rounded text-sm">Delete</button>
+</div>
+</td>
+</tr>
+`).join("");
+}
+
+async function loadDashboard(){
+try{
+const res = await fetch(`${API_BASE}/documents/dashboard`, {headers: headers()});
+if(!res.ok) return;
+
+const data = await res.json();
+
+document.getElementById("total_documents").innerText = data.total_documents || 0;
+document.getElementById("gst_documents").innerText = data.gst_documents || 0;
+document.getElementById("itr_documents").innerText = data.itr_documents || 0;
+document.getElementById("notice_documents").innerText = data.notice_documents || 0;
+}catch(e){
+console.error("Dashboard load failed", e);
+}
+}
+
+async function loadDocuments(){
+try{
+const res = await fetch(`${API_BASE}/documents/list`, {headers: headers()});
+if(!res.ok) return;
+
+const data = await res.json();
+renderDocuments(data.documents || []);
+}catch(e){
+console.error("Documents load failed", e);
+}
+}
+
+async function searchDocuments(){
+const q = document.getElementById("searchInput").value.trim();
+
+if(!q){
+await loadDocuments();
+return;
+}
+
+const res = await fetch(`${API_BASE}/documents/search?q=${encodeURIComponent(q)}`, {headers: headers()});
+if(!res.ok){
+alert("Search failed");
+return;
+}
+
+const data = await res.json();
+renderDocuments(data.documents || []);
+}
+
+document.getElementById("documentForm").addEventListener("submit", async function(e){
+e.preventDefault();
+
+if(!getToken()){
+alert("Please login again");
+window.location.href = "/login";
+return;
+}
+
+const formData = new FormData(e.target);
+const payload = Object.fromEntries(formData.entries());
+
+for(const key in payload){
+if(payload[key] === "") payload[key] = null;
+}
+
+const res = await fetch(`${API_BASE}/documents/create`, {
+method: "POST",
+headers: headers(),
+body: JSON.stringify(payload)
+});
+
+if(res.ok){
+alert("Document saved successfully");
+e.target.reset();
+await refreshAll();
+}else{
+alert("Document failed: " + await res.text());
+}
+});
+
+async function deleteDocument(id){
+if(!confirm("Delete this document?")) return;
+
+const res = await fetch(`${API_BASE}/documents/delete/${id}`, {
+method: "DELETE",
+headers: headers()
+});
+
+if(res.ok){
+alert("Document deleted");
+await refreshAll();
+}else{
+alert("Delete failed: " + await res.text());
+}
+}
+
+async function refreshAll(){
+await loadCRMClients();
+await loadDashboard();
+await loadDocuments();
+}
+
+document.getElementById("searchInput").addEventListener("keydown", function(e){
+if(e.key === "Enter"){
+e.preventDefault();
+searchDocuments();
+}
+});
+
+refreshAll();
+</script>
+
+</body>
+</html>
