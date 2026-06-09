@@ -1,6 +1,6 @@
 import os
 import logging
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 # Import existing routers
@@ -21,7 +21,7 @@ app = FastAPI(
     version="2.0.0"
 )
 
-# Explicitly defining precise origins to allow credentials securely without wildcard conflicts
+# Standard permissive setup for cross-routing safety
 origins = [
     "http://localhost:3000",
     "http://localhost:5500",
@@ -30,26 +30,6 @@ origins = [
     "https://www.gstagent.co.in",
 ]
 
-# 1. Direct Preflight Catching Middleware (Intercepts OPTIONS requests instantly)
-@app.middleware("http")
-async def catch_preflight_options(request: Request, call_next):
-    if request.method == "OPTIONS":
-        response = Response()
-        origin = request.headers.get("Origin")
-        if origin in origins:
-            response.headers["Access-Control-Allow-Origin"] = origin
-        else:
-            response.headers["Access-Control-Allow-Origin"] = "https://gstagent.co.in"
-        
-        response.headers["Access-Control-Allow-Credentials"] = "true"
-        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
-        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Requested-With"
-        response.headers["Access-Control-Max-Age"] = "86400"
-        return response
-        
-    return await call_next(request)
-
-# 2. Standard FastAPI CORS Fallback
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,

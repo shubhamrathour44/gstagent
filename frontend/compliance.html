@@ -15,7 +15,7 @@
                 <i class="fa-solid fa-shield-halved text-blue-400"></i> GSTAgent
             </div>
             <nav class="flex-1 p-4 space-y-2">
-                <a href="/dashboard" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-400 hover:bg-slate-800 hover:text-white transition">
+                <a href="/app" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-400 hover:bg-slate-800 hover:text-white transition">
                     <i class="fa-solid fa-chart-pie w-5"></i> Dashboard
                 </a>
                 <a href="/clients" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-400 hover:bg-slate-800 hover:text-white transition">
@@ -98,7 +98,7 @@
     </div>
 
     <div id="modal-backdrop" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-lg rounded-xl shadow-xl overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-150">
+        <div class="bg-white w-full max-w-lg rounded-xl shadow-xl overflow-hidden flex flex-col">
             <header class="p-5 border-b border-gray-200 flex items-center justify-between bg-gray-50">
                 <h3 class="font-bold text-gray-800 text-lg">New Compliance Metric Record</h3>
                 <button type="button" onclick="toggleModal(false)" class="text-gray-400 hover:text-gray-600 text-xl"><i class="fa-solid fa-xmark"></i></button>
@@ -106,36 +106,36 @@
             <form id="compliance-form" class="p-6 space-y-4 overflow-y-auto max-h-[75vh]">
                 <div>
                     <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Client Name *</label>
-                    <input type="text" name="client_name" required class="w-full border border-gray-300 px-3 py-2 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                    <input type="text" name="client_name" required class="w-full border border-gray-300 px-3 py-2 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none text-slate-900">
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-bold text-gray-600 uppercase mb-1">GSTIN</label>
-                        <input type="text" name="gstin" class="w-full border border-gray-300 px-3 py-2 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                        <input type="text" name="gstin" class="w-full border border-gray-300 px-3 py-2 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none text-slate-900" maxlength="15">
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-600 uppercase mb-1">PAN</label>
-                        <input type="text" name="pan" class="w-full border border-gray-300 px-3 py-2 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                        <input type="text" name="pan" class="w-full border border-gray-300 px-3 py-2 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none text-slate-900" maxlength="10">
                     </div>
                 </div>
                 <div class="grid grid-cols-3 gap-2">
                     <div>
                         <label class="block text-xs font-bold text-gray-600 uppercase mb-1">GST Status</label>
-                        <select name="gst_status" class="w-full border border-gray-300 p-2 rounded-md bg-white">
+                        <select name="gst_status" class="w-full border border-gray-300 p-2 rounded-md bg-white text-slate-900">
                             <option value="pending">Pending</option>
                             <option value="filed">Filed</option>
                         </select>
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-600 uppercase mb-1">ITR Status</label>
-                        <select name="itr_status" class="w-full border border-gray-300 p-2 rounded-md bg-white">
+                        <select name="itr_status" class="w-full border border-gray-300 p-2 rounded-md bg-white text-slate-900">
                             <option value="pending">Pending</option>
                             <option value="filed">Filed</option>
                         </select>
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-600 uppercase mb-1">TDS Status</label>
-                        <select name="tds_status" class="w-full border border-gray-300 p-2 rounded-md bg-white">
+                        <select name="tds_status" class="w-full border border-gray-300 p-2 rounded-md bg-white text-slate-900">
                             <option value="pending">Pending</option>
                             <option value="filed">Filed</option>
                         </select>
@@ -143,7 +143,7 @@
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Notice Status</label>
-                    <select name="notice_status" class="w-full border border-gray-300 p-2 rounded-md bg-white">
+                    <select name="notice_status" class="w-full border border-gray-300 p-2 rounded-md bg-white text-slate-900">
                         <option value="none">None</option>
                         <option value="pending">Pending Action</option>
                         <option value="open">Open Dispute</option>
@@ -152,11 +152,11 @@
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Assigned Staff</label>
-                        <input type="text" name="assigned_staff" class="w-full border border-gray-300 px-3 py-2 rounded-md">
+                        <input type="text" name="assigned_staff" class="w-full border border-gray-300 px-3 py-2 rounded-md text-slate-900">
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Remarks</label>
-                        <input type="text" name="remarks" class="w-full border border-gray-300 px-3 py-2 rounded-md">
+                        <input type="text" name="remarks" class="w-full border border-gray-300 px-3 py-2 rounded-md text-slate-900">
                     </div>
                 </div>
                 <footer class="pt-4 border-t border-gray-100 flex justify-end gap-3">
@@ -168,14 +168,17 @@
     </div>
 
     <script>
-        // Change this line near the top of your <script> tag:
-const API_BASE_URL = window.location.origin + "/api";
+        const API_BASE_URL = "https://gstagent-production.up.railway.app";
         
+        // Exact token resolution mechanism mirrored from working clients.html
+        function token() {
+            return localStorage.getItem('gstagent_token') || localStorage.getItem('token') || localStorage.getItem('access_token') || '';
+        }
+
         const getAuthHeaders = () => {
-            const token = localStorage.getItem("token") || "mock-valid-session-token"; 
             return {
                 "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`
+                "Authorization": "Bearer " + token()
             };
         };
 
@@ -184,9 +187,9 @@ const API_BASE_URL = window.location.origin + "/api";
         }
 
         async function fetchDashboardMetrics() {
-            console.log("Fetching metrics from backend...");
+            console.log("Synchronizing compliance view lists...");
             try {
-                // Fetch Core Dashboard Summary Numbers
+                // Fetch Core Dashboard Metrics summary values
                 const dashRes = await fetch(`${API_BASE_URL}/compliance/dashboard`, { headers: getAuthHeaders() });
                 if (dashRes.ok) {
                     const data = await dashRes.json();
@@ -197,7 +200,7 @@ const API_BASE_URL = window.location.origin + "/api";
                     document.getElementById('stat-notices').innerText = data.open_notices || 0;
                 }
 
-                // Fetch Full Grid Records
+                // Fetch data table rows grid
                 const listRes = await fetch(`${API_BASE_URL}/compliance/list`, { headers: getAuthHeaders() });
                 if (listRes.ok) {
                     const listData = await listRes.json();
@@ -211,7 +214,7 @@ const API_BASE_URL = window.location.origin + "/api";
 
                     listData.records.forEach(row => {
                         const tr = document.createElement('tr');
-                        tr.className = "hover:bg-gray-50/80 transition-colors";
+                        tr.className = "hover:bg-gray-50/80 transition-colors border-b border-gray-200";
                         tr.innerHTML = `
                             <td class="p-4 font-semibold text-gray-900">${row.client_name}</td>
                             <td class="p-4"><span class="px-2.5 py-1 text-xs font-semibold rounded-full ${row.gst_status === 'filed' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}">${row.gst_status.toUpperCase()}</span></td>
@@ -225,25 +228,23 @@ const API_BASE_URL = window.location.origin + "/api";
                     });
                 }
             } catch (err) {
-                console.error("Data synchronization error:", err);
+                console.error("Layout data render connection failed:", err);
             }
         }
 
-        // Properly register submit event listener to prevent structural failures
+        // Form interception management
         document.getElementById('compliance-form').addEventListener('submit', async function(event) {
             event.preventDefault();
-            console.log("Submitting form data...");
-
+            
             const formData = new FormData(this);
             const rawPayload = Object.fromEntries(formData.entries());
 
-            // Convert blank text elements to explicit null primitives for Pydantic stability
+            // Convert blank text elements to explicit null primitives for backend payload matching
             const cleanedPayload = {};
             for (const [key, value] of Object.entries(rawPayload)) {
                 cleanedPayload[key] = (value && value.trim() === "") ? null : value;
             }
             
-            // Map explicit dates as null since they are omitted inside basic dashboard setup
             cleanedPayload["gst_due_date"] = null;
             cleanedPayload["itr_due_date"] = null;
             cleanedPayload["tds_due_date"] = null;
@@ -256,21 +257,18 @@ const API_BASE_URL = window.location.origin + "/api";
                 });
 
                 if (response.ok) {
-                    console.log("Record successfully added!");
                     this.reset();
                     toggleModal(false);
-                    await fetchDashboardMetrics(); // Instantly update view lists
+                    await fetchDashboardMetrics(); // Trigger live data pull refresh
                 } else {
                     const errPayload = await response.json();
-                    console.error("Server validation response context:", errPayload);
-                    alert("Submission rejected by server. Check Developer Console logs.");
+                    alert("Submission rejected: " + JSON.stringify(errPayload));
                 }
             } catch (error) {
-                console.error("Network request transmission dropped:", error);
+                console.error("Network request failed:", error);
             }
         });
 
-        // Safe explicit initial layout loading
         window.onload = function() {
             fetchDashboardMetrics();
         };
