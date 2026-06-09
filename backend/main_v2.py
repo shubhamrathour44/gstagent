@@ -34,7 +34,7 @@ origins = [
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],  # Temporarily allow all origins to bypass preflight bugs completely
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
