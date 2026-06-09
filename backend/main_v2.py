@@ -14,6 +14,7 @@ from crm.router import crm_router
 from compliance.router import compliance_router
 from billing import router as billing_router
 from documents.router import router as documents_router
+from notices.router import router as notices_routerfrom notices.router import router as notices_router
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("gstagent-backend")
@@ -78,8 +79,9 @@ async def modules():
             "gsp",
             "compliance",
             "documents",
-            "tally",
-            "zoho"
+	    "notices",
+	    "tally",
+	    "zoho"
         ]
     }
 
@@ -93,6 +95,7 @@ app.include_router(crm_router)
 app.include_router(compliance_router)
 app.include_router(billing_router)
 app.include_router(documents_router)
+app.include_router(notices_router)
 
 
 if __name__ == "__main__":
