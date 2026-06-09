@@ -21,67 +21,72 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("gstagent-backend")
 
 app = FastAPI(
-title="GSTAgent API",
-description="Backend API engine for GSTAgent CA Practice Management Platform",
-version="2.1.0"
+    title="GSTAgent API",
+    description="Backend API engine for GSTAgent CA Practice Management Platform",
+    version="2.1.0"
 )
 
 origins = [
-"http://localhost:3000",
-"http://localhost:5500",
-"http://127.0.0.1:5500",
-"https://gstagent.co.in",
-"https://www.gstagent.co.in",
+    "http://localhost:3000",
+    "http://localhost:5500",
+    "http://127.0.0.1:5500",
+    "https://gstagent.co.in",
+    "https://www.gstagent.co.in",
 ]
 
 app.add_middleware(
-CORSMiddleware,
-allow_origins=origins,
-allow_credentials=True,
-allow_methods=["*"],
-allow_headers=["*"],
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
+
 
 @app.on_event("startup")
 async def startup_create_tables():
-try:
-await create_tables()
-logger.info("Database tables created successfully.")
-except Exception as e:
-logger.exception(f"Database startup failed: {e}")
+    try:
+        await create_tables()
+        logger.info("Database tables created successfully.")
+    except Exception as e:
+        logger.exception(f"Database startup failed: {e}")
+
 
 @app.get("/")
 async def root():
-return {
-"message": "Welcome to GSTAgent Core API Engine",
-"status": "healthy",
-"version": "2.1.0"
-}
+    return {
+        "message": "Welcome to GSTAgent Core API Engine",
+        "status": "healthy",
+        "version": "2.1.0"
+    }
+
 
 @app.get("/health")
 async def health():
-return {
-"status": "healthy",
-"service": "gstagent-backend"
-}
+    return {
+        "status": "healthy",
+        "service": "gstagent-backend"
+    }
+
 
 @app.get("/modules")
 async def modules():
-return {
-"modules": [
-"auth",
-"billing",
-"crm",
-"tax",
-"gsp",
-"compliance",
-"documents",
-"notices",
-"tasks",
-"tally",
-"zoho"
-]
-}
+    return {
+        "modules": [
+            "auth",
+            "billing",
+            "crm",
+            "tax",
+            "gsp",
+            "compliance",
+            "documents",
+            "notices",
+            "tasks",
+            "tally",
+            "zoho"
+        ]
+    }
+
 
 app.include_router(auth_router)
 app.include_router(tally_router)
@@ -95,16 +100,15 @@ app.include_router(documents_router)
 app.include_router(notices_router)
 app.include_router(tasks_router)
 
-if **name** == "**main**":
-import uvicorn
 
-```
-port = int(os.environ.get("PORT", 8000))
+if __name__ == "__main__":
+    import uvicorn
 
-uvicorn.run(
-    "main_v2:app",
-    host="0.0.0.0",
-    port=port,
-    reload=True
-)
-```
+    port = int(os.environ.get("PORT", 8000))
+
+    uvicorn.run(
+        "main_v2:app",
+        host="0.0.0.0",
+        port=port,
+        reload=True
+    )
