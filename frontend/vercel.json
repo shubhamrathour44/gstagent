@@ -1,12 +1,7 @@
 {
   "cleanUrls": true,
-  "trailingSlash": false,
-  "rewrites": [
-    { "source": "/", "destination": "/index.html" },
-    { "source": "/login", "destination": "/login.html" },
-    { "source": "/signup", "destination": "/signup.html" },
-    { "source": "/app", "destination": "/app.html" },
-    { "source": "/tax", "destination": "/tax.html" },
-    { "source": "/clients", "destination": "/clients.html" }
+  "routes": [
+    { "source": "/(.*)", "headers": { "Access-Control-Allow-Origin": "*" } },
+    { "source": "/compliance", "destination": "/compliance.html" }
   ]
 }
