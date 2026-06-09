@@ -33,6 +33,8 @@ origins = [
     "http://127.0.0.1:5500",
     "https://gstagent.co.in",
     "https://www.gstagent.co.in",
+    "https://gstagent.vercel.app",
+    "https://www.gstagent.vercel.app",
 ]
 
 app.add_middleware(
