@@ -7,7 +7,7 @@ from io import BytesIO
 import psycopg2
 from psycopg2.extras import RealDictCursor
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
@@ -89,7 +89,11 @@ def generate_invoice_number():
 
     conn = get_db()
     cur = conn.cursor()
-    cur.execute("SELECT COUNT(*) AS count FROM invoices")
+    cur.execute("""
+        SELECT COUNT(*) AS count
+        FROM invoices
+        WHERE EXTRACT(YEAR FROM created_at) = %s
+    """, (year,))
     count = cur.fetchone()["count"] + 1
     cur.close()
     conn.close()
@@ -102,7 +106,15 @@ async def billing_status():
     return {
         "status": "ok",
         "module": "billing_invoice_management",
-        "storage": "postgresql"
+        "storage": "postgresql",
+        "features": [
+            "invoice_creation",
+            "invoice_search",
+            "fee_collection_tracking",
+            "mark_paid",
+            "outstanding_tracking",
+            "pdf_invoice_download"
+        ]
     }
 
 
@@ -145,21 +157,70 @@ async def create_invoice(payload: InvoiceCreate):
 
 
 @router.get("/list")
-async def list_invoices():
+async def list_invoices(
+    from_date: Optional[str] = Query(default=None, alias="from"),
+    to_date: Optional[str] = Query(default=None, alias="to")
+):
     conn = get_db()
     cur = conn.cursor()
 
-    cur.execute("""
-        SELECT *
-        FROM invoices
-        ORDER BY created_at DESC
-    """)
+    if from_date and to_date:
+        cur.execute("""
+            SELECT *
+            FROM invoices
+            WHERE created_at::date BETWEEN %s AND %s
+            ORDER BY created_at DESC
+        """, (from_date, to_date))
+    else:
+        cur.execute("""
+            SELECT *
+            FROM invoices
+            ORDER BY created_at DESC
+        """)
 
     invoices = cur.fetchall()
     cur.close()
     conn.close()
 
     return {"invoices": invoices, "count": len(invoices)}
+
+
+@router.get("/search")
+async def search_invoices(q: str = ""):
+    conn = get_db()
+    cur = conn.cursor()
+
+    search_term = f"%{q}%"
+
+    cur.execute("""
+        SELECT *
+        FROM invoices
+        WHERE
+            invoice_number ILIKE %s
+            OR client_name ILIKE %s
+            OR service_name ILIKE %s
+            OR status ILIKE %s
+            OR payment_mode ILIKE %s
+            OR payment_reference ILIKE %s
+        ORDER BY created_at DESC
+    """, (
+        search_term,
+        search_term,
+        search_term,
+        search_term,
+        search_term,
+        search_term
+    ))
+
+    invoices = cur.fetchall()
+    cur.close()
+    conn.close()
+
+    return {
+        "query": q,
+        "count": len(invoices),
+        "invoices": invoices
+    }
 
 
 @router.get("/dashboard")
