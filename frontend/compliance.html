@@ -225,32 +225,34 @@
             }
         }
 
-        async function handleFormSubmit(event) {
-            event.preventDefault();
-            const formData = new FormData(event.target);
-            const payload = Object.fromEntries(formData.entries());
+       async function handleFormSubmit(event) {
+    event.preventDefault();
+    const formData = new FormData(event.target);
+    const rawPayload = Object.fromEntries(formData.entries());
 
-            try {
-                const response = await fetch(`${API_BASE_URL}/compliance/create`, {
-                    method: 'POST',
-                    headers: getAuthHeaders(),
-                    body: JSON.stringify(payload)
-                });
+    // Clean payload: Convert empty strings to null so FastAPI validation doesn't choke
+    const cleanedPayload = {};
+    for (const [key, value] of Object.entries(rawPayload)) {
+        cleanedPayload[key] = value.trim() === "" ? null : value;
+    }
 
-                if (response.ok) {
-                    event.target.reset();
-                    toggleModal(false);
-                    fetchDashboardMetrics();
-                } else {
-                    alert("Failed to submit the compliance entry schema parameters.");
-                }
-            } catch (error) {
-                console.error("Transmission error:", error);
-            }
+    try {
+        const response = await fetch(`${API_BASE_URL}/compliance/create`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify(cleanedPayload)
+        });
+
+        if (response.ok) {
+            event.target.reset();
+            toggleModal(false);
+            fetchDashboardMetrics(); // Refresh table and stats automatically
+        } else {
+            const errorData = await response.json();
+            console.error("Validation Details:", errorData);
+            alert("Failed to submit the compliance entry. Check console for validation errors.");
         }
-
-        // Run dashboard evaluation bootstrap metrics loop execution
-        window.addEventListener('DOMContentLoaded', fetchDashboardMetrics);
-    </script>
-</body>
-</html>
+    } catch (error) {
+        console.error("Transmission error:", error);
+    }
+}
