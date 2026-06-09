@@ -113,11 +113,6 @@ function headers() {
     "Authorization": "Bearer " + getToken()
   };
 }
-  return {
-    "Content-Type": "application/json",
-    "Authorization": "Bearer " + getToken()
-  };
-}
 
 function rupee(value) {
   return "₹" + Number(value || 0).toLocaleString("en-IN");
