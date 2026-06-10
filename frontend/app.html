@@ -509,7 +509,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--blue2)}
 
 <script>
 const API='https://TaxSphere-production.up.railway.app';
-const token=localStorage.getItem('TaxSphere_token');
+const token=localStorage.getItem('gstagent_token');
 if(!token)location.href='/login';
 const h=()=>({'Content-Type':'application/json','Authorization':'Bearer '+token});
 const $=id=>document.getElementById(id);
