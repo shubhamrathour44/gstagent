@@ -96,7 +96,7 @@ async def call_claude_vision(image_b64: str, media_type: str) -> dict:
                 "anthropic-version": "2023-06-01"
             },
             json={
-                "model": "claude-sonnet-4-20250514",
+                "model": "claude-sonnet-4-5",
                 "max_tokens": 2000,
                 "messages": [
                     {
