@@ -35,7 +35,7 @@ body{font-family:var(--f);background:var(--bg);color:var(--txt);min-height:100vh
 @keyframes spin{to{transform:rotate(360deg)}}
 
 /* ── SIDEBAR ── */
-.sidebar{
+.sidebar{height:100vh;
   width:var(--sw);min-height:100vh;background:var(--s1);
   border-right:1px solid var(--bd);
   display:flex;flex-direction:column;
@@ -156,7 +156,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--blue2)}
 
 /* ── MOBILE ── */
 @media(max-width:768px){
-  .sidebar{transform:translateX(-100%)}
+  .sidebar{height:100vh;transform:translateX(-100%)}
   .sidebar.open{transform:translateX(0)}
   .main{margin-left:0}
   .mob-btn{display:block}
