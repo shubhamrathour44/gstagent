@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Bill Reader — GSTAgent</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#07090F;--s1:#0D1117;--s2:#161B22;--bd:rgba(255,255,255,.07);--bd2:rgba(255,255,255,.12);--ind:#6366F1;--grn:#22C55E;--red:#EF4444;--amb:#F59E0B;--txt:#E2E8F0;--t2:#94A3B8;--t3:#475569;--sans:'DM Sans',sans-serif;--mono:'DM Mono',monospace;--serif:'Instrument Serif',serif}
+body{font-family:var(--sans);background:var(--bg);color:var(--txt);min-height:100vh}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+.topbar{background:#080D18;border-bottom:1px solid var(--bd);height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:sticky;top:0;z-index:50}
+.logo{display:flex;align-items:center;gap:9px;font-family:var(--serif);font-size:18px}
+.lm{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#6366F1,#8B5CF6);display:flex;align-items:center;justify-content:center;font-size:13px}
+
+.container{max-width:900px;margin:0 auto;padding:32px 24px}
+h1{font-family:var(--serif);font-size:28px;letter-spacing:-.02em;margin-bottom:6px}
+.sub{color:var(--t3);font-size:14px;margin-bottom:28px}
+
+.card{background:var(--s1);border:1px solid var(--bd);border-radius:14px;padding:24px;margin-bottom:16px}
+.card-title{font-size:14px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+
+/* Upload zone */
+.upload-zone{border:2px dashed rgba(99,102,241,.3);border-radius:12px;padding:40px 24px;text-align:center;cursor:pointer;transition:all .2s;position:relative;background:rgba(99,102,241,.03)}
+.upload-zone:hover,.upload-zone.drag{border-color:rgba(99,102,241,.6);background:rgba(99,102,241,.07)}
+.upload-zone.has-image{border-color:rgba(34,197,94,.4);background:rgba(34,197,94,.04)}
+.upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.upload-icon{font-size:40px;margin-bottom:12px}
+.upload-text{font-size:15px;font-weight:600;color:var(--txt);margin-bottom:6px}
+.upload-sub{font-size:12px;color:var(--t3)}
+.preview-img{max-width:100%;max-height:300px;border-radius:8px;margin-top:16px;display:none}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:7px;padding:10px 20px;border-radius:9px;font-size:14px;font-weight:600;cursor:pointer;border:none;font-family:var(--sans);transition:all .15s}
+.btn-primary{background:var(--ind);color:#fff}
+.btn-primary:hover{background:#5254CC;transform:translateY(-1px)}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn-ghost{background:rgba(255,255,255,.05);color:var(--t2);border:1px solid var(--bd2)}
+.btn-ghost:hover{background:rgba(255,255,255,.08);color:var(--txt)}
+.btn-success{background:rgba(34,197,94,.12);color:#86EFAC;border:1px solid rgba(34,197,94,.2)}
+
+/* Spinner */
+.spin{animation:spin .7s linear infinite;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;display:inline-block}
+
+/* Input */
+input,select{background:rgba(255,255,255,.04);border:1.5px solid var(--bd2);border-radius:9px;padding:10px 13px;color:var(--txt);font-size:13px;font-family:var(--sans);outline:none;transition:border-color .15s;width:100%}
+input:focus,select:focus{border-color:var(--ind)}
+input::placeholder{color:var(--t3)}
+label{display:block;font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px}
+
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
+
+/* Results */
+.result-card{background:var(--s2);border-radius:10px;padding:16px;margin-bottom:10px}
+.field-row{display:flex;justify-content:space-between;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--bd);font-size:13px}
+.field-row:last-child{border-bottom:none}
+.field-label{color:var(--t3);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;flex-shrink:0;margin-right:16px}
+.field-value{color:var(--txt);text-align:right;font-family:var(--mono);font-size:12px}
+.field-value.verify{color:#FCD34D}
+
+/* Confidence badges */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:5px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+.badge-high{background:rgba(34,197,94,.12);color:#86EFAC;border:1px solid rgba(34,197,94,.2)}
+.badge-medium{background:rgba(245,158,11,.12);color:#FCD34D;border:1px solid rgba(245,158,11,.2)}
+.badge-low{background:rgba(239,68,68,.12);color:#FCA5A5;border:1px solid rgba(239,68,68,.2)}
+
+/* Items table */
+table{width:100%;border-collapse:collapse;font-size:12px;margin-top:12px}
+th{padding:8px 10px;text-align:left;font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--bd);background:var(--s1)}
+td{padding:9px 10px;border-bottom:1px solid rgba(255,255,255,.03);color:var(--t2)}
+
+/* Flags */
+.flag-item{display:flex;align-items:center;gap:8px;padding:7px 10px;background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.15);border-radius:7px;font-size:12px;color:#FCD34D;margin-bottom:6px}
+
+/* Language badge */
+.lang-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.2);border-radius:6px;padding:3px 10px;font-size:11px;color:#A5B4FC;font-weight:600}
+
+/* Camera button for mobile */
+.camera-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:14px;background:rgba(99,102,241,.08);border:1.5px solid rgba(99,102,241,.25);border-radius:10px;color:#818CF8;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--sans);margin-bottom:12px;transition:all .15s}
+.camera-btn:hover{background:rgba(99,102,241,.14)}
+.camera-btn input{position:absolute;opacity:0;width:0;height:0}
+
+@media(max-width:600px){.grid-2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo"><div class="lm">⚡</div>GSTAgent</div>
+  <div style="display:flex;gap:8px">
+    <a href="/app" style="color:var(--t2);font-size:13px;text-decoration:none">← Dashboard</a>
+  </div>
+</div>
+
+<div class="container">
+  <h1>📷 Bill Reader</h1>
+  <p class="sub">Take a photo of any bill — handwritten or printed, Hindi or English — and GSTAgent reads it automatically.</p>
+
+  <!-- Supported languages banner -->
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px">
+    <span class="lang-badge">🇮🇳 Hindi (हिंदी)</span>
+    <span class="lang-badge">🔤 English</span>
+    <span class="lang-badge">🔀 Mixed Hindi-English</span>
+    <span class="lang-badge">✍️ Handwritten</span>
+    <span class="lang-badge">📱 WhatsApp Photos</span>
+    <span class="lang-badge">🖨️ Printed Bills</span>
+  </div>
+
+  <div class="grid-2">
+    <div>
+      <label>Client Name (optional)</label>
+      <input id="client-name" placeholder="Sharma Industries Pvt Ltd"/>
+    </div>
+    <div>
+      <label>Period (optional)</label>
+      <input id="period" placeholder="Jun 2025"/>
+    </div>
+  </div>
+
+  <!-- Mobile camera button -->
+  <label class="camera-btn" style="position:relative">
+    <input type="file" accept="image/*" capture="environment" id="camera-input" onchange="handleCamera(this)"/>
+    📷 Take Photo with Camera
+  </label>
+
+  <!-- Upload zone -->
+  <div class="upload-zone" id="upload-zone"
+    ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+    <input type="file" accept="image/*" id="file-input" onchange="handleFile(this)"/>
+    <div class="upload-icon" id="upload-icon">🧾</div>
+    <div class="upload-text" id="upload-text">Drop bill photo here or click to browse</div>
+    <div class="upload-sub" id="upload-sub">JPG, PNG, WEBP up to 10MB · Handwritten bills accepted</div>
+    <img id="preview-img" class="preview-img"/>
+  </div>
+
+  <div style="display:flex;gap:10px;margin-top:14px">
+    <button class="btn btn-primary" id="scan-btn" onclick="scanBill()" disabled>
+      🔍 Read Bill
+    </button>
+    <button class="btn btn-ghost" onclick="clearAll()">✕ Clear</button>
+    <button class="btn btn-ghost" onclick="document.getElementById('batch-section').style.display='block'">📦 Batch Mode</button>
+  </div>
+
+  <!-- Batch mode -->
+  <div id="batch-section" style="display:none;margin-top:16px">
+    <div class="card">
+      <div class="card-title">📦 Batch Bill Scanner — Up to 20 bills at once</div>
+      <input type="file" accept="image/*" multiple id="batch-input" onchange="handleBatch(this)" style="margin-bottom:12px"/>
+      <div id="batch-preview" style="font-size:13px;color:var(--t2);margin-bottom:12px"></div>
+      <button class="btn btn-primary" id="batch-btn" onclick="scanBatch()" disabled>📦 Scan All Bills</button>
+    </div>
+  </div>
+
+  <!-- Loading state -->
+  <div id="loading" style="display:none;text-align:center;padding:40px">
+    <div class="spin" style="width:32px;height:32px;border-width:3px;margin:0 auto 16px"></div>
+    <div style="font-size:15px;font-weight:600;margin-bottom:6px" id="loading-text">Reading bill...</div>
+    <div style="font-size:12px;color:var(--t3)">Analyzing handwriting, extracting GST fields...</div>
+  </div>
+
+  <!-- Results -->
+  <div id="results" style="display:none;margin-top:20px;animation:fadeUp .4s ease both">
+
+    <!-- Quality indicator -->
+    <div class="card" id="quality-card">
+      <div class="card-title">📊 Scan Quality</div>
+      <div id="quality-message"></div>
+      <div id="flags-section" style="margin-top:12px"></div>
+    </div>
+
+    <!-- Summary -->
+    <div class="card">
+      <div class="card-title">📋 Extracted Bill Details</div>
+      <div id="bill-summary"></div>
+    </div>
+
+    <!-- Items -->
+    <div class="card" id="items-card" style="display:none">
+      <div class="card-title">🛒 Items</div>
+      <table>
+        <thead><tr><th>Description</th><th>HSN</th><th>Qty</th><th>Rate</th><th>Amount</th></tr></thead>
+        <tbody id="items-table"></tbody>
+      </table>
+    </div>
+
+    <!-- Tax breakdown -->
+    <div class="card">
+      <div class="card-title">🧮 Tax Breakdown</div>
+      <div id="tax-breakdown"></div>
+    </div>
+
+    <!-- Actions -->
+    <div class="card">
+      <div class="card-title">⚡ Actions</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn btn-success" onclick="addToReconciliation()">➕ Add to Reconciliation</button>
+        <button class="btn btn-ghost" onclick="copyJSON()">📋 Copy JSON</button>
+        <button class="btn btn-ghost" onclick="scanAnother()">📷 Scan Another Bill</button>
+      </div>
+      <div id="action-result" style="margin-top:10px;font-size:13px"></div>
+    </div>
+
+  </div><!-- end results -->
+
+  <!-- Batch results -->
+  <div id="batch-results" style="display:none;margin-top:20px"></div>
+
+</div>
+
+<script>
+const API = "https://gstagent-production.up.railway.app";
+const token = localStorage.getItem("gstagent_token");
+const headers = {"Authorization": "Bearer " + token};
+
+let selectedFile = null;
+let lastResult = null;
+let batchFiles = [];
+
+// ── FILE HANDLING ─────────────────────────────────────────────────
+function handleFile(input) {
+  if (input.files[0]) setFile(input.files[0]);
+}
+function handleCamera(input) {
+  if (input.files[0]) setFile(input.files[0]);
+}
+function setFile(file) {
+  selectedFile = file;
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById('preview-img').src = e.target.result;
+    document.getElementById('preview-img').style.display = 'block';
+    document.getElementById('upload-icon').textContent = '✅';
+    document.getElementById('upload-text').textContent = file.name;
+    document.getElementById('upload-sub').textContent = `${(file.size/1024).toFixed(0)} KB · Click to change`;
+    document.getElementById('upload-zone').classList.add('has-image');
+    document.getElementById('scan-btn').disabled = false;
+  };
+  reader.readAsDataURL(file);
+  document.getElementById('results').style.display = 'none';
+}
+function handleDragOver(e) { e.preventDefault(); document.getElementById('upload-zone').classList.add('drag'); }
+function handleDragLeave(e) { document.getElementById('upload-zone').classList.remove('drag'); }
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('upload-zone').classList.remove('drag');
+  if (e.dataTransfer.files[0]) setFile(e.dataTransfer.files[0]);
+}
+function handleBatch(input) {
+  batchFiles = Array.from(input.files);
+  document.getElementById('batch-preview').textContent = `${batchFiles.length} bills selected`;
+  document.getElementById('batch-btn').disabled = false;
+}
+
+// ── SCAN SINGLE BILL ──────────────────────────────────────────────
+async function scanBill() {
+  if (!selectedFile) return;
+  document.getElementById('loading').style.display = 'block';
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('scan-btn').disabled = true;
+
+  const loadingMsgs = [
+    "Reading handwriting...",
+    "Detecting Hindi script...",
+    "Extracting GST fields...",
+    "Calculating tax amounts...",
+    "Checking GSTIN format..."
+  ];
+  let msgIdx = 0;
+  const msgInterval = setInterval(() => {
+    document.getElementById('loading-text').textContent = loadingMsgs[msgIdx % loadingMsgs.length];
+    msgIdx++;
+  }, 1500);
+
+  try {
+    const fd = new FormData();
+    fd.append('file', selectedFile);
+    fd.append('client_name', document.getElementById('client-name').value);
+    fd.append('period', document.getElementById('period').value);
+
+    const res = await fetch(API + '/bill-reader/scan', { method: 'POST', headers, body: fd });
+    const data = await res.json();
+    clearInterval(msgInterval);
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('scan-btn').disabled = false;
+
+    if (data.detail) throw new Error(data.detail);
+    lastResult = data;
+    showResults(data);
+  } catch(e) {
+    clearInterval(msgInterval);
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('scan-btn').disabled = false;
+    alert('Error: ' + e.message);
+  }
+}
+
+// ── SHOW RESULTS ──────────────────────────────────────────────────
+function showResults(data) {
+  document.getElementById('results').style.display = 'block';
+  const ex = data.extracted;
+  const q = data.quality;
+  const s = data.summary;
+
+  // Quality
+  const confColor = q.overall_confidence === 'high' ? '#86EFAC' : q.overall_confidence === 'medium' ? '#FCD34D' : '#FCA5A5';
+  document.getElementById('quality-message').innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+      <span class="badge badge-${q.overall_confidence}">${q.overall_confidence} confidence</span>
+      <span class="lang-badge">${s.language || 'unknown'} detected</span>
+      <span style="font-size:12px;color:var(--t2)">${s.bill_type || ''}</span>
+    </div>
+    <div style="font-size:13px;color:var(--t2)">${q.message}</div>
+  `;
+
+  // Flags
+  if (q.fields_to_verify && q.fields_to_verify.length > 0) {
+    let flagsHtml = `<div style="font-size:11px;font-weight:700;color:var(--amb);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">⚠️ Please Verify These Fields</div>`;
+    q.fields_to_verify.forEach(f => {
+      flagsHtml += `<div class="flag-item">⚠️ ${f}</div>`;
+    });
+    document.getElementById('flags-section').innerHTML = flagsHtml;
+  }
+
+  // Bill summary
+  const conf = ex.confidence || {};
+  document.getElementById('bill-summary').innerHTML = `
+    <div class="result-card">
+      ${fieldRow('Supplier Name', ex.supplier_name, conf.supplier_name)}
+      ${ex.supplier_name_hindi ? fieldRow('Supplier (Hindi)', ex.supplier_name_hindi, 'high') : ''}
+      ${fieldRow('GSTIN', ex.supplier_gstin || '❌ Not found', conf.gstin)}
+      ${fieldRow('Invoice Number', ex.invoice_number || '—', 'medium')}
+      ${fieldRow('Invoice Date', ex.invoice_date || '—', conf.date)}
+      ${ex.supplier_address ? fieldRow('Address', ex.supplier_address, 'medium') : ''}
+      ${ex.supplier_phone ? fieldRow('Phone', ex.supplier_phone, 'medium') : ''}
+      ${ex.buyer_name ? fieldRow('Buyer', ex.buyer_name, 'medium') : ''}
+      ${ex.buyer_gstin ? fieldRow('Buyer GSTIN', ex.buyer_gstin, 'medium') : ''}
+    </div>
+  `;
+
+  // Items
+  if (ex.items && ex.items.length > 0) {
+    document.getElementById('items-card').style.display = 'block';
+    let rows = '';
+    ex.items.forEach(item => {
+      rows += `<tr>
+        <td>${item.description || ''}${item.description_original && item.description_original !== item.description ? `<br/><span style="color:var(--t3);font-size:10px">${item.description_original}</span>` : ''}</td>
+        <td style="font-family:var(--mono)">${item.hsn_code || '—'}</td>
+        <td>${item.quantity || '—'} ${item.unit || ''}</td>
+        <td>₹${(item.rate || 0).toLocaleString('en-IN')}</td>
+        <td>₹${(item.amount || 0).toLocaleString('en-IN')}</td>
+      </tr>`;
+    });
+    document.getElementById('items-table').innerHTML = rows;
+  }
+
+  // Tax breakdown
+  document.getElementById('tax-breakdown').innerHTML = `
+    <div class="result-card">
+      ${fieldRow('Taxable Value', '₹' + num(ex.taxable_value), conf.amounts)}
+      ${ex.cgst_rate ? fieldRow(`CGST @ ${ex.cgst_rate}%`, '₹' + num(ex.cgst_amount), conf.amounts) : ''}
+      ${ex.sgst_rate ? fieldRow(`SGST @ ${ex.sgst_rate}%`, '₹' + num(ex.sgst_amount), conf.amounts) : ''}
+      ${ex.igst_rate ? fieldRow(`IGST @ ${ex.igst_rate}%`, '₹' + num(ex.igst_amount), conf.amounts) : ''}
+      ${fieldRow('Total Tax', '₹' + num(ex.total_tax), conf.amounts)}
+      ${fieldRow('Total Amount', '₹' + num(ex.total_amount), conf.amounts)}
+      ${ex.payment_mode ? fieldRow('Payment Mode', ex.payment_mode, 'medium') : ''}
+    </div>
+  `;
+}
+
+function fieldRow(label, value, confidence) {
+  const needsVerify = confidence === 'low' || confidence === 'medium';
+  const cls = needsVerify ? 'field-value verify' : 'field-value';
+  const badge = confidence ? `<span class="badge badge-${confidence || 'low'}" style="margin-left:6px">${confidence}</span>` : '';
+  return `<div class="field-row"><span class="field-label">${label}</span><span class="${cls}">${value}${badge}</span></div>`;
+}
+
+function num(v) {
+  return (v || 0).toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+}
+
+// ── ACTIONS ───────────────────────────────────────────────────────
+async function addToReconciliation() {
+  if (!lastResult?.reconciliation_data) {
+    document.getElementById('action-result').innerHTML = '<span style="color:#FCD34D">⚠️ GSTIN required for reconciliation. Verify the GSTIN first.</span>';
+    return;
+  }
+  document.getElementById('action-result').innerHTML = '<span style="color:#86EFAC">✅ Bill data ready for reconciliation. Go to Reconciliation tab to run.</span>';
+  localStorage.setItem('pending_bill_data', JSON.stringify(lastResult.reconciliation_data));
+}
+
+function copyJSON() {
+  if (!lastResult) return;
+  navigator.clipboard.writeText(JSON.stringify(lastResult.extracted, null, 2));
+  document.getElementById('action-result').innerHTML = '<span style="color:#86EFAC">✅ JSON copied to clipboard</span>';
+}
+
+function scanAnother() {
+  clearAll();
+}
+
+function clearAll() {
+  selectedFile = null;
+  lastResult = null;
+  document.getElementById('file-input').value = '';
+  document.getElementById('preview-img').style.display = 'none';
+  document.getElementById('preview-img').src = '';
+  document.getElementById('upload-icon').textContent = '🧾';
+  document.getElementById('upload-text').textContent = 'Drop bill photo here or click to browse';
+  document.getElementById('upload-sub').textContent = 'JPG, PNG, WEBP up to 10MB · Handwritten bills accepted';
+  document.getElementById('upload-zone').classList.remove('has-image');
+  document.getElementById('scan-btn').disabled = true;
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('items-card').style.display = 'none';
+  document.getElementById('flags-section').innerHTML = '';
+  document.getElementById('action-result').innerHTML = '';
+}
+
+// ── BATCH SCAN ────────────────────────────────────────────────────
+async function scanBatch() {
+  if (!batchFiles.length) return;
+  document.getElementById('batch-btn').disabled = true;
+  document.getElementById('batch-btn').innerHTML = '<span class="spin"></span> Scanning...';
+
+  const fd = new FormData();
+  batchFiles.forEach(f => fd.append('files', f));
+  fd.append('client_name', document.getElementById('client-name').value);
+  fd.append('period', document.getElementById('period').value);
+
+  try {
+    const res = await fetch(API + '/bill-reader/scan-multiple', { method: 'POST', headers, body: fd });
+    const data = await res.json();
+
+    let html = `
+      <div class="card">
+        <div class="card-title">📦 Batch Results — ${data.total_bills} bills</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px">
+          <div style="background:var(--s2);border-radius:9px;padding:12px;text-align:center">
+            <div style="font-size:20px;font-weight:800;color:#86EFAC">${data.successful}</div>
+            <div style="font-size:11px;color:var(--t3)">Successful</div>
+          </div>
+          <div style="background:var(--s2);border-radius:9px;padding:12px;text-align:center">
+            <div style="font-size:20px;font-weight:800;color:var(--txt)">₹${(data.total_amount||0).toLocaleString('en-IN')}</div>
+            <div style="font-size:11px;color:var(--t3)">Total Amount</div>
+          </div>
+          <div style="background:var(--s2);border-radius:9px;padding:12px;text-align:center">
+            <div style="font-size:20px;font-weight:800;color:#FCD34D">₹${(data.total_tax||0).toLocaleString('en-IN')}</div>
+            <div style="font-size:11px;color:var(--t3)">Total Tax</div>
+          </div>
+        </div>
+        <table>
+          <thead><tr><th>#</th><th>File</th><th>Supplier</th><th>Invoice</th><th>Amount</th><th>Confidence</th><th>Language</th></tr></thead>
+          <tbody>
+    `;
+    (data.results || []).forEach(r => {
+      html += `<tr>
+        <td>${r.index}</td>
+        <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px">${r.file}</td>
+        <td>${r.supplier || '—'}</td>
+        <td style="font-family:var(--mono);font-size:11px">${r.invoice_no || '—'}</td>
+        <td>₹${(r.amount||0).toLocaleString('en-IN')}</td>
+        <td><span class="badge badge-${r.confidence||'low'}">${r.confidence||'—'}</span></td>
+        <td>${r.language || '—'}</td>
+      </tr>`;
+    });
+    html += '</tbody></table></div>';
+    document.getElementById('batch-results').innerHTML = html;
+    document.getElementById('batch-results').style.display = 'block';
+  } catch(e) {
+    alert('Batch scan error: ' + e.message);
+  }
+  document.getElementById('batch-btn').disabled = false;
+  document.getElementById('batch-btn').innerHTML = '📦 Scan All Bills';
+}
+
+if (!token) window.location.href = '/login';
+</script>
+</body>
+</html>

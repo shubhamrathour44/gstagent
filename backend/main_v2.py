@@ -17,6 +17,7 @@ from documents.router import router as documents_router
 from notices.router import router as notices_router
 from tasks.router import router as tasks_router
 from reconciliation.router import router as reconciliation_router
+from bill_reader.router import router as bill_reader_router
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("gstagent-backend")
@@ -103,7 +104,7 @@ app.include_router(documents_router)
 app.include_router(notices_router)
 app.include_router(tasks_router)
 app.include_router(reconciliation_router)
-
+app.include_router(bill_reader_router)
 
 if __name__ == "__main__":
     import uvicorn
