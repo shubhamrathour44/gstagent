@@ -176,15 +176,34 @@ async def scan_bill(
     """
     # Validate file type
     content_type = file.content_type or ""
-    allowed = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif"]
-    if content_type not in allowed:
-        raise HTTPException(400, f"Unsupported file type: {content_type}. Use JPG, PNG, or WEBP.")
+    allowed = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif", "application/pdf"]
+    if content_type not in allowed and "image" not in content_type and "pdf" not in content_type:
+        raise HTTPException(400, f"Unsupported file type: {content_type}. Use JPG, PNG, WEBP, or PDF.")
 
     # Check file size (max 10MB)
     contents = await file.read()
     if len(contents) > 10 * 1024 * 1024:
         raise HTTPException(400, "File too large. Maximum 10MB.")
 
+    # Convert PDF to image if needed
+
+    # Convert PDF first page to image for Claude Vision
+    if "pdf" in content_type:
+        try:
+            import fitz  # PyMuPDF
+            doc = fitz.open(stream=contents, filetype="pdf")
+            page = doc[0]
+            mat = fitz.Matrix(2, 2)  # 2x zoom for clarity
+            pix = page.get_pixmap(matrix=mat)
+            contents = pix.tobytes("jpeg")
+            media_type = "image/jpeg"
+            doc.close()
+        except ImportError:
+            # PyMuPDF not installed - send PDF directly (Claude can handle some PDFs)
+            media_type = "application/pdf"
+        except Exception as e:
+            raise HTTPException(400, f"Could not read PDF: {str(e)}")
+    
     # Convert to base64
     image_b64 = base64.standard_b64encode(contents).decode("utf-8")
     media_type = content_type if content_type != "image/jpg" else "image/jpeg"
