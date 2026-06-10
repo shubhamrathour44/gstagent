@@ -7,7 +7,6 @@ Handles bad handwriting, spelling mistakes, mixed scripts
 from datetime import datetime
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
-from pydantic import BaseModel
 import base64, os, httpx
 
 from auth import CurrentUser, get_current_user
@@ -75,16 +74,15 @@ Extract these fields and return ONLY valid JSON (no explanation, no markdown):
 Rules:
 - If a field is unclear but guessable from context, make your best guess and add it to flags
 - If a field is completely unreadable, use null
-- Fix obvious spelling mistakes in vendor names (e.g. "Delh Distrbtr" → "Delhi Distributor")
+- Fix obvious spelling mistakes in vendor names
 - Convert Hindi numbers to digits if written in Devanagari
 - If GSTIN looks wrong (not 15 chars), set to null and add to flags
-- Calculate missing tax amounts if you can (e.g. if rate and taxable value given)
+- Calculate missing tax amounts if you can
 - Return ONLY the JSON object, nothing else
 """
 
 
 async def call_claude_vision(image_b64: str, media_type: str) -> dict:
-    """Send image to Claude and extract bill data."""
     api_key = os.getenv("ANTHROPIC_API_KEY", "")
     if not api_key:
         raise HTTPException(500, "ANTHROPIC_API_KEY not configured")
@@ -125,10 +123,8 @@ async def call_claude_vision(image_b64: str, media_type: str) -> dict:
         result = response.json()
         text = result["content"][0]["text"]
 
-        # Parse JSON from response
         import json
         try:
-            # Clean any markdown if present
             text = text.strip()
             if text.startswith("```"):
                 text = text.split("```")[1]
@@ -145,7 +141,7 @@ async def status(current_user: CurrentUser = Depends(get_current_user)):
         "status": "ok",
         "module": "handwritten_bill_reader",
         "languages": ["Hindi", "English", "Mixed Hindi-English"],
-        "supported_formats": ["JPG", "JPEG", "PNG", "WEBP", "GIF"],
+        "supported_formats": ["JPG", "JPEG", "PNG", "WEBP", "GIF", "PDF"],
         "features": [
             "Handwritten bill reading",
             "Hindi + English + mixed script",
@@ -155,6 +151,7 @@ async def status(current_user: CurrentUser = Depends(get_current_user)):
             "Confidence scoring per field",
             "Flags unclear fields for CA review",
             "WhatsApp photo support",
+            "PDF bill support",
             "Auto-feed into reconciliation"
         ],
         "accuracy": "90-98% on clear images, 75-90% on poor quality"
@@ -169,46 +166,34 @@ async def scan_bill(
     auto_reconcile: bool = Form(False),
     current_user: CurrentUser = Depends(get_current_user)
 ):
-    """
-    Scan a handwritten or printed bill photo.
-    Supports Hindi, English, mixed scripts.
-    Handles bad handwriting and spelling mistakes.
-    """
-    # Validate file type
     content_type = file.content_type or ""
     allowed = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif", "application/pdf"]
     if content_type not in allowed and "image" not in content_type and "pdf" not in content_type:
         raise HTTPException(400, f"Unsupported file type: {content_type}. Use JPG, PNG, WEBP, or PDF.")
 
-    # Check file size (max 10MB)
     contents = await file.read()
     if len(contents) > 10 * 1024 * 1024:
         raise HTTPException(400, "File too large. Maximum 10MB.")
 
-    # Convert PDF to image if needed
+    media_type = content_type if content_type != "image/jpg" else "image/jpeg"
 
-    # Convert PDF first page to image for Claude Vision
     if "pdf" in content_type:
         try:
-            import fitz  # PyMuPDF
+            import fitz
             doc = fitz.open(stream=contents, filetype="pdf")
             page = doc[0]
-            mat = fitz.Matrix(2, 2)  # 2x zoom for clarity
+            mat = fitz.Matrix(2, 2)
             pix = page.get_pixmap(matrix=mat)
             contents = pix.tobytes("jpeg")
             media_type = "image/jpeg"
             doc.close()
         except ImportError:
-            # PyMuPDF not installed - send PDF directly (Claude can handle some PDFs)
             media_type = "application/pdf"
         except Exception as e:
             raise HTTPException(400, f"Could not read PDF: {str(e)}")
-    
-    # Convert to base64
-    image_b64 = base64.standard_b64encode(contents).decode("utf-8")
-    media_type = content_type if content_type != "image/jpg" else "image/jpeg"
 
-    # Call Claude Vision
+    image_b64 = base64.standard_b64encode(contents).decode("utf-8")
+
     try:
         extracted = await call_claude_vision(image_b64, media_type)
     except httpx.HTTPStatusError as e:
@@ -216,13 +201,11 @@ async def scan_bill(
     except Exception as e:
         raise HTTPException(500, f"Bill reading failed: {str(e)}")
 
-    # Build response
     scan_id = new_id()
     confidence = extracted.get("confidence", {})
     flags = extracted.get("flags", [])
     overall_confidence = confidence.get("overall", "low")
 
-    # Prepare reconciliation data if extraction was successful
     recon_ready = None
     if overall_confidence in ["high", "medium"] and extracted.get("supplier_gstin"):
         recon_ready = {
@@ -272,7 +255,6 @@ async def scan_multiple_bills(
     period: Optional[str] = Form(None),
     current_user: CurrentUser = Depends(get_current_user)
 ):
-    """Scan multiple bill photos at once — batch processing."""
     if len(files) > 20:
         raise HTTPException(400, "Maximum 20 bills per batch")
 
@@ -333,7 +315,6 @@ async def scan_bill_from_url(
     client_name: Optional[str] = None,
     current_user: CurrentUser = Depends(get_current_user)
 ):
-    """Scan a bill from a URL (e.g. WhatsApp CDN link)."""
     try:
         async with httpx.AsyncClient(timeout=30.0) as client:
             resp = await client.get(image_url)
