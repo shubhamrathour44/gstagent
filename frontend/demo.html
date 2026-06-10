@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>GSTAgent — Live Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0A0C10;--s1:#0F1117;--s2:#161B24;--s3:#1C2333;
+  --bd:rgba(255,255,255,.06);--bd2:rgba(255,255,255,.1);
+  --ind:#5B73FF;--ind2:#7C91FF;
+  --grn:#2DD882;--red:#FF4F4F;--amb:#FFB547;--pur:#A78BFA;
+  --txt:#F1F5F9;--t2:#8B98B1;--t3:#4A5568;
+  --f:'Inter',sans-serif;--m:'JetBrains Mono',monospace
+}
+body{font-family:var(--f);background:var(--bg);color:var(--txt);min-height:100vh;font-size:14px}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* TOPBAR */
+.topbar{height:54px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;padding:0 28px;position:sticky;top:0;z-index:100;background:rgba(10,12,16,.95);backdrop-filter:blur(12px)}
+.logo{display:flex;align-items:center;gap:8px;font-size:17px;font-weight:700;letter-spacing:-.03em}
+.lm{width:30px;height:30px;border-radius:7px;background:linear-gradient(135deg,#5B73FF,#A78BFA);display:flex;align-items:center;justify-content:center;font-size:13px}
+.demo-pill{background:rgba(255,181,71,.1);border:1px solid rgba(255,181,71,.25);color:#FFB547;font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;letter-spacing:.08em}
+.signup-btn{background:var(--ind);color:#fff;border:none;border-radius:7px;padding:7px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--f);transition:background .15s}
+.signup-btn:hover{background:#4A62EE}
+
+/* HERO */
+.hero{padding:52px 28px 36px;text-align:center;animation:fadeUp .5s ease both}
+.hero-tag{display:inline-flex;align-items:center;gap:6px;background:rgba(91,115,255,.1);border:1px solid rgba(91,115,255,.2);color:var(--ind2);font-size:11px;font-weight:600;padding:4px 12px;border-radius:20px;margin-bottom:18px;letter-spacing:.04em}
+.hero h1{font-size:38px;font-weight:800;letter-spacing:-.04em;line-height:1.15;margin-bottom:14px}
+.hero h1 em{font-style:normal;background:linear-gradient(135deg,#5B73FF,#A78BFA);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero p{color:var(--t2);font-size:15px;max-width:500px;margin:0 auto 28px;line-height:1.6}
+.hero-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:12px}
+.btn-hero-p{background:var(--ind);color:#fff;border:none;border-radius:8px;padding:12px 24px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--f);transition:all .15s}
+.btn-hero-p:hover{background:#4A62EE;transform:translateY(-1px)}
+.btn-hero-s{background:var(--s2);color:var(--t2);border:1px solid var(--bd2);border-radius:8px;padding:12px 24px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--f);transition:all .15s}
+.btn-hero-s:hover{color:var(--txt);border-color:rgba(255,255,255,.2)}
+.hero-note{font-size:11px;color:var(--t3)}
+
+/* FEATURE PILLS */
+.features-row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;padding:0 28px 32px}
+.fp{display:inline-flex;align-items:center;gap:5px;background:var(--s1);border:1px solid var(--bd);border-radius:6px;padding:5px 10px;font-size:11px;font-weight:500;color:var(--t2)}
+
+/* TABS */
+.tabs-wrap{position:sticky;top:54px;z-index:90;background:rgba(10,12,16,.97);border-bottom:1px solid var(--bd);backdrop-filter:blur(10px)}
+.tabs{display:flex;gap:0;padding:0 20px;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{padding:13px 16px;font-size:12px;font-weight:600;color:var(--t3);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:all .15s;letter-spacing:.01em}
+.tab.active{color:var(--txt);border-bottom-color:var(--ind)}
+.tab:hover:not(.active){color:var(--t2)}
+
+/* CONTENT */
+.content{max-width:1040px;margin:0 auto;padding:28px 24px}
+.section{display:none}
+.section.active{display:block;animation:fadeUp .3s ease both}
+
+/* CARDS */
+.card{background:var(--s1);border:1px solid var(--bd);border-radius:12px;padding:20px;margin-bottom:14px}
+.card-hd{font-size:12px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:16px;display:flex;align-items:center;gap:7px}
+
+/* STATS */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.stat{background:var(--s1);border:1px solid var(--bd);border-radius:10px;padding:16px}
+.stat-v{font-size:22px;font-weight:800;font-family:var(--m);margin-bottom:3px}
+.stat-l{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.07em}
+
+/* TABLE */
+.tbl-wrap{overflow-x:auto;border-radius:8px;border:1px solid var(--bd)}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{padding:9px 12px;text-align:left;font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;background:var(--s2);border-bottom:1px solid var(--bd)}
+td{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.03);color:var(--t2);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.015)}
+
+/* BADGE */
+.b{display:inline-flex;align-items:center;padding:2px 7px;border-radius:4px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+.b-r{background:rgba(255,79,79,.1);color:#FF8080;border:1px solid rgba(255,79,79,.2)}
+.b-g{background:rgba(45,216,130,.1);color:#5EFFA8;border:1px solid rgba(45,216,130,.2)}
+.b-a{background:rgba(255,181,71,.1);color:#FFD080;border:1px solid rgba(255,181,71,.2)}
+.b-i{background:rgba(91,115,255,.1);color:#A0B0FF;border:1px solid rgba(91,115,255,.2)}
+.b-p{background:rgba(167,139,250,.1);color:#C4B5FD;border:1px solid rgba(167,139,250,.2)}
+
+/* FORM */
+.fg{margin-bottom:12px}
+label{display:block;font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px}
+input,select,textarea{background:rgba(255,255,255,.04);border:1.5px solid var(--bd2);border-radius:8px;padding:9px 12px;color:var(--txt);font-size:13px;font-family:var(--f);outline:none;width:100%;transition:border-color .15s}
+input:focus,select:focus,textarea:focus{border-color:var(--ind)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:none;font-family:var(--f);transition:all .15s}
+.btn-i{background:var(--ind);color:#fff}
+.btn-i:hover{background:#4A62EE}
+.btn-g{background:var(--s2);color:var(--t2);border:1px solid var(--bd2)}
+.btn-g:hover{color:var(--txt)}
+
+/* RESULT BOXES */
+.result-box{background:var(--s2);border:1px solid var(--bd);border-radius:8px;padding:14px;font-size:12px;line-height:1.8;color:var(--t2);margin-top:12px;font-family:var(--m);white-space:pre-wrap}
+.info-box{background:rgba(91,115,255,.06);border:1px solid rgba(91,115,255,.15);border-radius:8px;padding:12px;font-size:12px;color:#A0B0FF;margin-bottom:14px}
+.success-box{background:rgba(45,216,130,.06);border:1px solid rgba(45,216,130,.15);border-radius:8px;padding:12px;font-size:12px;color:#5EFFA8;margin-bottom:14px}
+.warn-box{background:rgba(255,79,79,.06);border:1px solid rgba(255,79,79,.15);border-radius:8px;padding:12px;font-size:12px;color:#FF8080;margin-bottom:14px}
+
+/* BILL DEMO */
+.bill-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.bill-mock{background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:16px;font-family:var(--m);font-size:11px;color:var(--t2);line-height:2}
+.extracted-field{display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:var(--s1);border-radius:6px;margin-bottom:5px;font-size:12px}
+.ef-label{color:var(--t3);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+.ef-val{color:var(--grn);font-family:var(--m);font-size:11px;font-weight:600}
+.ef-val.warn{color:var(--amb)}
+
+/* REGIME */
+.regime-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+.regime-c{background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:18px;text-align:center;transition:border-color .2s}
+.regime-c.best{border-color:var(--grn)}
+.regime-tax{font-size:26px;font-weight:800;font-family:var(--m);margin:8px 0}
+.regime-lbl{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.07em}
+
+/* ALERT BOX */
+.alert{display:flex;gap:10px;padding:12px 14px;border-radius:8px;font-size:12px;margin-bottom:10px}
+.alert-r{background:rgba(255,79,79,.06);border:1px solid rgba(255,79,79,.15);color:var(--t2)}
+.alert-a{background:rgba(255,181,71,.06);border:1px solid rgba(255,181,71,.15);color:var(--t2)}
+
+/* TIMELINE */
+.timeline{position:relative;padding-left:20px}
+.timeline::before{content:'';position:absolute;left:6px;top:8px;bottom:8px;width:1px;background:var(--bd2)}
+.tl-item{position:relative;margin-bottom:14px}
+.tl-dot{width:13px;height:13px;border-radius:50%;border:2px solid;position:absolute;left:-20px;top:2px;background:var(--bg)}
+.tl-dot-g{border-color:var(--grn)}
+.tl-dot-a{border-color:var(--amb)}
+.tl-dot-r{border-color:var(--red)}
+.tl-title{font-size:12px;font-weight:600;margin-bottom:2px}
+.tl-sub{font-size:11px;color:var(--t3)}
+
+/* CTA */
+.cta-section{background:linear-gradient(135deg,rgba(91,115,255,.1),rgba(167,139,250,.08));border:1px solid rgba(91,115,255,.2);border-radius:14px;padding:36px;text-align:center;margin-top:24px}
+
+@media(max-width:640px){.stats{grid-template-columns:1fr 1fr}.bill-grid,.regime-grid,.grid2{grid-template-columns:1fr}.hero h1{font-size:26px}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo"><div class="lm">⚡</div>GSTAgent</div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <span class="demo-pill">DEMO</span>
+    <button class="signup-btn" onclick="window.open('https://gstagent.vercel.app/signup','_blank')">Start Free Trial →</button>
+  </div>
+</div>
+
+<div class="hero">
+  <div class="hero-tag">✦ AI-Powered CA Practice Management</div>
+  <h1>Everything a CA needs,<br/><em>in one platform</em></h1>
+  <p>GST reconciliation, income tax filing, handwritten bill reading, notice replies — automated with AI. Built for Indian CA firms.</p>
+  <div class="hero-actions">
+    <button class="btn-hero-p" onclick="window.open('https://gstagent.vercel.app/signup','_blank')">🚀 Start Free 14-Day Trial</button>
+    <button class="btn-hero-s" onclick="document.getElementById('tabs-wrap').scrollIntoView({behavior:'smooth'})">Explore Demo ↓</button>
+  </div>
+  <div class="hero-note">No credit card required · ₹1,500/mo after trial · WhatsApp support</div>
+</div>
+
+<div class="features-row">
+  <span class="fp">✅ GST Reconciliation</span>
+  <span class="fp">✅ ITR 1/2/3/4/7</span>
+  <span class="fp">✅ Form 26AS / AIS</span>
+  <span class="fp">✅ TDS 24Q/26Q</span>
+  <span class="fp">✅ Tax Audit 3CA/3CB/3CD</span>
+  <span class="fp">✅ Hindi Bill Reader</span>
+  <span class="fp">✅ Notice Reply AI</span>
+  <span class="fp">✅ GSP Connected</span>
+  <span class="fp">✅ Tally/Zoho Sync</span>
+  <span class="fp">✅ Client Portal</span>
+</div>
+
+<div class="tabs-wrap" id="tabs-wrap">
+  <div class="tabs" id="tabs">
+    <div class="tab active" onclick="showTab('dashboard',this)">📊 Dashboard</div>
+    <div class="tab" onclick="showTab('reconciliation',this)">🔄 GST Recon</div>
+    <div class="tab" onclick="showTab('bill',this)">📷 Bill Reader</div>
+    <div class="tab" onclick="showTab('itr',this)">📋 ITR Filing</div>
+    <div class="tab" onclick="showTab('form26as',this)">📑 Form 26AS</div>
+    <div class="tab" onclick="showTab('tds',this)">🧾 TDS Returns</div>
+    <div class="tab" onclick="showTab('audit',this)">🔍 Tax Audit</div>
+    <div class="tab" onclick="showTab('notices',this)">⚠️ Notices</div>
+    <div class="tab" onclick="showTab('clients',this)">👥 Clients</div>
+    <div class="tab" onclick="showTab('compliance',this)">📅 Compliance</div>
+    <div class="tab" onclick="showTab('tasks',this)">✅ Tasks</div>
+    <div class="tab" onclick="showTab('billing',this)">💰 Billing</div>
+  </div>
+</div>
+
+<div class="content">
+
+<!-- DASHBOARD -->
+<div class="section active" id="sec-dashboard">
+  <div class="stats">
+    <div class="stat"><div class="stat-v" style="color:var(--grn)">47</div><div class="stat-l">Active Clients</div></div>
+    <div class="stat"><div class="stat-v" style="color:var(--amb)">12</div><div class="stat-l">Pending Returns</div></div>
+    <div class="stat"><div class="stat-v" style="color:var(--red)">₹2.4L</div><div class="stat-l">ITC at Risk</div></div>
+    <div class="stat"><div class="stat-v" style="color:var(--pur)">8</div><div class="stat-l">Open Notices</div></div>
+  </div>
+  <div class="alert alert-r"><span>🔴</span><div><strong>Mehta Industries</strong> — GSTR-1 overdue since 11 Jul. Late fee applicable after today.</div></div>
+  <div class="alert alert-a"><span>⚠️</span><div><strong>Sharma Traders</strong> — ASMT-10 notice reply due in 7 days. AI draft ready.</div></div>
+  <div class="card">
+    <div class="card-hd">📅 Upcoming Deadlines</div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Client</th><th>Return</th><th>Due Date</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>Sharma Traders</td><td>GSTR-3B</td><td>20 Jul 2025</td><td><span class="b b-a">Pending</span></td></tr>
+          <tr><td>Mehta Industries</td><td>GSTR-1</td><td>11 Jul 2025</td><td><span class="b b-r">Overdue</span></td></tr>
+          <tr><td>Patel Enterprises</td><td>GSTR-3B</td><td>20 Jul 2025</td><td><span class="b b-g">Filed</span></td></tr>
+          <tr><td>Gupta & Sons</td><td>ITR-3</td><td>31 Jul 2025</td><td><span class="b b-a">In Progress</span></td></tr>
+          <tr><td>Verma Chemicals</td><td>TDS 26Q</td><td>31 Jul 2025</td><td><span class="b b-i">Not Started</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- GST RECONCILIATION -->
+<div class="section" id="sec-reconciliation">
+  <div class="success-box">✅ Reconciliation complete — Mehta Industries · Jun 2025 · 127 invoices in 14 seconds</div>
+  <div class="stats">
+    <div class="stat"><div class="stat-v" style="color:var(--grn)">98</div><div class="stat-l">Matched</div></div>
+    <div class="stat"><div class="stat-v" style="color:var(--red)">18</div><div class="stat-l">Mismatches</div></div>
+    <div class="stat"><div class="stat-v" style="color:var(--amb)">11</div><div class="stat-l">Missing in 2B</div></div>
+    <div class="stat"><div class="stat-v" style="color:var(--red)">₹87,450</div><div class="stat-l">ITC at Risk</div></div>
+  </div>
+  <div class="card">
+    <div class="card-hd">🔴 Mismatches</div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Supplier</th><th>Invoice</th><th>PR ITC</th><th>2B ITC</th><th>Diff</th><th>Type</th></tr></thead>
+        <tbody>
+          <tr><td>Raj Suppliers</td><td style="font-family:var(--m);font-size:10px">RS/24-25/1234</td><td>₹12,500</td><td>₹0</td><td style="color:var(--red);font-weight:700">-₹12,500</td><td><span class="b b-r">Missing 2B</span></td></tr>
+          <tr><td>Kumar Traders</td><td style="font-family:var(--m);font-size:10px">KT/2024/567</td><td>₹8,200</td><td>₹6,800</td><td style="color:var(--amb);font-weight:700">-₹1,400</td><td><span class="b b-a">ITC Diff</span></td></tr>
+          <tr><td>Shree Agencies</td><td style="font-family:var(--m);font-size:10px">SA/Jun/890</td><td>₹0</td><td>₹5,600</td><td style="color:var(--grn);font-weight:700">+₹5,600</td><td><span class="b b-i">Missing PR</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-hd">📧 AI Vendor Email Draft</div>
+    <div class="result-box">Dear Raj Suppliers,
+
+We are reconciling our GSTR-2B for June 2025. Invoice RS/24-25/1234 (ITC ₹12,500) is in our Purchase Register but not in GSTR-2B.
+
+Please verify if GSTR-1 for June 2025 has been filed and includes this invoice. If not filed, please file at the earliest to avoid ITC reversal.
+
+Regards, Accounts Team — Mehta Industries</div>
+  </div>
+</div>
+
+<!-- BILL READER -->
+<div class="section" id="sec-bill">
+  <div class="info-box">📷 Upload any bill photo — handwritten or printed, Hindi or English. AI extracts all GST fields automatically.</div>
+  <div class="bill-grid">
+    <div>
+      <div class="card-hd">🧾 Sample Hindi Handwritten Bill</div>
+      <div class="bill-mock">
+        राज सप्लायर्स, दिल्ली<br/>
+        GSTIN: 07AABCR1234F1Z5<br/>
+        बिल नं: 1234 · 15/06/25<br/>
+        ──────────────────────<br/>
+        सीमेंट 50 बैग @320 = 16,000<br/>
+        CGST @9% = 1,440<br/>
+        SGST @9% = 1,440<br/>
+        ──────────────────────<br/>
+        <strong style="color:var(--txt)">कुल = ₹18,880</strong>
+      </div>
+    </div>
+    <div>
+      <div class="card-hd">✅ AI Extracted — High Confidence</div>
+      <div class="extracted-field"><span class="ef-label">Supplier</span><span class="ef-val">Raj Suppliers</span></div>
+      <div class="extracted-field"><span class="ef-label">GSTIN</span><span class="ef-val" style="font-size:10px">07AABCR1234F1Z5</span></div>
+      <div class="extracted-field"><span class="ef-label">Invoice No</span><span class="ef-val">1234</span></div>
+      <div class="extracted-field"><span class="ef-label">Date</span><span class="ef-val">15/06/2025</span></div>
+      <div class="extracted-field"><span class="ef-label">Taxable Value</span><span class="ef-val">₹16,000</span></div>
+      <div class="extracted-field"><span class="ef-label">CGST 9%</span><span class="ef-val">₹1,440</span></div>
+      <div class="extracted-field"><span class="ef-label">SGST 9%</span><span class="ef-val">₹1,440</span></div>
+      <div class="extracted-field"><span class="ef-label">Total</span><span class="ef-val" style="font-size:13px">₹18,880</span></div>
+      <div style="margin-top:8px;padding:8px 10px;background:rgba(45,216,130,.06);border:1px solid rgba(45,216,130,.15);border-radius:6px;font-size:11px;color:var(--grn)">🇮🇳 Hindi detected · 0 fields need verification · Ready for reconciliation</div>
+    </div>
+  </div>
+  <div class="card" style="margin-top:14px">
+    <div class="card-hd">🔥 Try it live — upload your own bill</div>
+    <p style="color:var(--t2);font-size:12px;margin-bottom:12px">Upload a real bill photo to see AI extraction in action. Requires free account.</p>
+    <button class="btn btn-i" onclick="window.open('https://gstagent.vercel.app/signup','_blank')">Create Free Account to Try Live →</button>
+  </div>
+</div>
+
+<!-- ITR FILING -->
+<div class="section" id="sec-itr">
+  <div class="info-box">📋 Supports ITR-1 (Salaried), ITR-2 (Capital Gains), ITR-3 (Business), ITR-4 (Presumptive), ITR-7 (Trusts). Auto old vs new regime comparison.</div>
+  <div class="card">
+    <div class="card-hd">🧮 Live Tax Calculator — Old vs New Regime</div>
+    <div class="grid2">
+      <div class="fg"><label>ITR Type</label>
+        <select id="itr-type">
+          <option>ITR-1 (Salaried)</option>
+          <option>ITR-2 (Capital Gains)</option>
+          <option>ITR-3 (Business)</option>
+          <option>ITR-4 (Presumptive)</option>
+        </select>
+      </div>
+      <div class="fg"><label>Annual Income (₹)</label><input type="number" id="inc" value="1200000"/></div>
+      <div class="fg"><label>Section 80C (₹)</label><input type="number" id="c80c" value="150000"/></div>
+      <div class="fg"><label>TDS Deducted (₹)</label><input type="number" id="tds-amt" value="85000"/></div>
+    </div>
+    <button class="btn btn-i" onclick="calcITR()">Compare Regimes →</button>
+    <div id="itr-result" style="display:none">
+      <div class="regime-grid">
+        <div class="regime-c" id="old-rc">
+          <div class="regime-lbl">Old Regime</div>
+          <div class="regime-tax" id="old-t" style="color:var(--amb)">₹0</div>
+          <div style="font-size:11px;color:var(--t3)">Tax Payable</div>
+          <div id="old-r" style="font-size:11px;color:var(--t2);margin-top:4px"></div>
+        </div>
+        <div class="regime-c" id="new-rc">
+          <div class="regime-lbl">New Regime</div>
+          <div class="regime-tax" id="new-t" style="color:var(--grn)">₹0</div>
+          <div style="font-size:11px;color:var(--t3)">Tax Payable</div>
+          <div id="new-r" style="font-size:11px;color:var(--t2);margin-top:4px"></div>
+        </div>
+      </div>
+      <div id="itr-rec" style="margin-top:12px;padding:12px;border-radius:8px;text-align:center;font-size:13px;font-weight:600"></div>
+    </div>
+  </div>
+</div>
+
+<!-- FORM 26AS -->
+<div class="section" id="sec-form26as">
+  <div class="info-box">📑 Reconcile Form 26AS vs AIS vs Books. Detect TDS mismatches before filing ITR. Avoid demands.</div>
+  <div class="stats">
+    <div class="stat"><div class="stat-v" style="color:var(--txt)">₹2,45,000</div><div class="stat-l">Total 26AS TDS</div></div>
+    <div class="stat"><div class="stat-v" style="color:var(--amb)">₹2,38,500</div><div class="stat-l">AIS TDS</div></div>
+    <div class="stat"><div class="stat-v" style="color:var(--red)">3</div><div class="stat-l">Mismatches</div></div>
+    <div class="stat"><div class="stat-v" style="color:var(--red)">₹6,500</div><div class="stat-l">Difference</div></div>
+  </div>
+  <div class="card">
+    <div class="card-hd">⚠️ TDS Mismatches Detected</div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Deductor</th><th>Section</th><th>26AS TDS</th><th>AIS TDS</th><th>Difference</th><th>Action</th></tr></thead>
+        <tbody>
+          <tr><td>ABC Pvt Ltd</td><td style="font-family:var(--m)">192</td><td>₹60,000</td><td>₹55,000</td><td style="color:var(--amb);font-weight:700">-₹5,000</td><td style="font-size:11px;color:var(--ind2)">Verify with employer</td></tr>
+          <tr><td>Demo Bank</td><td style="font-family:var(--m)">194A</td><td>₹2,500</td><td>₹1,000</td><td style="color:var(--amb);font-weight:700">-₹1,500</td><td style="font-size:11px;color:var(--ind2)">Check interest certificate</td></tr>
+          <tr><td>XYZ Builders</td><td style="font-family:var(--m)">194C</td><td>₹0</td><td>₹0</td><td style="color:var(--grn);font-weight:700">₹0</td><td style="font-size:11px;color:var(--t3)">Matched</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- TDS RETURNS -->
+<div class="section" id="sec-tds">
+  <div class="info-box">🧾 Manage TDS returns 24Q (salary) and 26Q (non-salary). Track challans, deductees, filing status.</div>
+  <div class="stats">
+    <div class="stat"><div class="stat-v" style="color:var(--grn)">8</div><div class="stat-l">Filed Returns</div></div>
+    <div class="stat"><div class="stat-v" style="color:var(--amb)">3</div><div class="stat-l">Pending</div></div>
+    <div class="stat"><div class="stat-v" style="color:var(--txt)">₹12.4L</div><div class="stat-l">TDS Deducted</div></div>
+    <div class="stat"><div class="stat-v" style="color:var(--grn)">₹12.4L</div><div class="stat-l">TDS Deposited</div></div>
+  </div>
+  <div class="card">
+    <div class="card-hd">📋 TDS Return Status</div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Client</th><th>TAN</th><th>Form</th><th>Quarter</th><th>Due Date</th><th>Deductees</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>Mehta Industries</td><td style="font-family:var(--m);font-size:10px">DELM12345B</td><td>24Q</td><td>Q1 FY26</td><td>31 Jul 2025</td><td>45</td><td><span class="b b-a">Pending</span></td></tr>
+          <tr><td>Sharma Traders</td><td style="font-family:var(--m);font-size:10px">DELS67890C</td><td>26Q</td><td>Q4 FY25</td><td>31 May 2025</td><td>12</td><td><span class="b b-g">Filed</span></td></tr>
+          <tr><td>Patel Enterprises</td><td style="font-family:var(--m);font-size:10px">DELP11223D</td><td>26Q</td><td>Q1 FY26</td><td>31 Jul 2025</td><td>8</td><td><span class="b b-i">Draft</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-hd">📅 Due Date Calendar</div>
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">
+      <div style="background:var(--s2);border-radius:8px;padding:12px;font-size:12px"><div style="font-weight:700;color:var(--amb);margin-bottom:4px">Q1 — 31 Jul 2025</div><div style="color:var(--t3)">Apr–Jun 2025 · 24Q + 26Q</div></div>
+      <div style="background:var(--s2);border-radius:8px;padding:12px;font-size:12px"><div style="font-weight:700;color:var(--t2);margin-bottom:4px">Q2 — 31 Oct 2025</div><div style="color:var(--t3)">Jul–Sep 2025 · 24Q + 26Q</div></div>
+      <div style="background:var(--s2);border-radius:8px;padding:12px;font-size:12px"><div style="font-weight:700;color:var(--t2);margin-bottom:4px">Q3 — 31 Jan 2026</div><div style="color:var(--t3)">Oct–Dec 2025 · 24Q + 26Q</div></div>
+      <div style="background:var(--s2);border-radius:8px;padding:12px;font-size:12px"><div style="font-weight:700;color:var(--t2);margin-bottom:4px">Q4 — 31 May 2026</div><div style="color:var(--t3)">Jan–Mar 2026 · 24Q + 26Q</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- TAX AUDIT -->
+<div class="section" id="sec-audit">
+  <div class="info-box">🔍 Tax Audit reports 3CA/3CB/3CD. Auto-observations for disallowances. Due 30 September.</div>
+  <div class="stats">
+    <div class="stat"><div class="stat-v" style="color:var(--txt)">6</div><div class="stat-l">Total Audits</div></div>
+    <div class="stat"><div class="stat-v" style="color:var(--amb)">4</div><div class="stat-l">In Progress</div></div>
+    <div class="stat"><div class="stat-v" style="color:var(--grn)">2</div><div class="stat-l">Filed</div></div>
+    <div class="stat"><div class="stat-v" style="color:var(--red)">Sep 30</div><div class="stat-l">Due Date</div></div>
+  </div>
+  <div class="card">
+    <div class="card-hd">📋 Form 3CD — Auto Observations</div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div style="background:rgba(255,79,79,.06);border:1px solid rgba(255,79,79,.15);border-radius:8px;padding:12px;font-size:12px">
+        <div style="font-weight:700;color:var(--red);margin-bottom:4px">⚠️ Clause 30 — Cash Payments Above ₹20,000</div>
+        <div style="color:var(--t2)">Cash payments of ₹3,45,000 detected. Disallowable under Section 40A(3). Impact: ₹1,03,500 tax liability.</div>
+      </div>
+      <div style="background:rgba(255,181,71,.06);border:1px solid rgba(255,181,71,.15);border-radius:8px;padding:12px;font-size:12px">
+        <div style="font-weight:700;color:var(--amb);margin-bottom:4px">⚠️ Clause 34 — TDS Default</div>
+        <div style="color:var(--t2)">TDS not deducted on professional fees of ₹2,80,000. Disallowance under Section 40(a)(ia) may apply.</div>
+      </div>
+      <div style="background:rgba(45,216,130,.06);border:1px solid rgba(45,216,130,.15);border-radius:8px;padding:12px;font-size:12px">
+        <div style="font-weight:700;color:var(--grn);margin-bottom:4px">✅ Clause 40 — Turnover</div>
+        <div style="color:var(--t2)">Gross receipts ₹1.85 Cr. Net profit ratio 11.2%. Above 8% threshold — no scrutiny risk.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- NOTICES -->
+<div class="section" id="sec-notices">
+  <div class="card">
+    <div class="card-hd">✍️ AI Notice Reply Generator</div>
+    <div class="fg"><label>Notice Type</label>
+      <select id="n-type">
+        <option>ASMT-10 (Scrutiny)</option>
+        <option>DRC-01 (Demand Notice)</option>
+        <option>REG-03 (Registration)</option>
+        <option>CMP-05 (Composition)</option>
+        <option>GSTR-3A (Non-filing)</option>
+      </select>
+    </div>
+    <div class="fg"><label>Brief Details (optional)</label>
+      <textarea id="n-detail" rows="2" placeholder="e.g. Mismatch in GSTR-3B vs GSTR-1 for Q3, difference ₹45,000"></textarea>
+    </div>
+    <button class="btn btn-i" onclick="genNotice()">Generate AI Draft →</button>
+    <div id="n-result" style="display:none;margin-top:14px">
+      <div class="card-hd">📄 Draft Reply</div>
+      <div class="result-box" id="n-draft"></div>
+      <div style="margin-top:8px;font-size:11px;color:var(--t3)">⚡ AI generated · Review before submitting on GST portal</div>
+    </div>
+  </div>
+</div>
+
+<!-- CLIENTS -->
+<div class="section" id="sec-clients">
+  <div class="stats">
+    <div class="stat"><div class="stat-v" style="color:var(--grn)">47</div><div class="stat-l">Total Clients</div></div>
+    <div class="stat"><div class="stat-v" style="color:var(--grn)">31</div><div class="stat-l">All Clear</div></div>
+    <div class="stat"><div class="stat-v" style="color:var(--amb)">12</div><div class="stat-l">Action Needed</div></div>
+    <div class="stat"><div class="stat-v" style="color:var(--red)">4</div><div class="stat-l">Notice Received</div></div>
+  </div>
+  <div class="card">
+    <div class="card-hd">👥 Client List</div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Client</th><th>GSTIN</th><th>Type</th><th>Pending</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Mehta Industries Pvt Ltd</strong></td><td style="font-family:var(--m);font-size:10px">27AABCM5678G2Z3</td><td>Pvt Ltd</td><td>GSTR-1, GSTR-3B</td><td><span class="b b-a">Action Needed</span></td></tr>
+          <tr><td><strong>Sharma Traders</strong></td><td style="font-family:var(--m);font-size:10px">27AABCS1234F1Z5</td><td>Proprietorship</td><td>Notice Reply</td><td><span class="b b-r">Notice</span></td></tr>
+          <tr><td><strong>Patel Enterprises</strong></td><td style="font-family:var(--m);font-size:10px">24AABCP9012H3Z1</td><td>Partnership</td><td>None</td><td><span class="b b-g">All Clear</span></td></tr>
+          <tr><td><strong>Gupta & Sons</strong></td><td style="font-family:var(--m);font-size:10px">07AABCG3456J4Z9</td><td>HUF</td><td>GSTR-3B, ITR</td><td><span class="b b-a">Pending</span></td></tr>
+          <tr><td><strong>Verma Chemicals</strong></td><td style="font-family:var(--m);font-size:10px">19AABCV7890K5Z7</td><td>Pvt Ltd</td><td>GSTR-9</td><td><span class="b b-i">Annual Return</span></td></tr>
+          <tr><td><strong>Singh Associates</strong></td><td style="font-family:var(--m);font-size:10px">06AABCS2468L6Z2</td><td>LLP</td><td>None</td><td><span class="b b-g">All Clear</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- COMPLIANCE -->
+<div class="section" id="sec-compliance">
+  <div class="stats">
+    <div class="stat"><div class="stat-v" style="color:var(--grn)">89%</div><div class="stat-l">Compliance Rate</div></div>
+    <div class="stat"><div class="stat-v" style="color:var(--amb)">7</div><div class="stat-l">Due This Week</div></div>
+    <div class="stat"><div class="stat-v" style="color:var(--red)">3</div><div class="stat-l">Overdue</div></div>
+    <div class="stat"><div class="stat-v" style="color:var(--grn)">156</div><div class="stat-l">Filed This Year</div></div>
+  </div>
+  <div class="card">
+    <div class="card-hd">📅 GST Filing Calendar — July 2025</div>
+    <div class="timeline">
+      <div class="tl-item"><div class="tl-dot tl-dot-r"></div><div class="tl-title" style="color:var(--red)">11 Jul — GSTR-1 Due (Mehta Industries) ⚠️ Overdue</div><div class="tl-sub">Monthly filers · Outward supplies</div></div>
+      <div class="tl-item"><div class="tl-dot tl-dot-a"></div><div class="tl-title">13 Jul — GSTR-1 IFF Due</div><div class="tl-sub">Quarterly filers · Invoice Furnishing Facility</div></div>
+      <div class="tl-item"><div class="tl-dot tl-dot-a"></div><div class="tl-title">20 Jul — GSTR-3B Due (5 clients)</div><div class="tl-sub">Monthly return · Tax payment</div></div>
+      <div class="tl-item"><div class="tl-dot tl-dot-a"></div><div class="tl-title">31 Jul — TDS Returns Due (Q1)</div><div class="tl-sub">24Q + 26Q for Apr–Jun 2025</div></div>
+      <div class="tl-item"><div class="tl-dot tl-dot-a"></div><div class="tl-title">31 Jul — ITR Filing Due</div><div class="tl-sub">Non-audit cases · Individuals and firms</div></div>
+      <div class="tl-item"><div class="tl-dot tl-dot-g"></div><div class="tl-title" style="color:var(--grn)">GSTR-2B Available — 14 Jul</div><div class="tl-sub">Auto-reconciliation will run automatically</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- TASKS -->
+<div class="section" id="sec-tasks">
+  <div class="stats">
+    <div class="stat"><div class="stat-v" style="color:var(--txt)">34</div><div class="stat-l">Total Tasks</div></div>
+    <div class="stat"><div class="stat-v" style="color:var(--grn)">18</div><div class="stat-l">Completed</div></div>
+    <div class="stat"><div class="stat-v" style="color:var(--amb)">12</div><div class="stat-l">In Progress</div></div>
+    <div class="stat"><div class="stat-v" style="color:var(--red)">4</div><div class="stat-l">Overdue</div></div>
+  </div>
+  <div class="card">
+    <div class="card-hd">✅ Tasks</div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Task</th><th>Client</th><th>Assigned To</th><th>Due</th><th>Priority</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>File GSTR-1</td><td>Mehta Industries</td><td>Rahul</td><td>11 Jul</td><td><span class="b b-r">High</span></td><td><span class="b b-r">Overdue</span></td></tr>
+          <tr><td>ASMT-10 Reply</td><td>Sharma Traders</td><td>Priya</td><td>18 Jul</td><td><span class="b b-r">High</span></td><td><span class="b b-a">In Progress</span></td></tr>
+          <tr><td>ITR-3 Preparation</td><td>Gupta & Sons</td><td>Amit</td><td>25 Jul</td><td><span class="b b-a">Medium</span></td><td><span class="b b-a">In Progress</span></td></tr>
+          <tr><td>26AS Reconciliation</td><td>Verma Chemicals</td><td>Rahul</td><td>20 Jul</td><td><span class="b b-a">Medium</span></td><td><span class="b b-i">Not Started</span></td></tr>
+          <tr><td>File GSTR-3B</td><td>Patel Enterprises</td><td>Priya</td><td>20 Jul</td><td><span class="b b-g">Low</span></td><td><span class="b b-g">Done</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- BILLING -->
+<div class="section" id="sec-billing">
+  <div class="stats">
+    <div class="stat"><div class="stat-v" style="color:var(--grn)">₹2.8L</div><div class="stat-l">This Month</div></div>
+    <div class="stat"><div class="stat-v" style="color:var(--amb)">₹45,000</div><div class="stat-l">Pending</div></div>
+    <div class="stat"><div class="stat-v" style="color:var(--txt)">23</div><div class="stat-l">Invoices Raised</div></div>
+    <div class="stat"><div class="stat-v" style="color:var(--red)">4</div><div class="stat-l">Overdue</div></div>
+  </div>
+  <div class="card">
+    <div class="card-hd">💰 Recent Invoices</div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Invoice</th><th>Client</th><th>Services</th><th>Amount</th><th>Due Date</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td style="font-family:var(--m);font-size:10px">INV-2025-047</td><td>Mehta Industries</td><td>GST Filing + Recon</td><td style="font-family:var(--m)">₹12,000</td><td>15 Jul</td><td><span class="b b-a">Pending</span></td></tr>
+          <tr><td style="font-family:var(--m);font-size:10px">INV-2025-046</td><td>Patel Enterprises</td><td>ITR Filing</td><td style="font-family:var(--m)">₹8,500</td><td>10 Jul</td><td><span class="b b-g">Paid</span></td></tr>
+          <tr><td style="font-family:var(--m);font-size:10px">INV-2025-045</td><td>Sharma Traders</td><td>Notice Reply</td><td style="font-family:var(--m)">₹5,000</td><td>5 Jul</td><td><span class="b b-r">Overdue</span></td></tr>
+          <tr><td style="font-family:var(--m);font-size:10px">INV-2025-044</td><td>Gupta & Sons</td><td>Tax Audit 3CB/3CD</td><td style="font-family:var(--m)">₹25,000</td><td>30 Jul</td><td><span class="b b-i">Draft</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- CTA -->
+<div class="cta-section">
+  <h2 style="font-size:24px;font-weight:800;letter-spacing:-.03em;margin-bottom:10px">Ready to save 10+ hours every week?</h2>
+  <p style="color:var(--t2);margin-bottom:22px;font-size:14px">Join CA firms across India automating GST + Income Tax work with GSTAgent.</p>
+  <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+    <button class="btn-hero-p" onclick="window.open('https://gstagent.vercel.app/signup','_blank')" style="font-size:14px;padding:12px 26px">🚀 Start Free 14-Day Trial</button>
+    <button class="btn-hero-s" onclick="window.open('https://gstagent.vercel.app/login','_blank')" style="font-size:14px;padding:12px 26px">Already have account →</button>
+  </div>
+  <div style="margin-top:14px;font-size:11px;color:var(--t3)">₹1,500/month after trial · No credit card · WhatsApp: +91 XXXXX XXXXX</div>
+</div>
+
+</div><!-- end content -->
+
+<script>
+function showTab(name, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('sec-' + name).classList.add('active');
+}
+
+// ITR Calculator
+function calcOld(t) {
+  if(t<=250000)return 0;
+  if(t<=500000)return(t-250000)*.05;
+  if(t<=1000000)return 12500+(t-500000)*.2;
+  return 112500+(t-1000000)*.3;
+}
+function calcNew(t) {
+  const s=[[300000,0],[600000,.05],[900000,.1],[1200000,.15],[1500000,.2],[Infinity,.3]];
+  let tax=0,p=0;
+  for(const[l,r]of s){if(t<=l){tax+=(t-p)*r;break;}tax+=(l-p)*r;p=l;}
+  if(t<=700000)tax=Math.max(0,tax-25000);
+  return tax;
+}
+function calcITR() {
+  const inc=+document.getElementById('inc').value||0;
+  const c80c=+document.getElementById('c80c').value||0;
+  const tds=+document.getElementById('tds-amt').value||0;
+  const std=50000;
+  const oldTax=(calcOld(Math.max(0,inc-std-Math.min(c80c,150000)))*1.04);
+  const newTax=(calcNew(Math.max(0,inc-std))*1.04);
+  const oldP=Math.max(0,oldTax-tds);
+  const newP=Math.max(0,newTax-tds);
+  const oldR=Math.max(0,tds-oldTax);
+  const newR=Math.max(0,tds-newTax);
+  document.getElementById('old-t').textContent='₹'+Math.round(oldP).toLocaleString('en-IN');
+  document.getElementById('new-t').textContent='₹'+Math.round(newP).toLocaleString('en-IN');
+  document.getElementById('old-r').textContent=oldR>0?'Refund: ₹'+Math.round(oldR).toLocaleString('en-IN'):'';
+  document.getElementById('new-r').textContent=newR>0?'Refund: ₹'+Math.round(newR).toLocaleString('en-IN'):'';
+  document.getElementById('old-rc').classList.remove('best');
+  document.getElementById('new-rc').classList.remove('best');
+  const saving=Math.abs(Math.round(oldTax-newTax));
+  const rec=newTax<=oldTax?'New':'Old';
+  document.getElementById(rec.toLowerCase()+'-rc').classList.add('best');
+  const recEl=document.getElementById('itr-rec');
+  recEl.style.background=`rgba(45,216,130,.06)`;
+  recEl.style.border=`1px solid rgba(45,216,130,.2)`;
+  recEl.style.color=`var(--grn)`;
+  recEl.textContent=`✅ ${rec} Regime recommended — saves ₹${saving.toLocaleString('en-IN')} in tax`;
+  document.getElementById('itr-result').style.display='block';
+}
+
+// Notice Generator
+const ntpl={
+  'ASMT-10 (Scrutiny)':(d)=>`To,\nThe Proper Officer, GST Department\n\nSubject: Reply to ASMT-10 Notice\n\nRespected Sir/Madam,\n\nWith reference to the notice issued, we submit our reply:\n\n1. All GST returns for the relevant period have been filed on time.\n\n2. ${d||'The discrepancy noticed arises from timing differences in accounting entries. Taxable values in books are correctly reflected in GSTR-1 and GSTR-3B.'}\n\n3. Documents enclosed:\n   a) Books extract for relevant period\n   b) GSTR-1 vs GSTR-3B reconciliation\n   c) Bank statements\n\nWe request the Authority to kindly drop the proceedings.\n\nYours faithfully,\n[Authorized Signatory]`,
+  'DRC-01 (Demand Notice)':(d)=>`To,\nThe Proper Officer, GST Department\n\nSubject: Reply to DRC-01 Show Cause Notice\n\nRespected Sir/Madam,\n\nIn response to the Show Cause Notice:\n\n1. The demand appears to be based on ${d||'alleged mismatch in tax payments'}.\n\n2. We submit that our GST liability has been correctly discharged. Any difference is due to eligible ITC legally available under Section 16.\n\n3. After considering eligible ITC, the correct tax liability is NIL.\n\nWe request the Authority to drop the demand.\n\nEnclosures: Reconciliation, ITC ledger, Challan copies\n\nYours faithfully,\n[Authorized Signatory]`,
+  'REG-03 (Registration)':(d)=>`To,\nThe Proper Officer, GST Registration\n\nSubject: Reply to REG-03 Query\n\nRespected Sir/Madam,\n\n${d||'All documents submitted with the registration application are genuine and complete. Our business premises are legally occupied as per documents submitted.'}\n\nWe request early approval of our registration.\n\nYours faithfully,\n[Authorized Signatory]`,
+  'CMP-05 (Composition)':(d)=>`To,\nThe Proper Officer, GST Department\n\nSubject: Reply to CMP-05 Notice\n\nRespected Sir/Madam,\n\nWe have correctly opted for the Composition Scheme as our aggregate turnover is within the prescribed limit of ₹1.5 Crore.\n\n${d||'All CMP-08 quarterly returns have been filed and tax paid on time.'}\n\nWe request the Authority to close the proceedings.\n\nYours faithfully,\n[Authorized Signatory]`,
+  'GSTR-3A (Non-filing)':(d)=>`To,\nThe Proper Officer, GST Department\n\nSubject: Reply to GSTR-3A Notice for Non-filing\n\nRespected Sir/Madam,\n\nWith reference to the notice for non-filing of returns:\n\n${d||'The delay in filing was due to technical difficulties on the GST portal and reconciliation requirements. We have since filed all pending returns and paid applicable late fees and interest.'}\n\nAll pending returns are now filed. We request the notice to be withdrawn.\n\nYours faithfully,\n[Authorized Signatory]`
+};
+function genNotice() {
+  const t=document.getElementById('n-type').value;
+  const d=document.getElementById('n-detail').value;
+  document.getElementById('n-draft').textContent=ntpl[t]?ntpl[t](d):'Draft generated.';
+  document.getElementById('n-result').style.display='block';
+  document.getElementById('n-result').scrollIntoView({behavior:'smooth'});
+}
+</script>
+</body>
+</html>
