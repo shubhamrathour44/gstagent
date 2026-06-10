@@ -39,6 +39,7 @@ input::placeholder{color:#334155}
   <input type="password" id="pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')login()"/>
   <button class="btn" onclick="login()" id="btn">Sign In →</button>
   <div class="link">Don't have an account? <a href="/signup">Sign up free</a></div>
+  <div class="link" style="margin-top:8px"><a href="/forgot-password.html">Forgot Password?</a></div>
   <div class="link" style="margin-top:8px"><a href="/">← Back to home</a></div>
 </div>
 <script>
@@ -59,7 +60,6 @@ async function login(){
     window.location.href='/app';
   }catch(e){err.style.display='block';err.textContent=e.message;btn.disabled=false;btn.textContent='Sign In →';}
 }
-// Redirect if already logged in
 if(localStorage.getItem('gstagent_token')) window.location.href='/app';
 </script>
 </body>
