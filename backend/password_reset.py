@@ -13,7 +13,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 import secrets, os, hashlib
 
 from database import Base, get_db, new_id
-from auth import get_password_hash, get_current_user, CurrentUser
+from auth import hash_password, get_current_user, CurrentUser
 
 router = APIRouter(prefix="/auth", tags=["Password Reset"])
 
@@ -219,7 +219,7 @@ async def reset_password(
     if not user:
         raise HTTPException(404, "User not found")
 
-    user.hashed_password = get_password_hash(req.new_password)
+    user.hashed_password = hash_password(req.new_password)
     token.used = True
     await db.commit()
 
@@ -246,7 +246,7 @@ async def change_password(
     if not verify_password(req.current_password, user.hashed_password):
         raise HTTPException(400, "Current password is incorrect")
 
-    user.hashed_password = get_password_hash(req.new_password)
+    user.hashed_password = hash_password(req.new_password)
     await db.commit()
 
     return {"message": "Password changed successfully."}
