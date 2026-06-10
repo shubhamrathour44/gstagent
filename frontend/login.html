@@ -3,33 +3,51 @@
 <head>
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>Sign In — TaxSphere</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400&display=swap"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'DM Sans',sans-serif;background:#07090F;color:#E2E8F0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
-.bg{position:fixed;inset:0;background-image:radial-gradient(circle at 1px 1px,rgba(99,102,241,.07) 1px,transparent 0);background-size:40px 40px;pointer-events:none}
-.card{background:#0D1117;border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:36px;width:100%;max-width:420px;box-shadow:0 40px 80px rgba(0,0,0,.5);position:relative;z-index:1}
-.logo{display:flex;align-items:center;gap:9px;margin-bottom:28px}
-.lm{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,#6366F1,#8B5CF6);display:flex;align-items:center;justify-content:center;font-size:15px}
-.lt{font-family:'Instrument Serif',serif;font-size:19px}
-h2{font-family:'Instrument Serif',serif;font-size:26px;letter-spacing:-.02em;margin-bottom:6px}
-p{color:#64748B;font-size:13px;margin-bottom:24px}
-label{display:block;font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px}
-input{width:100%;background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.1);border-radius:10px;padding:11px 13px;color:#E2E8F0;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .15s;margin-bottom:16px}
-input:focus{border-color:#6366F1}
-input::placeholder{color:#334155}
-.btn{width:100%;background:#6366F1;color:#fff;border:none;border-radius:10px;padding:12px;font-size:15px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .15s;margin-top:4px}
-.btn:hover{background:#5254CC;transform:translateY(-1px)}
+body{font-family:'Inter',sans-serif;background:#070B12;color:#F0F4FF;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.bg{position:fixed;inset:0;background-image:radial-gradient(circle at 1px 1px,rgba(26,63,170,.06) 1px,transparent 0);background-size:40px 40px;pointer-events:none}
+.card{background:#0C1118;border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:36px;width:100%;max-width:420px;box-shadow:0 40px 80px rgba(0,0,0,.5);position:relative;z-index:1}
+.logo{display:flex;align-items:center;gap:10px;margin-bottom:28px}
+.logo-svg{width:36px;height:36px}
+.brand{display:flex;flex-direction:column}
+.brand-name{font-size:18px;font-weight:800;letter-spacing:-.03em}
+.brand-name span{color:#22C55E}
+.brand-tag{font-size:10px;color:#3D5070;margin-top:1px}
+h2{font-size:26px;font-weight:800;letter-spacing:-.03em;margin-bottom:6px}
+p{color:#4A5E7A;font-size:13px;margin-bottom:24px}
+label{display:block;font-size:10px;font-weight:700;color:#3D5070;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px}
+input{width:100%;background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.1);border-radius:10px;padding:11px 13px;color:#F0F4FF;font-size:14px;font-family:'Inter',sans-serif;outline:none;transition:border-color .15s;margin-bottom:16px}
+input:focus{border-color:#2B5CE6}
+input::placeholder{color:#3D5070}
+.btn{width:100%;background:linear-gradient(135deg,#1A3FAA,#2B5CE6);color:#fff;border:none;border-radius:10px;padding:12px;font-size:15px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;transition:all .15s;margin-top:4px;box-shadow:0 2px 12px rgba(26,63,170,.4)}
+.btn:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(26,63,170,.5)}
 .btn:disabled{opacity:.6;cursor:not-allowed;transform:none}
-.err{color:#FCA5A5;font-size:13px;padding:9px 12px;background:rgba(239,68,68,.08);border-radius:8px;margin-bottom:14px}
-.link{text-align:center;font-size:13px;color:#475569;margin-top:18px}
-.link a{color:#818CF8;text-decoration:none;font-weight:600}
+.err{color:#F87171;font-size:13px;padding:9px 12px;background:rgba(239,68,68,.08);border-radius:8px;margin-bottom:14px;border:1px solid rgba(239,68,68,.2)}
+.link{text-align:center;font-size:13px;color:#4A5E7A;margin-top:16px}
+.link a{color:#4B7BFF;text-decoration:none;font-weight:600}
 </style>
 </head>
 <body>
 <div class="bg"></div>
 <div class="card">
-  <div class="logo"><div class="lm">⚡</div><span class="lt">TaxSphere</span></div>
+  <div class="logo">
+    <svg class="logo-svg" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="18" cy="18" r="17" fill="url(#g1)" opacity=".15" stroke="url(#g1)" stroke-width="1.5"/>
+      <rect x="8" y="22" width="3" height="6" rx="1" fill="#1A3FAA"/>
+      <rect x="12" y="19" width="3" height="9" rx="1" fill="#1A3FAA"/>
+      <rect x="16" y="16" width="3" height="12" rx="1" fill="#2B5CE6"/>
+      <rect x="20" y="13" width="3" height="15" rx="1" fill="#2B5CE6"/>
+      <polyline points="8,22 12,19 16,16 20,13 26,9" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      <polygon points="26,9 22,9 26,13" fill="#22C55E"/>
+      <defs><linearGradient id="g1" x1="0" y1="0" x2="36" y2="36"><stop offset="0%" stop-color="#1A3FAA"/><stop offset="100%" stop-color="#22C55E"/></linearGradient></defs>
+    </svg>
+    <div class="brand">
+      <div class="brand-name">Tax<span>Sphere</span></div>
+      <div class="brand-tag">One Platform. Complete Tax & Compliance.</div>
+    </div>
+  </div>
   <h2>Welcome back</h2>
   <p>Sign in to your CA workspace</p>
   <div id="err" class="err" style="display:none"></div>
@@ -43,7 +61,7 @@ input::placeholder{color:#334155}
   <div class="link" style="margin-top:8px"><a href="/">← Back to home</a></div>
 </div>
 <script>
-const API = "https://TaxSphere-production.up.railway.app";
+const API="https://gstagent-production.up.railway.app";
 async function login(){
   const email=document.getElementById('email').value;
   const pass=document.getElementById('pass').value;
@@ -55,12 +73,12 @@ async function login(){
     const res=await fetch(API+'/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pass})});
     const data=await res.json();
     if(!res.ok)throw new Error(data.detail||'Login failed');
-    localStorage.setItem('TaxSphere_token',data.access_token);
-    localStorage.setItem('TaxSphere_user',JSON.stringify(data));
+    localStorage.setItem('gstagent_token',data.access_token);
+    localStorage.setItem('gstagent_user',JSON.stringify(data));
     window.location.href='/app';
   }catch(e){err.style.display='block';err.textContent=e.message;btn.disabled=false;btn.textContent='Sign In →';}
 }
-if(localStorage.getItem('TaxSphere_token')) window.location.href='/app';
+if(localStorage.getItem('gstagent_token')) window.location.href='/app';
 </script>
 </body>
 </html>
