@@ -20,6 +20,7 @@ from reconciliation.router import router as reconciliation_router
 from bill_reader.router import router as bill_reader_router
 from itr.router import router as itr_router
 from password_reset import router as password_reset_router
+from ai_agent_router import router as ai_agent_router
 
 
 logging.basicConfig(level=logging.INFO)
@@ -110,6 +111,7 @@ app.include_router(reconciliation_router)
 app.include_router(bill_reader_router)
 app.include_router(itr_router)
 app.include_router(password_reset_router)
+app.include_router(ai_agent_router)
 
 
 if __name__ == "__main__":
