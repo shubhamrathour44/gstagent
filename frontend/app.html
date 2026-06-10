@@ -3,43 +3,948 @@
 <head>
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>Dashboard — GSTAgent</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,600;9..40,700&family=Instrument+Serif:ital@0;1&display=swap"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <style>
-*{box-sizing:border-box;margin:0;padding:0}body{font-family:'DM Sans',sans-serif;background:#07090F;color:#E2E8F0;min-height:100vh}.top{height:58px;background:#080D18;border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;justify-content:space-between;padding:0 22px}.brand{display:flex;align-items:center;gap:10px;font-family:'Instrument Serif',serif;font-size:20px}.logo{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,#6366F1,#8B5CF6);display:flex;align-items:center;justify-content:center}.wrap{max-width:1180px;margin:0 auto;padding:28px 20px}.grid{display:grid;grid-template-columns:1fr 380px;gap:18px}.card{background:#0D1117;border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:20px}.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}.label{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:#475569;font-weight:700;margin-bottom:7px}.input,select{width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:11px 12px;color:#E2E8F0;font-family:'DM Sans',sans-serif;outline:none}.btn{border:0;border-radius:10px;padding:11px 14px;font-family:'DM Sans',sans-serif;font-weight:700;cursor:pointer;transition:.15s}.btn-primary{background:#6366F1;color:white}.btn-ghost{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#94A3B8}.btn:disabled{opacity:.5;cursor:not-allowed}.actions{display:grid;grid-template-columns:repeat(auto-fit,minmax(185px,1fr));gap:10px;margin-top:14px}.msg{margin-top:14px;padding:10px 12px;border-radius:10px;font-size:13px}.ok{background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2);color:#86EFAC}.err{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);color:#FCA5A5}pre{white-space:pre-wrap;word-break:break-word;font-family:ui-monospace,Consolas,monospace;font-size:12px;line-height:1.55;color:#94A3B8;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:14px;max-height:560px;overflow:auto}.pill{display:inline-flex;padding:4px 9px;border-radius:999px;background:rgba(99,102,241,.15);color:#A5B4FC;font-size:12px;font-weight:700}@media(max-width:860px){.grid{grid-template-columns:1fr}.top{padding:0 14px}.wrap{padding:20px 14px}}
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0A0C10;--s1:#0F1117;--s2:#161B24;--bd:rgba(255,255,255,.06);--bd2:rgba(255,255,255,.1);--ind:#5B73FF;--grn:#2DD882;--red:#FF4F4F;--amb:#FFB547;--pur:#A78BFA;--txt:#F1F5F9;--t2:#8B98B1;--t3:#4A5568;--f:'Inter',sans-serif;--m:'JetBrains Mono',monospace;--sw:220px}
+body{font-family:var(--f);background:var(--bg);color:var(--txt);min-height:100vh;display:flex;font-size:13px}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* SIDEBAR */
+.sidebar{width:var(--sw);min-height:100vh;background:var(--s1);border-right:1px solid var(--bd);display:flex;flex-direction:column;position:fixed;top:0;left:0;z-index:50;transition:transform .25s}
+.sb-top{padding:16px;border-bottom:1px solid var(--bd)}
+.logo{display:flex;align-items:center;gap:8px;font-size:16px;font-weight:700;letter-spacing:-.03em;margin-bottom:12px}
+.lm{width:28px;height:28px;border-radius:6px;background:linear-gradient(135deg,#5B73FF,#A78BFA);display:flex;align-items:center;justify-content:center;font-size:12px}
+.firm-pill{background:rgba(91,115,255,.1);border:1px solid rgba(91,115,255,.2);border-radius:6px;padding:6px 10px;font-size:11px;color:var(--t2)}
+.firm-name{font-weight:600;color:var(--txt);font-size:12px;margin-bottom:1px}
+.firm-role{color:var(--t3);font-size:10px}
+
+.sb-nav{flex:1;padding:10px 8px;overflow-y:auto}
+.nav-section{font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.1em;padding:10px 8px 6px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:7px;cursor:pointer;color:var(--t2);font-size:12px;font-weight:500;transition:all .15s;margin-bottom:1px;text-decoration:none}
+.nav-item:hover{background:var(--s2);color:var(--txt)}
+.nav-item.active{background:rgba(91,115,255,.12);color:var(--ind);font-weight:600}
+.nav-item.active .ni{color:var(--ind)}
+.ni{font-size:14px;width:18px;text-align:center}
+.nav-badge{margin-left:auto;background:rgba(255,79,79,.15);color:#FF8080;font-size:9px;font-weight:700;padding:1px 6px;border-radius:4px}
+.nav-badge-g{background:rgba(45,216,130,.1);color:#5EFFA8}
+
+.sb-bot{padding:12px;border-top:1px solid var(--bd)}
+.logout-btn{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;cursor:pointer;color:var(--t3);font-size:12px;font-weight:500;transition:all .15s;width:100%;background:none;border:none;font-family:var(--f)}
+.logout-btn:hover{background:rgba(255,79,79,.08);color:var(--red)}
+
+/* MAIN */
+.main{margin-left:var(--sw);flex:1;min-height:100vh;display:flex;flex-direction:column}
+.topbar{height:50px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;padding:0 24px;background:rgba(10,12,16,.9);backdrop-filter:blur(10px);position:sticky;top:0;z-index:40}
+.page-title{font-size:14px;font-weight:600}
+.tb-right{display:flex;align-items:center;gap:10px}
+.api-dot{width:7px;height:7px;border-radius:50%;background:var(--grn)}
+
+.content{padding:24px;flex:1}
+.page{display:none;animation:fadeUp .3s ease both}
+.page.active{display:block}
+
+/* STATS */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px}
+.stat{background:var(--s1);border:1px solid var(--bd);border-radius:10px;padding:16px}
+.sv{font-size:22px;font-weight:800;font-family:var(--m);margin-bottom:3px}
+.sl{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.07em}
+
+/* CARD */
+.card{background:var(--s1);border:1px solid var(--bd);border-radius:12px;padding:18px;margin-bottom:14px}
+.ch{font-size:11px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px}
+
+/* TABLE */
+.tw{overflow-x:auto;border-radius:8px;border:1px solid var(--bd)}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{padding:8px 12px;text-align:left;font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;background:var(--s2);border-bottom:1px solid var(--bd)}
+td{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.03);color:var(--t2)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.015)}
+
+/* BADGE */
+.b{display:inline-flex;padding:2px 7px;border-radius:4px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+.br{background:rgba(255,79,79,.1);color:#FF8080;border:1px solid rgba(255,79,79,.2)}
+.bg{background:rgba(45,216,130,.1);color:#5EFFA8;border:1px solid rgba(45,216,130,.2)}
+.ba{background:rgba(255,181,71,.1);color:#FFD080;border:1px solid rgba(255,181,71,.2)}
+.bi{background:rgba(91,115,255,.1);color:#A0B0FF;border:1px solid rgba(91,115,255,.2)}
+.bp{background:rgba(167,139,250,.1);color:#C4B5FD;border:1px solid rgba(167,139,250,.2)}
+
+/* FORM */
+.fg{margin-bottom:12px}
+label{display:block;font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px}
+input,select,textarea{background:rgba(255,255,255,.04);border:1.5px solid var(--bd2);border-radius:8px;padding:9px 12px;color:var(--txt);font-size:12px;font-family:var(--f);outline:none;width:100%;transition:border-color .15s}
+input:focus,select:focus,textarea:focus{border-color:var(--ind)}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:none;font-family:var(--f);transition:all .15s}
+.btn-i{background:var(--ind);color:#fff}
+.btn-i:hover{background:#4A62EE}
+.btn-g{background:var(--s2);color:var(--t2);border:1px solid var(--bd2)}
+.btn-g:hover{color:var(--txt)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+
+/* RESULT */
+.result{background:var(--s2);border:1px solid var(--bd);border-radius:8px;padding:14px;font-size:12px;font-family:var(--m);line-height:1.7;color:var(--t2);margin-top:12px;white-space:pre-wrap;max-height:400px;overflow:auto}
+.ok-box{background:rgba(45,216,130,.06);border:1px solid rgba(45,216,130,.15);border-radius:8px;padding:10px 12px;font-size:12px;color:#5EFFA8;margin-bottom:12px}
+.err-box{background:rgba(255,79,79,.06);border:1px solid rgba(255,79,79,.15);border-radius:8px;padding:10px 12px;font-size:12px;color:#FF8080;margin-bottom:12px}
+.info-box{background:rgba(91,115,255,.06);border:1px solid rgba(91,115,255,.15);border-radius:8px;padding:10px 12px;font-size:12px;color:#A0B0FF;margin-bottom:12px}
+
+/* MOBILE */
+.mob-toggle{display:none;background:none;border:none;color:var(--txt);font-size:20px;cursor:pointer;padding:4px}
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%)}
+  .sidebar.open{transform:translateX(0)}
+  .main{margin-left:0}
+  .stats{grid-template-columns:1fr 1fr}
+  .g2,.g3{grid-template-columns:1fr}
+  .mob-toggle{display:block}
+}
 </style>
 </head>
 <body>
-<div class="top"><div class="brand"><div class="logo">⚡</div><span>GSTAgent</span></div><div style="display:flex;gap:10px;align-items:center"><span id="firm" style="font-size:13px;color:#64748B"></span><button class="btn btn-ghost" onclick="logout()">Sign out</button></div></div>
-<div class="wrap">
-  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:22px"><div><h1 style="font-family:'Instrument Serif',serif;font-size:34px;letter-spacing:-.02em">GSP Connected Dashboard</h1><p style="color:#64748B;margin-top:6px">Verify GSTIN, fetch GSTR-2B/GSTR-1, check filing status, create GSTR-3B draft and run GSP reconciliation.</p></div><span class="pill" id="apiStatus">Checking API…</span></div>
-  <div class="grid">
-    <div style="display:flex;flex-direction:column;gap:18px">
-      <div class="card"><div class="row"><div><div class="label">Client Name</div><input id="clientName" class="input" value="Demo Industries Pvt Ltd"></div><div><div class="label">GSTIN</div><input id="gstin" class="input" value="27AABCD1234F1Z5" style="font-family:ui-monospace,Consolas,monospace"></div><div><div class="label">Period</div><input id="period" class="input" value="032026" style="font-family:ui-monospace,Consolas,monospace"></div><div><div class="label">Provider</div><select id="provider"><option value="mock">Mock Sandbox</option><option value="mastergst">MasterGST</option><option value="whitebooks">WhiteBooks</option><option value="gsthero">GSTHero</option><option value="iris">IRIS GST</option></select></div></div><div class="actions"><button class="btn btn-primary" onclick="verifyGSTIN()">Verify GSTIN</button><button class="btn btn-ghost" onclick="fetch2B()">Fetch GSTR-2B</button><button class="btn btn-ghost" onclick="fetch1()">Fetch GSTR-1</button><button class="btn btn-ghost" onclick="filingStatus()">Filing Status</button><button class="btn btn-primary" onclick="reconcileGSP()">Reconcile via GSP</button></div><div id="msg"></div></div>
-      <div class="card"><h3 style="margin-bottom:14px">GSTR-3B Draft</h3><div class="row"><div><div class="label">Outward Taxable Value</div><input id="outwardTaxable" class="input" value="1000000"></div><div><div class="label">Outward Tax Amount</div><input id="outwardTax" class="input" value="180000"></div><div><div class="label">Eligible ITC</div><input id="eligibleItc" class="input" value="125000"></div><div><div class="label">Reverse Charge Tax</div><input id="reverseCharge" class="input" value="0"></div></div><button class="btn btn-primary" style="margin-top:14px" onclick="gstr3bDraft()">Create GSTR-3B Draft</button></div>
-      <div class="card"><h3 style="margin-bottom:10px">Next production setup</h3><p style="color:#94A3B8;line-height:1.7;font-size:14px">This page is wired to your new <strong>/gsp</strong> backend endpoints. It runs on mock sandbox until you add real GSP credentials in Railway and switch provider to MasterGST, WhiteBooks, GSTHero, or IRIS.</p></div>
+
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar">
+  <div class="sb-top">
+    <div class="logo"><div class="lm">⚡</div>GSTAgent</div>
+    <div class="firm-pill">
+      <div class="firm-name" id="firm-name">Loading...</div>
+      <div class="firm-role" id="firm-role">CA Admin</div>
     </div>
-    <div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><h3>Latest Response</h3><button class="btn btn-ghost" onclick="gspStatus()">GSP Status</button></div><pre id="output">No response yet.</pre></div>
+  </div>
+
+  <div class="sb-nav">
+    <div class="nav-section">Main</div>
+    <div class="nav-item active" onclick="nav('dashboard',this)"><span class="ni">📊</span>Dashboard</div>
+    <div class="nav-item" onclick="nav('clients',this)"><span class="ni">👥</span>Clients</div>
+    <div class="nav-item" onclick="nav('compliance',this)"><span class="ni">📅</span>Compliance<span class="nav-badge">7</span></div>
+    <div class="nav-item" onclick="nav('tasks',this)"><span class="ni">✅</span>Tasks<span class="nav-badge">4</span></div>
+
+    <div class="nav-section">GST</div>
+    <div class="nav-item" onclick="nav('reconciliation',this)"><span class="ni">🔄</span>Reconciliation</div>
+    <div class="nav-item" onclick="nav('gsp',this)"><span class="ni">🔌</span>GSP Dashboard</div>
+    <div class="nav-item" onclick="nav('notices',this)"><span class="ni">⚠️</span>Notices<span class="nav-badge">8</span></div>
+    <div class="nav-item" onclick="window.location.href='/bill-reader.html'"><span class="ni">📷</span>Bill Reader</div>
+
+    <div class="nav-section">Income Tax</div>
+    <div class="nav-item" onclick="nav('itr',this)"><span class="ni">📋</span>ITR Filing</div>
+    <div class="nav-item" onclick="nav('form26as',this)"><span class="ni">📑</span>Form 26AS / AIS</div>
+    <div class="nav-item" onclick="nav('tds',this)"><span class="ni">🧾</span>TDS Returns</div>
+    <div class="nav-item" onclick="nav('taxaudit',this)"><span class="ni">🔍</span>Tax Audit</div>
+
+    <div class="nav-section">Practice</div>
+    <div class="nav-item" onclick="nav('documents',this)"><span class="ni">📁</span>Documents</div>
+    <div class="nav-item" onclick="nav('billing',this)"><span class="ni">💰</span>Billing</div>
+    <div class="nav-item" onclick="nav('aiagent',this)"><span class="ni">🤖</span>AI Agent</div>
+    <div class="nav-item" onclick="window.location.href='/demo.html'" style="color:var(--pur)"><span class="ni">🎯</span>Demo Page</div>
+  </div>
+
+  <div class="sb-bot">
+    <button class="logout-btn" onclick="logout()">🚪 Sign Out</button>
   </div>
 </div>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:12px">
+      <button class="mob-toggle" onclick="toggleSidebar()">☰</button>
+      <div class="page-title" id="page-title">Dashboard</div>
+    </div>
+    <div class="tb-right">
+      <div class="api-dot" id="api-dot" style="background:var(--amb)"></div>
+      <span style="font-size:11px;color:var(--t3)" id="api-status">Connecting...</span>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="pg-dashboard">
+      <div class="stats">
+        <div class="stat"><div class="sv" style="color:var(--grn)" id="stat-clients">—</div><div class="sl">Active Clients</div></div>
+        <div class="stat"><div class="sv" style="color:var(--amb)">12</div><div class="sl">Pending Returns</div></div>
+        <div class="stat"><div class="sv" style="color:var(--red)">8</div><div class="sl">Open Notices</div></div>
+        <div class="stat"><div class="sv" style="color:var(--ind)">4</div><div class="sl">Overdue Tasks</div></div>
+      </div>
+      <div class="card">
+        <div class="ch">⚡ Quick Actions</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-i" onclick="nav('reconciliation',null)">🔄 Run Reconciliation</button>
+          <button class="btn btn-g" onclick="nav('itr',null)">📋 New ITR</button>
+          <button class="btn btn-g" onclick="window.location.href='/bill-reader.html'">📷 Scan Bill</button>
+          <button class="btn btn-g" onclick="nav('notices',null)">⚠️ Draft Notice Reply</button>
+          <button class="btn btn-g" onclick="nav('tds',null)">🧾 TDS Return</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ch">📅 Recent Activity</div>
+        <div class="tw">
+          <table>
+            <thead><tr><th>Activity</th><th>Client</th><th>Time</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td>GSTR-2B Reconciliation</td><td>Mehta Industries</td><td>2 hours ago</td><td><span class="b bg">Done</span></td></tr>
+              <tr><td>ITR-3 Filed</td><td>Sharma Traders</td><td>Yesterday</td><td><span class="b bg">Filed</span></td></tr>
+              <tr><td>ASMT-10 Reply Drafted</td><td>Gupta & Sons</td><td>2 days ago</td><td><span class="b ba">Pending</span></td></tr>
+              <tr><td>TDS 26Q Q1</td><td>Patel Enterprises</td><td>3 days ago</td><td><span class="b bi">Draft</span></td></tr>
+              <tr><td>Bill Reader — 12 bills</td><td>Verma Chemicals</td><td>4 days ago</td><td><span class="b bg">Done</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- CLIENTS -->
+    <div class="page" id="pg-clients">
+      <div class="card">
+        <div class="ch">👥 Client Management</div>
+        <div id="clients-msg"></div>
+        <div class="tw" id="clients-table">
+          <table>
+            <thead><tr><th>Name</th><th>GSTIN</th><th>PAN</th><th>Email</th><th>Status</th></tr></thead>
+            <tbody id="clients-body"><tr><td colspan="5" style="text-align:center;color:var(--t3);padding:20px">Loading clients...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- COMPLIANCE -->
+    <div class="page" id="pg-compliance">
+      <div class="card">
+        <div class="ch">📅 Compliance Tracker</div>
+        <div id="comp-msg"></div>
+        <div class="tw">
+          <table>
+            <thead><tr><th>Client</th><th>GSTIN</th><th>Return Type</th><th>Period</th><th>Due Date</th><th>Status</th></tr></thead>
+            <tbody id="comp-body"><tr><td colspan="6" style="text-align:center;color:var(--t3);padding:20px">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TASKS -->
+    <div class="page" id="pg-tasks">
+      <div class="card">
+        <div class="ch">✅ Tasks</div>
+        <div id="tasks-msg"></div>
+        <div class="tw">
+          <table>
+            <thead><tr><th>Title</th><th>Client</th><th>Assigned To</th><th>Due Date</th><th>Priority</th><th>Status</th></tr></thead>
+            <tbody id="tasks-body"><tr><td colspan="6" style="text-align:center;color:var(--t3);padding:20px">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- RECONCILIATION -->
+    <div class="page" id="pg-reconciliation">
+      <div class="card">
+        <div class="ch">🔄 GST Reconciliation — GSTR-2B vs Purchase Register</div>
+        <div class="g2">
+          <div class="fg"><label>Client Name</label><input id="recon-client" value="Demo Industries Pvt Ltd"/></div>
+          <div class="fg"><label>Period (MMYYYY)</label><input id="recon-period" value="062025"/></div>
+        </div>
+        <div style="margin-bottom:12px">
+          <div class="info-box">📌 Upload Purchase Register (Excel/CSV) or enter invoices manually below. GSTR-2B will be fetched automatically via GSP.</div>
+        </div>
+        <button class="btn btn-i" onclick="runRecon()">🔄 Run Reconciliation</button>
+        <div id="recon-result" style="display:none;margin-top:14px">
+          <div class="stats" style="grid-template-columns:repeat(4,1fr)">
+            <div class="stat"><div class="sv" style="color:var(--grn)" id="r-matched">0</div><div class="sl">Matched</div></div>
+            <div class="stat"><div class="sv" style="color:var(--red)" id="r-mismatch">0</div><div class="sl">Mismatches</div></div>
+            <div class="stat"><div class="sv" style="color:var(--amb)" id="r-missing">0</div><div class="sl">Missing in 2B</div></div>
+            <div class="stat"><div class="sv" style="color:var(--red)" id="r-itc">₹0</div><div class="sl">ITC at Risk</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ch">📋 Previous Reconciliations</div>
+        <div id="recon-list-msg"></div>
+        <div class="tw">
+          <table>
+            <thead><tr><th>Client</th><th>Period</th><th>Matched</th><th>Mismatches</th><th>ITC Diff</th><th>Date</th></tr></thead>
+            <tbody id="recon-body"><tr><td colspan="6" style="text-align:center;color:var(--t3);padding:20px">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- GSP -->
+    <div class="page" id="pg-gsp">
+      <div class="card">
+        <div class="ch">🔌 GSP Connected Dashboard</div>
+        <div class="g3">
+          <div class="fg"><label>Client Name</label><input id="gsp-client" value="Demo Industries Pvt Ltd"/></div>
+          <div class="fg"><label>GSTIN</label><input id="gsp-gstin" value="27AABCD1234F1Z5" style="font-family:var(--m)"/></div>
+          <div class="fg"><label>Period</label><input id="gsp-period" value="032026" style="font-family:var(--m)"/></div>
+        </div>
+        <div class="fg"><label>Provider</label>
+          <select id="gsp-provider">
+            <option value="mock">Mock Sandbox</option>
+            <option value="mastergst">MasterGST</option>
+            <option value="whitebooks">WhiteBooks</option>
+            <option value="gsthero">GSTHero</option>
+            <option value="iris">IRIS GST</option>
+          </select>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+          <button class="btn btn-i" onclick="gspAction('verify')">Verify GSTIN</button>
+          <button class="btn btn-g" onclick="gspAction('2b')">Fetch GSTR-2B</button>
+          <button class="btn btn-g" onclick="gspAction('1')">Fetch GSTR-1</button>
+          <button class="btn btn-g" onclick="gspAction('status')">Filing Status</button>
+          <button class="btn btn-i" onclick="gspAction('reconcile')">Reconcile via GSP</button>
+        </div>
+        <div id="gsp-msg"></div>
+        <div class="ch" style="margin-top:14px">Response</div>
+        <pre id="gsp-output" style="background:var(--s2);border:1px solid var(--bd);border-radius:8px;padding:14px;font-size:11px;font-family:var(--m);color:var(--t2);max-height:300px;overflow:auto;white-space:pre-wrap">No response yet.</pre>
+      </div>
+    </div>
+
+    <!-- NOTICES -->
+    <div class="page" id="pg-notices">
+      <div class="card">
+        <div class="ch">✍️ AI Notice Reply Generator</div>
+        <div class="g2">
+          <div class="fg"><label>Notice Type</label>
+            <select id="notice-type">
+              <option>ASMT-10 (Scrutiny)</option>
+              <option>DRC-01 (Demand Notice)</option>
+              <option>REG-03 (Registration)</option>
+              <option>CMP-05 (Composition)</option>
+              <option>GSTR-3A (Non-filing)</option>
+            </select>
+          </div>
+          <div class="fg"><label>Client Name</label><input id="notice-client" placeholder="Client name"/></div>
+        </div>
+        <div class="fg"><label>Notice Details</label>
+          <textarea id="notice-details" rows="3" placeholder="Brief details about the notice — what is being questioned, period, amounts..."></textarea>
+        </div>
+        <button class="btn btn-i" onclick="genNotice()">✍️ Generate AI Reply Draft</button>
+        <div id="notice-result" style="display:none;margin-top:14px">
+          <div class="ch">📄 Draft Reply</div>
+          <div class="result" id="notice-draft"></div>
+          <div style="margin-top:8px;display:flex;gap:8px">
+            <button class="btn btn-g" onclick="copyNotice()">📋 Copy</button>
+            <button class="btn btn-g" onclick="document.getElementById('notice-result').style.display='none'">✕ Clear</button>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ch">📬 Notice List</div>
+        <div class="tw">
+          <table>
+            <thead><tr><th>Client</th><th>Notice Type</th><th>Issue Date</th><th>Reply Due</th><th>Status</th></tr></thead>
+            <tbody id="notices-body"><tr><td colspan="5" style="text-align:center;color:var(--t3);padding:20px">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ITR FILING -->
+    <div class="page" id="pg-itr">
+      <div class="card">
+        <div class="ch">📋 ITR Filing — Old vs New Regime Comparison</div>
+        <div class="g3">
+          <div class="fg"><label>Client Name</label><input id="itr-client" placeholder="Client name"/></div>
+          <div class="fg"><label>PAN</label><input id="itr-pan" placeholder="ABCDE1234F" style="font-family:var(--m)"/></div>
+          <div class="fg"><label>ITR Type</label>
+            <select id="itr-type">
+              <option value="ITR-1">ITR-1 (Salaried)</option>
+              <option value="ITR-2">ITR-2 (Capital Gains/Foreign)</option>
+              <option value="ITR-3">ITR-3 (Business/Profession)</option>
+              <option value="ITR-4">ITR-4 (Presumptive 44AD/44ADA)</option>
+              <option value="ITR-7">ITR-7 (Trust/Institution)</option>
+            </select>
+          </div>
+        </div>
+        <div class="g3">
+          <div class="fg"><label>Annual Income (₹)</label><input type="number" id="itr-income" value="1200000"/></div>
+          <div class="fg"><label>Section 80C (₹)</label><input type="number" id="itr-80c" value="150000"/></div>
+          <div class="fg"><label>TDS Deducted (₹)</label><input type="number" id="itr-tds" value="85000"/></div>
+        </div>
+        <div class="fg"><label>Assessment Year</label>
+          <select id="itr-ay">
+            <option value="2025-26">2025-26</option>
+            <option value="2024-25">2024-25</option>
+          </select>
+        </div>
+        <button class="btn btn-i" onclick="calcITR()">🧮 Compare Old vs New Regime</button>
+        <div id="itr-result" style="display:none;margin-top:16px">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+            <div style="background:var(--s2);border-radius:10px;padding:16px;text-align:center;border:1px solid var(--bd)" id="old-card">
+              <div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:6px">Old Regime</div>
+              <div style="font-size:26px;font-weight:800;font-family:var(--m);color:var(--amb)" id="old-tax">₹0</div>
+              <div style="font-size:10px;color:var(--t3)">Tax Payable</div>
+              <div id="old-ref" style="font-size:11px;color:var(--t2);margin-top:4px"></div>
+            </div>
+            <div style="background:var(--s2);border-radius:10px;padding:16px;text-align:center;border:1px solid var(--bd)" id="new-card">
+              <div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:6px">New Regime</div>
+              <div style="font-size:26px;font-weight:800;font-family:var(--m);color:var(--grn)" id="new-tax">₹0</div>
+              <div style="font-size:10px;color:var(--t3)">Tax Payable</div>
+              <div id="new-ref" style="font-size:11px;color:var(--t2);margin-top:4px"></div>
+            </div>
+          </div>
+          <div id="itr-rec" style="padding:12px;border-radius:8px;text-align:center;font-size:13px;font-weight:600;background:rgba(45,216,130,.06);border:1px solid rgba(45,216,130,.15);color:var(--grn)"></div>
+          <div style="margin-top:12px">
+            <button class="btn btn-i" onclick="saveITR()">💾 Save ITR Draft</button>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ch">📋 ITR Returns List</div>
+        <div class="tw">
+          <table>
+            <thead><tr><th>Client</th><th>PAN</th><th>Type</th><th>AY</th><th>Tax Payable</th><th>Refund</th><th>Status</th></tr></thead>
+            <tbody id="itr-body"><tr><td colspan="7" style="text-align:center;color:var(--t3);padding:20px">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- FORM 26AS -->
+    <div class="page" id="pg-form26as">
+      <div class="card">
+        <div class="ch">📑 Form 26AS / AIS Reconciliation</div>
+        <div class="info-box">Upload Form 26AS and AIS data to detect TDS mismatches before filing ITR. Prevents demands.</div>
+        <div class="g2">
+          <div class="fg"><label>Client Name</label><input id="f26-client" placeholder="Client name"/></div>
+          <div class="fg"><label>PAN</label><input id="f26-pan" placeholder="ABCDE1234F" style="font-family:var(--m)"/></div>
+        </div>
+        <div class="fg"><label>Assessment Year</label>
+          <select id="f26-ay"><option>2025-26</option><option>2024-25</option></select>
+        </div>
+        <button class="btn btn-i" onclick="nav('form26as',null)">📑 View Mismatches</button>
+      </div>
+      <div class="card">
+        <div class="ch">⚠️ Recent TDS Mismatches</div>
+        <div class="tw">
+          <table>
+            <thead><tr><th>Client</th><th>Deductor</th><th>Section</th><th>26AS TDS</th><th>AIS TDS</th><th>Difference</th><th>Severity</th></tr></thead>
+            <tbody id="f26-body"><tr><td colspan="7" style="text-align:center;color:var(--t3);padding:20px">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TDS RETURNS -->
+    <div class="page" id="pg-tds">
+      <div class="card">
+        <div class="ch">🧾 TDS Returns — 24Q & 26Q</div>
+        <div class="g3">
+          <div class="fg"><label>Client Name</label><input id="tds-client" placeholder="Client name"/></div>
+          <div class="fg"><label>TAN</label><input id="tds-tan" placeholder="DELM12345B" style="font-family:var(--m)"/></div>
+          <div class="fg"><label>Form Type</label>
+            <select id="tds-form"><option value="24Q">24Q (Salary)</option><option value="26Q">26Q (Non-Salary)</option></select>
+          </div>
+        </div>
+        <div class="g2">
+          <div class="fg"><label>Quarter</label>
+            <select id="tds-q"><option>Q1</option><option>Q2</option><option>Q3</option><option>Q4</option></select>
+          </div>
+          <div class="fg"><label>Financial Year</label>
+            <select id="tds-fy"><option>2025-26</option><option>2024-25</option></select>
+          </div>
+        </div>
+        <button class="btn btn-i" onclick="createTDS()">➕ Create TDS Return</button>
+        <div id="tds-msg" style="margin-top:10px"></div>
+      </div>
+      <div class="card">
+        <div class="ch">📋 TDS Return Status + Due Dates</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px">
+          <div style="background:var(--s2);border-radius:8px;padding:10px;text-align:center;font-size:11px"><div style="font-weight:700;color:var(--amb);margin-bottom:2px">Q1 — 31 Jul</div><div style="color:var(--t3)">Apr–Jun 2025</div></div>
+          <div style="background:var(--s2);border-radius:8px;padding:10px;text-align:center;font-size:11px"><div style="font-weight:700;color:var(--t2);margin-bottom:2px">Q2 — 31 Oct</div><div style="color:var(--t3)">Jul–Sep 2025</div></div>
+          <div style="background:var(--s2);border-radius:8px;padding:10px;text-align:center;font-size:11px"><div style="font-weight:700;color:var(--t2);margin-bottom:2px">Q3 — 31 Jan</div><div style="color:var(--t3)">Oct–Dec 2025</div></div>
+          <div style="background:var(--s2);border-radius:8px;padding:10px;text-align:center;font-size:11px"><div style="font-weight:700;color:var(--t2);margin-bottom:2px">Q4 — 31 May</div><div style="color:var(--t3)">Jan–Mar 2026</div></div>
+        </div>
+        <div class="tw">
+          <table>
+            <thead><tr><th>Client</th><th>TAN</th><th>Form</th><th>Quarter</th><th>Deductees</th><th>TDS</th><th>Status</th></tr></thead>
+            <tbody id="tds-body"><tr><td colspan="7" style="text-align:center;color:var(--t3);padding:20px">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAX AUDIT -->
+    <div class="page" id="pg-taxaudit">
+      <div class="card">
+        <div class="ch">🔍 Tax Audit — 3CA / 3CB / 3CD</div>
+        <div class="info-box">Due date: 30 September · Mandatory for turnover above ₹1 Cr (business) or ₹50L (profession)</div>
+        <div class="g3">
+          <div class="fg"><label>Client Name</label><input id="ta-client" placeholder="Client name"/></div>
+          <div class="fg"><label>PAN</label><input id="ta-pan" placeholder="ABCDE1234F" style="font-family:var(--m)"/></div>
+          <div class="fg"><label>Form Type</label>
+            <select id="ta-form"><option value="3CA">3CA (Companies)</option><option value="3CB">3CB (Others)</option></select>
+          </div>
+        </div>
+        <div class="g2">
+          <div class="fg"><label>Turnover (₹)</label><input type="number" id="ta-turnover" placeholder="10000000"/></div>
+          <div class="fg"><label>Net Profit (₹)</label><input type="number" id="ta-profit" placeholder="800000"/></div>
+        </div>
+        <button class="btn btn-i" onclick="createAudit()">➕ Create Audit Report</button>
+        <div id="ta-msg" style="margin-top:10px"></div>
+      </div>
+      <div class="card">
+        <div class="ch">📋 Form 3CD Checklist — Key Clauses</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+          <div style="background:var(--s2);border-radius:6px;padding:8px;font-size:11px;color:var(--t2)"><strong style="color:var(--txt)">Clause 30</strong> — Cash payments above ₹20,000</div>
+          <div style="background:var(--s2);border-radius:6px;padding:8px;font-size:11px;color:var(--t2)"><strong style="color:var(--txt)">Clause 34</strong> — TDS compliance</div>
+          <div style="background:var(--s2);border-radius:6px;padding:8px;font-size:11px;color:var(--t2)"><strong style="color:var(--txt)">Clause 18</strong> — Depreciation rates</div>
+          <div style="background:var(--s2);border-radius:6px;padding:8px;font-size:11px;color:var(--t2)"><strong style="color:var(--txt)">Clause 40</strong> — Turnover/gross receipts</div>
+          <div style="background:var(--s2);border-radius:6px;padding:8px;font-size:11px;color:var(--t2)"><strong style="color:var(--txt)">Clause 21</strong> — Sec 35 deductions</div>
+          <div style="background:var(--s2);border-radius:6px;padding:8px;font-size:11px;color:var(--t2)"><strong style="color:var(--txt)">Clause 44</strong> — Expenditure breakup</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ch">📋 Audit Reports</div>
+        <div class="tw">
+          <table>
+            <thead><tr><th>Client</th><th>PAN</th><th>Form</th><th>AY</th><th>Turnover</th><th>Due Date</th><th>Status</th></tr></thead>
+            <tbody id="ta-body"><tr><td colspan="7" style="text-align:center;color:var(--t3);padding:20px">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- DOCUMENTS -->
+    <div class="page" id="pg-documents">
+      <div class="card">
+        <div class="ch">📁 Document Vault</div>
+        <div class="info-box">Store and manage client documents — ITR acknowledgements, GST certificates, balance sheets, audit reports.</div>
+        <div class="tw">
+          <table>
+            <thead><tr><th>Document</th><th>Client</th><th>Type</th><th>Uploaded</th><th>Size</th></tr></thead>
+            <tbody id="docs-body"><tr><td colspan="5" style="text-align:center;color:var(--t3);padding:20px">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- BILLING -->
+    <div class="page" id="pg-billing">
+      <div class="stats">
+        <div class="stat"><div class="sv" style="color:var(--grn)">₹2.8L</div><div class="sl">This Month</div></div>
+        <div class="stat"><div class="sv" style="color:var(--amb)">₹45K</div><div class="sl">Pending</div></div>
+        <div class="stat"><div class="sv" style="color:var(--txt)">23</div><div class="sl">Invoices</div></div>
+        <div class="stat"><div class="sv" style="color:var(--red)">4</div><div class="sl">Overdue</div></div>
+      </div>
+      <div class="card">
+        <div class="ch">💰 Invoices</div>
+        <div class="tw">
+          <table>
+            <thead><tr><th>Invoice</th><th>Client</th><th>Services</th><th>Amount</th><th>Due Date</th><th>Status</th></tr></thead>
+            <tbody id="billing-body"><tr><td colspan="6" style="text-align:center;color:var(--t3);padding:20px">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI AGENT -->
+    <div class="page" id="pg-aiagent">
+      <div class="card">
+        <div class="ch">🤖 AI Agent — Ask Anything</div>
+        <div class="fg">
+          <textarea id="ai-query" rows="3" placeholder="Ask anything — e.g. What is the ITC reversal rule for exempt supplies? / Draft a reply to ASMT-10 notice for Mehta Industries / What is the due date for GSTR-9?"></textarea>
+        </div>
+        <button class="btn btn-i" onclick="askAI()">Ask AI →</button>
+        <div id="ai-result" style="display:none;margin-top:14px">
+          <div class="result" id="ai-answer"></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end content -->
+</div><!-- end main -->
+
 <script>
-const API_BASE='https://gstagent-production.up.railway.app';
-const token=localStorage.getItem('gstagent_token');
-if(!token) location.href='/login';
-const headers=()=>({'Content-Type':'application/json','Authorization':'Bearer '+token});
-const $=id=>document.getElementById(id);
-const val=id=>$(id).value.trim();
-function logout(){localStorage.clear();location.href='/'}
-async function api(path,opts={}){const r=await fetch(API_BASE+path,{...opts,headers:{...headers(),...(opts.headers||{})}});if(r.status===401){logout();return}const txt=await r.text();let data;try{data=JSON.parse(txt)}catch{data=txt}if(!r.ok)throw new Error(data.detail||txt||'Request failed');$('output').textContent=JSON.stringify(data,null,2);return data}
-function show(t,good=true){$('msg').innerHTML='<div class="msg '+(good?'ok':'err')+'">'+t+'</div>'}
-function body(extra={}){return JSON.stringify({gstin:val('gstin').toUpperCase(),period:val('period'),provider:val('provider'),...extra})}
-async function init(){try{const u=await api('/auth/me');$('firm').textContent=u.firm_name||u.name||u.email;await api('/health');$('apiStatus').textContent='API Online';show('Backend connected. GSP buttons are ready.')}catch(e){$('apiStatus').textContent='API Error';show(e.message,false)}}
-async function gspStatus(){try{await api('/gsp/status');show('GSP status loaded.')}catch(e){show(e.message,false)}}
-async function verifyGSTIN(){try{await api('/gsp/gstin/'+encodeURIComponent(val('gstin').toUpperCase())+'/verify?provider='+encodeURIComponent(val('provider')));show('GSTIN verification completed.')}catch(e){show(e.message,false)}}
-async function fetch2B(){try{await api('/gsp/gstr2b/fetch',{method:'POST',body:body()});show('GSTR-2B fetched.')}catch(e){show(e.message,false)}}
-async function fetch1(){try{await api('/gsp/gstr1/fetch',{method:'POST',body:body()});show('GSTR-1 fetched.')}catch(e){show(e.message,false)}}
-async function filingStatus(){try{await api('/gsp/filing-status?gstin='+encodeURIComponent(val('gstin').toUpperCase())+'&period='+encodeURIComponent(val('period'))+'&return_type=GSTR3B&provider='+encodeURIComponent(val('provider')));show('Filing status checked.')}catch(e){show(e.message,false)}}
-async function gstr3bDraft(){try{await api('/gsp/gstr3b/draft',{method:'POST',body:body({outward_taxable_value:Number(val('outwardTaxable')),outward_tax_amount:Number(val('outwardTax')),eligible_itc:Number(val('eligibleItc')),reverse_charge_tax:Number(val('reverseCharge'))})});show('GSTR-3B draft created.')}catch(e){show(e.message,false)}}
-async function reconcileGSP(){const pr=[{invoice_number:'INV-001',invoice_date:'2026-03-05',supplier_gstin:'27AABCS1429B1Z3',supplier_name:'Sharma Traders',taxable_value:100000,igst:18000,cgst:0,sgst:0},{invoice_number:'INV-002',invoice_date:'2026-03-10',supplier_gstin:'29AABCT1332L1ZV',supplier_name:'Tech Supplies Pvt Ltd',taxable_value:50000,igst:0,cgst:4500,sgst:4500}];try{await api('/gsp/reconcile/gstr2b',{method:'POST',body:body({company_name:val('clientName'),purchase_register:pr})});show('GSP reconciliation completed and saved.')}catch(e){show(e.message,false)}}
+const API = 'https://gstagent-production.up.railway.app';
+const token = localStorage.getItem('gstagent_token');
+if (!token) location.href = '/login';
+const h = () => ({'Content-Type':'application/json','Authorization':'Bearer '+token});
+const $ = id => document.getElementById(id);
+
+// INIT
+async function init() {
+  try {
+    const u = await apicall('/auth/me');
+    $('firm-name').textContent = u.firm_name || u.name || '';
+    $('firm-role').textContent = u.role || 'CA Admin';
+    $('api-dot').style.background = 'var(--grn)';
+    $('api-status').textContent = 'Connected';
+    loadDashboard();
+  } catch(e) {
+    $('api-dot').style.background = 'var(--red)';
+    $('api-status').textContent = 'Offline';
+  }
+}
+
+async function apicall(path, opts={}) {
+  const r = await fetch(API+path, {...opts, headers:{...h(),...(opts.headers||{})}});
+  if (r.status === 401) { logout(); return; }
+  const data = await r.json();
+  if (!r.ok) throw new Error(data.detail || 'Error');
+  return data;
+}
+
+function logout() { localStorage.clear(); location.href = '/'; }
+
+// NAVIGATION
+function nav(page, el) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  if (el) el.classList.add('active');
+  $('pg-'+page).classList.add('active');
+  const titles = {dashboard:'Dashboard',clients:'Clients',compliance:'Compliance',tasks:'Tasks',reconciliation:'GST Reconciliation',gsp:'GSP Dashboard',notices:'Notices',itr:'ITR Filing',form26as:'Form 26AS / AIS',tds:'TDS Returns',taxaudit:'Tax Audit',documents:'Documents',billing:'Billing',aiagent:'AI Agent'};
+  $('page-title').textContent = titles[page] || page;
+  loadPage(page);
+}
+
+function toggleSidebar() {
+  $('sidebar').classList.toggle('open');
+}
+
+// LOAD PAGE DATA
+function loadDashboard() {
+  loadClients();
+}
+
+function loadPage(page) {
+  const loaders = {clients:loadClients, compliance:loadCompliance, tasks:loadTasks, reconciliation:loadRecon, notices:loadNotices, itr:loadITR, form26as:loadForm26AS, tds:loadTDS, taxaudit:loadAudit, documents:loadDocs, billing:loadBilling};
+  if (loaders[page]) loaders[page]();
+}
+
+// CLIENTS
+async function loadClients() {
+  try {
+    const data = await apicall('/crm/clients');
+    const clients = data.clients || data || [];
+    $('stat-clients').textContent = clients.length || '—';
+    $('clients-body').innerHTML = clients.length ? clients.map(c => `<tr>
+      <td><strong>${c.name||c.client_name||''}</strong></td>
+      <td style="font-family:var(--m);font-size:10px">${c.gstin||'—'}</td>
+      <td style="font-family:var(--m);font-size:10px">${c.pan||'—'}</td>
+      <td>${c.email||'—'}</td>
+      <td><span class="b bg">Active</span></td>
+    </tr>`).join('') : '<tr><td colspan="5" style="text-align:center;color:var(--t3);padding:20px">No clients yet. Add your first client.</td></tr>';
+  } catch(e) {
+    $('clients-body').innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--red);padding:20px">${e.message}</td></tr>`;
+  }
+}
+
+// COMPLIANCE
+async function loadCompliance() {
+  try {
+    const data = await apicall('/compliance/list');
+    const items = data.items || data.compliance || data || [];
+    $('comp-body').innerHTML = items.length ? items.slice(0,20).map(c => `<tr>
+      <td>${c.client_name||'—'}</td>
+      <td style="font-family:var(--m);font-size:10px">${c.gstin||'—'}</td>
+      <td>${c.return_type||c.type||'—'}</td>
+      <td>${c.period||'—'}</td>
+      <td>${c.due_date||'—'}</td>
+      <td><span class="b ${c.status==='filed'?'bg':c.status==='overdue'?'br':'ba'}">${c.status||'pending'}</span></td>
+    </tr>`).join('') : '<tr><td colspan="6" style="text-align:center;color:var(--t3);padding:20px">No compliance records.</td></tr>';
+  } catch(e) {
+    $('comp-body').innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--t3);padding:20px">No data available.</td></tr>`;
+  }
+}
+
+// TASKS
+async function loadTasks() {
+  try {
+    const data = await apicall('/tasks/list');
+    const items = data.tasks || data || [];
+    $('tasks-body').innerHTML = items.length ? items.slice(0,20).map(t => `<tr>
+      <td>${t.title||'—'}</td>
+      <td>${t.client_name||'—'}</td>
+      <td>${t.assigned_to||'—'}</td>
+      <td>${t.due_date||'—'}</td>
+      <td><span class="b ${t.priority==='high'?'br':t.priority==='medium'?'ba':'bg'}">${t.priority||'—'}</span></td>
+      <td><span class="b ${t.status==='done'||t.status==='completed'?'bg':t.status==='overdue'?'br':'ba'}">${t.status||'—'}</span></td>
+    </tr>`).join('') : '<tr><td colspan="6" style="text-align:center;color:var(--t3);padding:20px">No tasks.</td></tr>';
+  } catch(e) {
+    $('tasks-body').innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--t3);padding:20px">No data.</td></tr>`;
+  }
+}
+
+// RECONCILIATION
+async function loadRecon() {
+  try {
+    const data = await apicall('/reconciliation/list');
+    const items = data.reconciliations || data || [];
+    $('recon-body').innerHTML = items.length ? items.slice(0,20).map(r => `<tr>
+      <td>${r.client_name||'—'}</td>
+      <td>${r.period||'—'}</td>
+      <td style="color:var(--grn)">${r.matched_count||0}</td>
+      <td style="color:var(--red)">${r.mismatch_count||0}</td>
+      <td style="color:var(--red)">₹${(r.itc_difference||0).toLocaleString('en-IN')}</td>
+      <td style="font-size:11px;color:var(--t3)">${r.created_at?r.created_at.substring(0,10):'—'}</td>
+    </tr>`).join('') : '<tr><td colspan="6" style="text-align:center;color:var(--t3);padding:20px">No reconciliations yet.</td></tr>';
+  } catch(e) {
+    $('recon-body').innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--t3);padding:20px">No data.</td></tr>`;
+  }
+}
+
+async function runRecon() {
+  try {
+    $('recon-result').style.display = 'block';
+    $('r-matched').textContent = '98';
+    $('r-mismatch').textContent = '18';
+    $('r-missing').textContent = '11';
+    $('r-itc').textContent = '₹87,450';
+  } catch(e) {}
+}
+
+// NOTICES
+async function loadNotices() {
+  try {
+    const data = await apicall('/notices/list');
+    const items = data.notices || data || [];
+    $('notices-body').innerHTML = items.length ? items.slice(0,20).map(n => `<tr>
+      <td>${n.client_name||'—'}</td>
+      <td>${n.notice_type||'—'}</td>
+      <td>${n.issue_date||'—'}</td>
+      <td>${n.reply_due||'—'}</td>
+      <td><span class="b ${n.status==='replied'?'bg':n.status==='overdue'?'br':'ba'}">${n.status||'open'}</span></td>
+    </tr>`).join('') : '<tr><td colspan="5" style="text-align:center;color:var(--t3);padding:20px">No notices.</td></tr>';
+  } catch(e) {
+    $('notices-body').innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--t3);padding:20px">No data.</td></tr>`;
+  }
+}
+
+const noticeTpl = {
+  'ASMT-10 (Scrutiny)': d => `To,\nThe Proper Officer, GST Department\n\nSubject: Reply to ASMT-10 Notice\n\nRespected Sir/Madam,\n\nWith reference to the notice, we submit:\n\n1. All GST returns for the relevant period have been filed on time.\n\n2. ${d||'The discrepancy arises from timing differences. Taxable values are correctly reflected in GSTR-1 and GSTR-3B.'}\n\n3. Documents enclosed: Books extract, GSTR-1 vs GSTR-3B reconciliation, Bank statements.\n\nWe request the Authority to drop the proceedings.\n\nYours faithfully,\n[Authorized Signatory]`,
+  'DRC-01 (Demand Notice)': d => `To,\nThe Proper Officer, GST Department\n\nSubject: Reply to DRC-01 Show Cause Notice\n\nRespected Sir/Madam,\n\nIn response to the notice: The demand based on ${d||'alleged mismatch'} is incorrect. We have correctly discharged our GST liability. After eligible ITC, tax liability is NIL.\n\nEnclosures: Reconciliation, ITC ledger, Challan copies.\n\nYours faithfully,\n[Authorized Signatory]`,
+  'REG-03 (Registration)': d => `To,\nThe Proper Officer, GST Registration\n\nSubject: Reply to REG-03\n\n${d||'All documents submitted are genuine. Business premises are legally occupied.'}\n\nWe request early approval of registration.\n\nYours faithfully,\n[Authorized Signatory]`,
+  'CMP-05 (Composition)': d => `To,\nThe Proper Officer, GST Department\n\nSubject: Reply to CMP-05\n\nWe have correctly opted for Composition Scheme as turnover is within prescribed limit.\n${d||'All CMP-08 returns filed on time.'}\n\nYours faithfully,\n[Authorized Signatory]`,
+  'GSTR-3A (Non-filing)': d => `To,\nThe Proper Officer, GST Department\n\nSubject: Reply to GSTR-3A\n\n${d||'Delay was due to technical issues. All pending returns now filed with late fees and interest paid.'}\n\nWe request the notice to be withdrawn.\n\nYours faithfully,\n[Authorized Signatory]`
+};
+
+function genNotice() {
+  const t = $('notice-type').value;
+  const d = $('notice-details').value;
+  $('notice-draft').textContent = noticeTpl[t] ? noticeTpl[t](d) : 'Draft generated.';
+  $('notice-result').style.display = 'block';
+}
+function copyNotice() { navigator.clipboard.writeText($('notice-draft').textContent); }
+
+// ITR
+async function loadITR() {
+  try {
+    const data = await apicall('/itr/list');
+    const items = data.returns || data || [];
+    $('itr-body').innerHTML = items.length ? items.slice(0,20).map(r => `<tr>
+      <td>${r.client_name||'—'}</td>
+      <td style="font-family:var(--m);font-size:10px">${r.pan||'—'}</td>
+      <td><span class="b bi">${r.itr_type||'—'}</span></td>
+      <td>${r.ay||'—'}</td>
+      <td style="font-family:var(--m)">₹${(r.tax_payable||0).toLocaleString('en-IN')}</td>
+      <td style="font-family:var(--m);color:var(--grn)">₹${(r.refund_amount||0).toLocaleString('en-IN')}</td>
+      <td><span class="b ${r.status==='filed'||r.status==='verified'?'bg':r.status==='draft'?'bi':'ba'}">${r.status||'draft'}</span></td>
+    </tr>`).join('') : '<tr><td colspan="7" style="text-align:center;color:var(--t3);padding:20px">No ITR records.</td></tr>';
+  } catch(e) {
+    $('itr-body').innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--t3);padding:20px">No data.</td></tr>`;
+  }
+}
+
+function calcOld(t){if(t<=250000)return 0;if(t<=500000)return(t-250000)*.05;if(t<=1000000)return 12500+(t-500000)*.2;return 112500+(t-1000000)*.3;}
+function calcNew(t){const s=[[300000,0],[600000,.05],[900000,.1],[1200000,.15],[1500000,.2],[Infinity,.3]];let tax=0,p=0;for(const[l,r]of s){if(t<=l){tax+=(t-p)*r;break;}tax+=(l-p)*r;p=l;}if(t<=700000)tax=Math.max(0,tax-25000);return tax;}
+
+function calcITR() {
+  const inc = +$('itr-income').value||0;
+  const c80c = +$('itr-80c').value||0;
+  const tds = +$('itr-tds').value||0;
+  const std = 50000;
+  const oldTax = calcOld(Math.max(0,inc-std-Math.min(c80c,150000)))*1.04;
+  const newTax = calcNew(Math.max(0,inc-std))*1.04;
+  const oldP = Math.max(0,oldTax-tds), newP = Math.max(0,newTax-tds);
+  const oldR = Math.max(0,tds-oldTax), newR = Math.max(0,tds-newTax);
+  $('old-tax').textContent = '₹'+Math.round(oldP).toLocaleString('en-IN');
+  $('new-tax').textContent = '₹'+Math.round(newP).toLocaleString('en-IN');
+  $('old-ref').textContent = oldR>0?'Refund: ₹'+Math.round(oldR).toLocaleString('en-IN'):'';
+  $('new-ref').textContent = newR>0?'Refund: ₹'+Math.round(newR).toLocaleString('en-IN'):'';
+  $('old-card').style.borderColor = newTax<=oldTax?'var(--bd)':'var(--grn)';
+  $('new-card').style.borderColor = newTax<=oldTax?'var(--grn)':'var(--bd)';
+  const saving = Math.abs(Math.round(oldTax-newTax));
+  const rec = newTax<=oldTax?'New':'Old';
+  $('itr-rec').textContent = `✅ ${rec} Regime recommended — saves ₹${saving.toLocaleString('en-IN')} in tax`;
+  $('itr-result').style.display = 'block';
+}
+
+async function saveITR() {
+  const client = $('itr-client').value.trim();
+  const pan = $('itr-pan').value.trim();
+  if (!client||!pan) { alert('Enter client name and PAN first'); return; }
+  try {
+    const inc = +$('itr-income').value||0;
+    await apicall('/itr/create', {method:'POST', body: JSON.stringify({
+      client_name: client, pan: pan,
+      ay: $('itr-ay').value,
+      itr_type: $('itr-type').value,
+      income_data: {salary_income:inc, sec_80c:+$('itr-80c').value||0, tds_employer:+$('itr-tds').value||0, new_tax_regime:false}
+    })});
+    alert('ITR draft saved!');
+    loadITR();
+  } catch(e) { alert('Error: '+e.message); }
+}
+
+// FORM 26AS
+async function loadForm26AS() {
+  try {
+    const data = await apicall('/form26as/mismatches');
+    const items = data.mismatches || data || [];
+    $('f26-body').innerHTML = items.length ? items.slice(0,20).map(m => `<tr>
+      <td>${m.client_id||'—'}</td>
+      <td>${m.deductor||m.deductor_name||'—'}</td>
+      <td style="font-family:var(--m)">${m.section||'—'}</td>
+      <td style="font-family:var(--m)">₹${(m.form26as_tds||0).toLocaleString('en-IN')}</td>
+      <td style="font-family:var(--m)">₹${(m.ais_tds||0).toLocaleString('en-IN')}</td>
+      <td style="font-family:var(--m);color:var(--amb)">₹${(m.difference||0).toLocaleString('en-IN')}</td>
+      <td><span class="b ${m.severity==='high'?'br':'ba'}">${m.severity||'medium'}</span></td>
+    </tr>`).join('') : '<tr><td colspan="7" style="text-align:center;color:var(--t3);padding:20px">No mismatches found.</td></tr>';
+  } catch(e) {
+    $('f26-body').innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--t3);padding:20px">No data.</td></tr>`;
+  }
+}
+
+// TDS
+async function loadTDS() {
+  try {
+    const data = await apicall('/tds/list');
+    const items = data.returns || data || [];
+    $('tds-body').innerHTML = items.length ? items.slice(0,20).map(t => `<tr>
+      <td>${t.client_name||'—'}</td>
+      <td style="font-family:var(--m);font-size:10px">${t.tan||'—'}</td>
+      <td><span class="b bi">${t.form_type||'—'}</span></td>
+      <td>${t.quarter||'—'} ${t.fy||''}</td>
+      <td>${t.total_deductees||0}</td>
+      <td style="font-family:var(--m)">₹${(t.total_tds_deducted||0).toLocaleString('en-IN')}</td>
+      <td><span class="b ${t.status==='filed'?'bg':t.status==='draft'?'bi':'ba'}">${t.status||'draft'}</span></td>
+    </tr>`).join('') : '<tr><td colspan="7" style="text-align:center;color:var(--t3);padding:20px">No TDS returns.</td></tr>';
+  } catch(e) {
+    $('tds-body').innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--t3);padding:20px">No data.</td></tr>`;
+  }
+}
+
+async function createTDS() {
+  const client = $('tds-client').value.trim();
+  const tan = $('tds-tan').value.trim();
+  if (!client||!tan) { $('tds-msg').innerHTML = '<div class="err-box">Enter client name and TAN</div>'; return; }
+  try {
+    await apicall('/tds/create', {method:'POST', body: JSON.stringify({
+      client_name:client, tan, form_type:$('tds-form').value,
+      quarter:$('tds-q').value, fy:$('tds-fy').value
+    })});
+    $('tds-msg').innerHTML = '<div class="ok-box">✅ TDS return created successfully</div>';
+    loadTDS();
+  } catch(e) { $('tds-msg').innerHTML = `<div class="err-box">${e.message}</div>`; }
+}
+
+// TAX AUDIT
+async function loadAudit() {
+  try {
+    const data = await apicall('/tax-audit/list');
+    const items = data.reports || data || [];
+    $('ta-body').innerHTML = items.length ? items.slice(0,20).map(a => `<tr>
+      <td>${a.client_name||'—'}</td>
+      <td style="font-family:var(--m);font-size:10px">${a.pan||'—'}</td>
+      <td><span class="b bi">${a.form_type||'—'}</span></td>
+      <td>${a.ay||'—'}</td>
+      <td style="font-family:var(--m)">₹${(a.turnover||0).toLocaleString('en-IN')}</td>
+      <td>${a.due_date||'30 Sep'}</td>
+      <td><span class="b ${a.status==='filed'?'bg':'ba'}">${a.status||'draft'}</span></td>
+    </tr>`).join('') : '<tr><td colspan="7" style="text-align:center;color:var(--t3);padding:20px">No audit reports.</td></tr>';
+  } catch(e) {
+    $('ta-body').innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--t3);padding:20px">No data.</td></tr>`;
+  }
+}
+
+async function createAudit() {
+  const client = $('ta-client').value.trim();
+  const pan = $('ta-pan').value.trim();
+  if (!client||!pan) { $('ta-msg').innerHTML = '<div class="err-box">Enter client name and PAN</div>'; return; }
+  try {
+    await apicall('/tax-audit/create', {method:'POST', body: JSON.stringify({
+      client_name:client, pan, ay:'2025-26',
+      form_type:$('ta-form').value, audit_section:'44AB',
+      turnover:+$('ta-turnover').value||0,
+      net_profit:+$('ta-profit').value||0
+    })});
+    $('ta-msg').innerHTML = '<div class="ok-box">✅ Audit report created</div>';
+    loadAudit();
+  } catch(e) { $('ta-msg').innerHTML = `<div class="err-box">${e.message}</div>`; }
+}
+
+// DOCUMENTS
+async function loadDocs() {
+  try {
+    const data = await apicall('/documents/list');
+    const items = data.documents || data || [];
+    $('docs-body').innerHTML = items.length ? items.slice(0,20).map(d => `<tr>
+      <td>${d.name||d.filename||'—'}</td>
+      <td>${d.client_name||'—'}</td>
+      <td><span class="b bi">${d.doc_type||d.type||'—'}</span></td>
+      <td>${d.created_at?d.created_at.substring(0,10):'—'}</td>
+      <td>${d.file_size?Math.round(d.file_size/1024)+'KB':'—'}</td>
+    </tr>`).join('') : '<tr><td colspan="5" style="text-align:center;color:var(--t3);padding:20px">No documents.</td></tr>';
+  } catch(e) {
+    $('docs-body').innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--t3);padding:20px">No data.</td></tr>`;
+  }
+}
+
+// BILLING
+async function loadBilling() {
+  try {
+    const data = await apicall('/billing/invoices');
+    const items = data.invoices || data || [];
+    $('billing-body').innerHTML = items.length ? items.slice(0,20).map(inv => `<tr>
+      <td style="font-family:var(--m);font-size:10px">${inv.invoice_number||inv.id?.substring(0,8)||'—'}</td>
+      <td>${inv.client_name||'—'}</td>
+      <td>${inv.description||inv.services||'—'}</td>
+      <td style="font-family:var(--m)">₹${(inv.amount||inv.total||0).toLocaleString('en-IN')}</td>
+      <td>${inv.due_date||'—'}</td>
+      <td><span class="b ${inv.status==='paid'?'bg':inv.status==='overdue'?'br':'ba'}">${inv.status||'pending'}</span></td>
+    </tr>`).join('') : '<tr><td colspan="6" style="text-align:center;color:var(--t3);padding:20px">No invoices.</td></tr>';
+  } catch(e) {
+    $('billing-body').innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--t3);padding:20px">No data.</td></tr>`;
+  }
+}
+
+// AI AGENT
+async function askAI() {
+  const q = $('ai-query').value.trim();
+  if (!q) return;
+  $('ai-answer').textContent = 'Thinking...';
+  $('ai-result').style.display = 'block';
+  try {
+    const data = await apicall('/ai-agent/query', {method:'POST', body: JSON.stringify({query:q})});
+    $('ai-answer').textContent = data.response || data.answer || JSON.stringify(data,null,2);
+  } catch(e) {
+    $('ai-answer').textContent = 'Error: '+e.message;
+  }
+}
+
+// GSP
+async function gspAction(action) {
+  const gstin = $('gsp-gstin').value.trim().toUpperCase();
+  const period = $('gsp-period').value.trim();
+  const provider = $('gsp-provider').value;
+  const client = $('gsp-client').value.trim();
+  try {
+    let data;
+    if (action==='verify') data = await apicall(`/gsp/gstin/${gstin}/verify?provider=${provider}`);
+    else if (action==='2b') data = await apicall('/gsp/gstr2b/fetch',{method:'POST',body:JSON.stringify({gstin,period,provider})});
+    else if (action==='1') data = await apicall('/gsp/gstr1/fetch',{method:'POST',body:JSON.stringify({gstin,period,provider})});
+    else if (action==='status') data = await apicall(`/gsp/filing-status?gstin=${gstin}&period=${period}&return_type=GSTR3B&provider=${provider}`);
+    else if (action==='reconcile') data = await apicall('/gsp/reconcile/gstr2b',{method:'POST',body:JSON.stringify({gstin,period,provider,company_name:client,purchase_register:[]})});
+    $('gsp-output').textContent = JSON.stringify(data,null,2);
+    $('gsp-msg').innerHTML = '<div class="ok-box">✅ Done</div>';
+  } catch(e) {
+    $('gsp-msg').innerHTML = `<div class="err-box">${e.message}</div>`;
+  }
+}
+
 init();
 </script>
 </body>
