@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>GSTAgent — Practice Dashboard</title>
+<title>TaxSphere — Practice Dashboard</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap"/>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -92,7 +92,7 @@ h1{font-family:var(--serif);font-size:26px;letter-spacing:-.02em;margin-bottom:6
 
 <!-- SIDEBAR -->
 <div class="sidebar">
-  <div class="logo"><div class="lm">⚡</div><span class="lt">GSTAgent</span></div>
+  <div class="logo"><div class="lm">⚡</div><span class="lt">TaxSphere</span></div>
   <nav>
     <div class="nav-section">Main</div>
     <button class="nav-item active" onclick="showPage('dashboard')">📊 Dashboard</button>
@@ -346,8 +346,8 @@ h1{font-family:var(--serif);font-size:26px;letter-spacing:-.02em;margin-bottom:6
 </div><!-- end layout -->
 
 <script>
-const API = "https://gstagent-production.up.railway.app";
-const token = localStorage.getItem("gstagent_token");
+const API = "https://TaxSphere-production.up.railway.app";
+const token = localStorage.getItem("TaxSphere_token");
 const headers = {"Content-Type":"application/json","Authorization":"Bearer "+token};
 
 // ── PAGE NAVIGATION ────────────────────────────────────────────────────────────

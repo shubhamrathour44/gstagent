@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>Start Free Trial — GSTAgent</title>
+<title>Start Free Trial — TaxSphere</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap"/>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -31,7 +31,7 @@ input::placeholder{color:#334155}
 <body>
 <div class="bg"></div>
 <div class="card">
-  <div class="logo"><div class="lm">⚡</div><span class="lt">GSTAgent</span></div>
+  <div class="logo"><div class="lm">⚡</div><span class="lt">TaxSphere</span></div>
   <h2>Start free trial</h2>
   <p>14 days free · No credit card · Setup in 5 minutes</p>
   <div class="badge">🚀 Launch offer: 50% off first 3 months for first 20 firms</div>
@@ -49,7 +49,7 @@ input::placeholder{color:#334155}
   <div class="link">Already have an account? <a href="/login">Sign in</a></div>
 </div>
 <script>
-const API = "https://gstagent-production.up.railway.app";
+const API = "https://TaxSphere-production.up.railway.app";
 // Pre-fill email from URL param
 const urlEmail = new URLSearchParams(window.location.search).get('email');
 if(urlEmail) document.getElementById('email').value = urlEmail;
@@ -68,12 +68,12 @@ async function signup(){
     const res=await fetch(API+'/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pass,firm_name:firm,admin_name:name})});
     const data=await res.json();
     if(!res.ok)throw new Error(data.detail||'Signup failed');
-    localStorage.setItem('gstagent_token',data.access_token);
-    localStorage.setItem('gstagent_user',JSON.stringify(data));
+    localStorage.setItem('TaxSphere_token',data.access_token);
+    localStorage.setItem('TaxSphere_user',JSON.stringify(data));
     window.location.href='/app';
   }catch(e){err.style.display='block';err.textContent=e.message;btn.disabled=false;btn.textContent='Create account →';}
 }
-if(localStorage.getItem('gstagent_token')) window.location.href='/app';
+if(localStorage.getItem('TaxSphere_token')) window.location.href='/app';
 </script>
 </body>
 </html>

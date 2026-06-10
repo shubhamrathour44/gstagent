@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>Bill Reader — GSTAgent</title>
+<title>Bill Reader — TaxSphere</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap"/>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -89,7 +89,7 @@ td{padding:9px 10px;border-bottom:1px solid rgba(255,255,255,.03);color:var(--t2
 <body>
 
 <div class="topbar">
-  <div class="logo"><div class="lm">⚡</div>GSTAgent</div>
+  <div class="logo"><div class="lm">⚡</div>TaxSphere</div>
   <div style="display:flex;gap:8px">
     <a href="/app" style="color:var(--t2);font-size:13px;text-decoration:none">← Dashboard</a>
   </div>
@@ -97,7 +97,7 @@ td{padding:9px 10px;border-bottom:1px solid rgba(255,255,255,.03);color:var(--t2
 
 <div class="container">
   <h1>📷 Bill Reader</h1>
-  <p class="sub">Take a photo of any bill — handwritten or printed, Hindi or English — and GSTAgent reads it automatically.</p>
+  <p class="sub">Take a photo of any bill — handwritten or printed, Hindi or English — and TaxSphere reads it automatically.</p>
 
   <!-- Supported languages banner -->
   <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px">
@@ -211,8 +211,8 @@ td{padding:9px 10px;border-bottom:1px solid rgba(255,255,255,.03);color:var(--t2
 </div>
 
 <script>
-const API = "https://gstagent-production.up.railway.app";
-const token = localStorage.getItem("gstagent_token");
+const API = "https://TaxSphere-production.up.railway.app";
+const token = localStorage.getItem("TaxSphere_token");
 const headers = {"Authorization": "Bearer " + token};
 
 let selectedFile = null;

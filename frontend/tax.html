@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>GSTAgent — Income Tax Assistant</title>
+  <title>TaxSphere — Income Tax Assistant</title>
   <style>
     body{font-family:Inter,Arial,sans-serif;background:#0f172a;color:#e5e7eb;margin:0;padding:32px} .card{max-width:980px;margin:auto;background:#111827;border:1px solid #334155;border-radius:20px;padding:28px} h1{margin-top:0} input,select,button{padding:12px;border-radius:10px;border:1px solid #475569;background:#020617;color:#e5e7eb;margin:6px 0;width:100%} button{background:#4f46e5;border:none;cursor:pointer;font-weight:700}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.result{white-space:pre-wrap;background:#020617;border:1px solid #334155;border-radius:14px;padding:18px;margin-top:18px;overflow:auto}.muted{color:#94a3b8}@media(max-width:720px){.grid{grid-template-columns:1fr}}
   </style>
@@ -23,9 +23,9 @@
     <div id="result" class="result">Result will appear here.</div>
   </div>
   <script>
-    const API_BASE = 'https://gstagent-production.up.railway.app';
+    const API_BASE = 'https://TaxSphere-production.up.railway.app';
     function token(){
-  return localStorage.getItem('gstagent_token') 
+  return localStorage.getItem('TaxSphere_token') 
       || localStorage.getItem('token') 
       || localStorage.getItem('access_token') 
       || '';

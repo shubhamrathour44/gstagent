@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Compliance Tracker - GSTAgent</title>
+    <title>Compliance Tracker - TaxSphere</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -12,7 +12,7 @@
     <div class="flex h-screen overflow-hidden">
         <div class="w-64 bg-slate-900 text-white flex flex-col">
             <div class="p-5 text-2xl font-bold tracking-wider border-b border-slate-800 flex items-center gap-2">
-                <i class="fa-solid fa-shield-halved text-blue-400"></i> GSTAgent
+                <i class="fa-solid fa-shield-halved text-blue-400"></i> TaxSphere
             </div>
             <nav class="flex-1 p-4 space-y-2">
                 <a href="/app" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-400 hover:bg-slate-800 hover:text-white transition">
@@ -168,10 +168,10 @@
     </div>
 
     <script>
-        const API_BASE = "https://gstagent-production.up.railway.app";
+        const API_BASE = "https://TaxSphere-production.up.railway.app";
         
         function token() {
-            return localStorage.getItem('gstagent_token') || localStorage.getItem('token') || localStorage.getItem('access_token') || '';
+            return localStorage.getItem('TaxSphere_token') || localStorage.getItem('token') || localStorage.getItem('access_token') || '';
         }
 
         async function apiCall(path, options = {}) {

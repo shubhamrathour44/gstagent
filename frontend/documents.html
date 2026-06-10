@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Document Vault - GSTAgent</title>
+<title>Document Vault - TaxSphere</title>
 <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
@@ -139,10 +139,10 @@ Search
 </div>
 
 <script>
-const API_BASE = "https://gstagent-production.up.railway.app";
+const API_BASE = "https://TaxSphere-production.up.railway.app";
 
 function getToken(){
-return localStorage.getItem("gstagent_token") || localStorage.getItem("access_token") || localStorage.getItem("token") || "";
+return localStorage.getItem("TaxSphere_token") || localStorage.getItem("access_token") || localStorage.getItem("token") || "";
 }
 
 function headers(){
