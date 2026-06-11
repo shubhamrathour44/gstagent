@@ -1,4 +1,4 @@
-﻿import os
+import os
 import logging
 
 from fastapi import FastAPI
@@ -21,6 +21,9 @@ from bill_reader.router import router as bill_reader_router
 from itr.router import router as itr_router
 from password_reset import router as password_reset_router`nfrom form26as import router as form26as_router`nfrom tds import router as tds_router`nfrom tax_audit import router as tax_audit_router
 from ai_agent_router import router as ai_agent_router
+from form26as import router as form26as_router
+from tds import router as tds_router
+from tax_audit import router as tax_audit_router
 
 
 logging.basicConfig(level=logging.INFO)
@@ -112,6 +115,9 @@ app.include_router(bill_reader_router)
 app.include_router(itr_router)
 app.include_router(password_reset_router)
 app.include_router(ai_agent_router)
+app.include_router(form26as_router)
+app.include_router(tds_router)
+app.include_router(tax_audit_router)
 
 
 if __name__ == "__main__":
@@ -125,3 +131,4 @@ if __name__ == "__main__":
         port=port,
         reload=True
     )
+
