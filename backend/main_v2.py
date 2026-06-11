@@ -116,6 +116,8 @@ app.include_router(tds_router)
 app.include_router(tax_audit_router)
 app.include_router(invoices_router)
 app.include_router(reconcile_saved_router)
+app.include_router(tally_import_router)
+app.include_router(zoho_import_router)
 
 
 if __name__ == "__main__":
