@@ -1,0 +1,24 @@
+FIX NO firm_id ERROR
+
+Problem:
+Railway Postgres invoices table exists without firm_id column.
+Old code queried WHERE firm_id = ...
+That caused 500 error and browser showed CORS/Failed to fetch.
+
+Fix:
+Replace backend/invoices.py and backend/reconcile_saved.py with these fixed files.
+
+Commands:
+copy /Y frontend\invoices_no_firm_id.py backend\invoices.py
+copy /Y frontend\reconcile_saved_no_firm_id.py backend\reconcile_saved.py
+
+git add backend\invoices.py backend\reconcile_saved.py
+git commit -m "Fix invoice reconciliation firm id error"
+git push origin main
+
+After Railway deploy:
+1. Open https://gstagent-production.up.railway.app/docs
+2. Confirm /invoices/list and /reconcile-saved/run exist
+3. Open https://gstagent.vercel.app/app
+4. Ctrl+Shift+R
+5. Test Run Reconciliation again

@@ -1,0 +1,19 @@
+TALLY + ZOHO IMPORT INSTALL STEPS
+
+Copy these files into your project root if needed, then run:
+
+copy /Y tally_import.py backend\tally_import.py
+copy /Y zoho_import.py backend\zoho_import.py
+copy /Y apply_tally_zoho_patch.py apply_tally_zoho_patch.py
+
+python apply_tally_zoho_patch.py
+
+git add frontend\app.html backend\tally_import.py backend\zoho_import.py backend\main_v2.py apply_tally_zoho_patch.py
+git commit -m "Add Tally and Zoho import integrations"
+git push origin main
+
+After deployment:
+1. Open https://gstagent.vercel.app/app
+2. Go to Accounting Integrations
+3. Upload Tally or Zoho Excel/CSV export
+4. Imported invoices should appear in Invoice Register

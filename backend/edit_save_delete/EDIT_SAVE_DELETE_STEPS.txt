@@ -1,0 +1,18 @@
+EDIT / SAVE / DELETE PACKAGE
+
+1) Copy files into project:
+copy /Y app_with_edit_save_delete.html frontend\app.html
+copy /Y invoices_with_edit_delete.py backend\invoices.py
+
+2) Commit and push:
+git add frontend\app.html backend\invoices.py
+git commit -m "Add invoice edit save delete actions"
+git push origin main
+
+3) Wait for Vercel + Railway deploy.
+
+4) Test:
+- Open /app
+- Invoice Register -> Edit invoice
+- Update fields -> Update Invoice
+- Delete invoice -> confirm row disappears
