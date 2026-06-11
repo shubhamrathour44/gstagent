@@ -508,8 +508,8 @@ input:focus,select:focus,textarea:focus{border-color:var(--blue2)}
 </div>
 
 <script>
-const API='https://TaxSphere-production.up.railway.app';
-const token=localStorage.getItem('gstagent_token');
+const API='https://gstagent-production.up.railway.app';
+const token=localStorage.getItem('gstagent_token'); const _t=localStorage.getItem('gstagent_token');
 if(!token)location.href='/login';
 const h=()=>({'Content-Type':'application/json','Authorization':'Bearer '+token});
 const $=id=>document.getElementById(id);
