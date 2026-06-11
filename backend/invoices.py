@@ -63,6 +63,21 @@ class InvoiceCreate(BaseModel):
     raw_data: Optional[dict[str, Any]] = None
 
 
+class InvoiceUpdate(BaseModel):
+    client_id: Optional[str] = None
+    client_name: Optional[str] = None
+    invoice_type: Optional[str] = None
+    vendor_name: Optional[str] = None
+    vendor_gstin: Optional[str] = None
+    invoice_number: Optional[str] = None
+    invoice_date: Optional[str] = None
+    taxable_value: Optional[float] = None
+    cgst: Optional[float] = None
+    sgst: Optional[float] = None
+    igst: Optional[float] = None
+    total_amount: Optional[float] = None
+    raw_data: Optional[dict[str, Any]] = None
+
 async def ensure_invoice_table(db: AsyncSession) -> None:
     await db.execute(text(CREATE_TABLE_SQL))
     # Add missing columns safely for older tables.
@@ -169,6 +184,66 @@ async def list_invoices(
     result = await db.execute(text(sql), params)
     invoices = [row_to_dict(row) for row in result.fetchall()]
     return {"ok": True, "invoices": invoices, "count": len(invoices)}
+
+
+@router.get("/{invoice_id}")
+async def get_invoice(
+    invoice_id: str,
+    db: AsyncSession = Depends(get_db),
+    user: CurrentUser = Depends(get_current_user),
+):
+    await ensure_invoice_table(db)
+    result = await db.execute(text("SELECT * FROM invoices WHERE id = :id"), {"id": invoice_id})
+    row = result.fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail="Invoice not found")
+    return {"ok": True, "invoice": row_to_dict(row)}
+
+
+@router.put("/{invoice_id}")
+async def update_invoice(
+    invoice_id: str,
+    payload: InvoiceUpdate,
+    db: AsyncSession = Depends(get_db),
+    user: CurrentUser = Depends(get_current_user),
+):
+    await ensure_invoice_table(db)
+    existing = await db.execute(text("SELECT id FROM invoices WHERE id = :id"), {"id": invoice_id})
+    if not existing.fetchone():
+        raise HTTPException(status_code=404, detail="Invoice not found")
+
+    data = payload.model_dump(exclude_unset=True)
+    if not data:
+        return {"ok": True, "message": "No changes supplied"}
+
+    allowed = {
+        "client_id", "client_name", "invoice_type", "vendor_name", "vendor_gstin",
+        "invoice_number", "invoice_date", "taxable_value", "cgst", "sgst",
+        "igst", "total_amount", "raw_data"
+    }
+    updates = []
+    params: dict[str, Any] = {"id": invoice_id}
+    import json
+    for key, value in data.items():
+        if key not in allowed:
+            continue
+        if key == "raw_data":
+            updates.append(f"{key} = CAST(:{key} AS JSONB)")
+            params[key] = json.dumps(value or {})
+        else:
+            updates.append(f"{key} = :{key}")
+            params[key] = value
+
+    if not updates:
+        return {"ok": True, "message": "No valid changes supplied"}
+
+    # updated_at may not exist on old tables, so add it safely.
+    await db.execute(text("ALTER TABLE invoices ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP"))
+    updates.append("updated_at = CURRENT_TIMESTAMP")
+
+    await db.execute(text("UPDATE invoices SET " + ", ".join(updates) + " WHERE id = :id"), params)
+    await db.commit()
+    return {"ok": True, "invoice_id": invoice_id, "message": "Invoice updated"}
 
 
 @router.delete("/{invoice_id}")

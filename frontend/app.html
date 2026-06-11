@@ -397,6 +397,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--blue2)}
           <button class="btn btn-s" onclick="clearSmartInvoiceForm()">Clear</button>
         </div>
         <div id="si-msg"></div>
+        <input type="hidden" id="si-edit-id" value=""/>
       </div>
 
       <div class="card">
@@ -421,6 +422,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--blue2)}
           <div class="fg"><label>Detected Language</label><input id="si-detected-lang" readonly placeholder="—"/></div>
         </div>
         <button class="btn btn-p" id="si-save-btn" onclick="saveSmartInvoice()">💾 Save Invoice to Client Register</button>
+        <button class="btn btn-s" id="si-cancel-edit-btn" onclick="cancelInvoiceEdit()" style="margin-left:8px;display:none">Cancel Edit</button>
         <button class="btn btn-s" onclick="loadSmartInvoices()" style="margin-left:8px">Refresh Register</button>
       </div>
 
@@ -431,8 +433,8 @@ input:focus,select:focus,textarea:focus{border-color:var(--blue2)}
           <button class="btn btn-s" onclick="exportSmartInvoicesCSV()">⬇️ Export CSV</button>
           <button class="btn btn-p" onclick="nav('reconciliation',null)">Run Reconciliation →</button>
         </div>
-        <div class="tw"><table><thead><tr><th>Client</th><th>Type</th><th>Invoice No</th><th>Vendor</th><th>GSTIN</th><th>Date</th><th>Taxable</th><th>Total</th><th>Source</th></tr></thead>
-        <tbody id="si-register-body"><tr><td colspan="9" style="text-align:center;color:var(--t3);padding:20px">No invoices yet.</td></tr></tbody></table></div>
+        <div class="tw"><table><thead><tr><th>Client</th><th>Type</th><th>Invoice No</th><th>Vendor</th><th>GSTIN</th><th>Date</th><th>Taxable</th><th>Total</th><th>Source</th><th>Action</th></tr></thead>
+        <tbody id="si-register-body"><tr><td colspan="10" style="text-align:center;color:var(--t3);padding:20px">No invoices yet.</td></tr></tbody></table></div>
       </div>
     </div>
 
@@ -460,8 +462,8 @@ input:focus,select:focus,textarea:focus{border-color:var(--blue2)}
           <button class="btn btn-s" onclick="nav('smartinvoice',null)">📄 Add Invoice</button>
         </div>
         <div id="ir-msg"></div>
-        <div class="tw"><table><thead><tr><th>Client</th><th>Type</th><th>Invoice No</th><th>Vendor</th><th>GSTIN</th><th>Date</th><th>Taxable</th><th>GST</th><th>Total</th><th>Source</th></tr></thead>
-        <tbody id="ir-body"><tr><td colspan="10" style="text-align:center;color:var(--t3);padding:20px">Loading invoices...</td></tr></tbody></table></div>
+        <div class="tw"><table><thead><tr><th>Client</th><th>Type</th><th>Invoice No</th><th>Vendor</th><th>GSTIN</th><th>Date</th><th>Taxable</th><th>GST</th><th>Total</th><th>Source</th><th>Action</th></tr></thead>
+        <tbody id="ir-body"><tr><td colspan="11" style="text-align:center;color:var(--t3);padding:20px">Loading invoices...</td></tr></tbody></table></div>
       </div>
     </div>
 
@@ -818,6 +820,9 @@ async function loadSmartClients(){
 function clearSmartInvoiceForm(){
   ['si-file','si-vendor-name','si-vendor-gstin','si-invoice-no','si-invoice-date','si-taxable','si-total','si-cgst','si-sgst','si-igst','si-confidence','si-detected-lang'].forEach(id=>{if($(id))$(id).value='';});
   if($('si-msg'))$('si-msg').innerHTML='';
+  editingInvoiceId=''; if($('si-edit-id')) $('si-edit-id').value='';
+  if($('si-save-btn')) $('si-save-btn').textContent='💾 Save Invoice to Client Register';
+  if($('si-cancel-edit-btn')) $('si-cancel-edit-btn').style.display='none';
 }
 function fillDemoInvoice(){
   const today=new Date().toISOString().substring(0,10);
@@ -893,24 +898,36 @@ function getSmartInvoicePayload(){
 }
 async function saveSmartInvoice(){
   const p=getSmartInvoicePayload();
+  const editId = $('si-edit-id')?.value || editingInvoiceId || '';
   if(!p.client_id){$('si-msg').innerHTML='<div class="err-box">Select client first.</div>';return;}
   if(!p.invoice_number){$('si-msg').innerHTML='<div class="err-box">Invoice number is required.</div>';return;}
-  const btn=$('si-save-btn');btn.disabled=true;btn.textContent='Saving...';
-  const endpoints=['/invoices/create','/invoices','/invoice/create','/billing/invoices'];
+  const btn=$('si-save-btn');btn.disabled=true;btn.textContent=editId?'Updating...':'Saving...';
   let saved=false,lastErr='';
-  for(const ep of endpoints){
-    try{await api(ep,{method:'POST',body:JSON.stringify(p)});saved=true;break;}catch(e){lastErr=e.message||String(e);}
+  if(editId && !String(editId).startsWith('local-')){
+    try{await api('/invoices/'+encodeURIComponent(editId),{method:'PUT',body:JSON.stringify(p)});saved=true;}catch(e){lastErr=e.message||String(e);}
+  } else if(editId && String(editId).startsWith('local-')){
+    const local=JSON.parse(localStorage.getItem('smart_invoices_demo')||'[]');
+    const idx=local.findIndex(x=>String(getInvoiceId(x))===String(editId));
+    if(idx>=0){local[idx]={...local[idx],...p,updated_at:new Date().toISOString()};localStorage.setItem('smart_invoices_demo',JSON.stringify(local));saved=true;}
+  } else {
+    const endpoints=['/invoices/create','/invoices','/invoice/create','/billing/invoices'];
+    for(const ep of endpoints){try{await api(ep,{method:'POST',body:JSON.stringify(p)});saved=true;break;}catch(e){lastErr=e.message||String(e);}}
   }
-  if(!saved){
+  if(!saved && !editId){
     const local=JSON.parse(localStorage.getItem('smart_invoices_demo')||'[]');
     local.unshift({...p,id:'local-'+Date.now(),created_at:new Date().toISOString()});
     localStorage.setItem('smart_invoices_demo',JSON.stringify(local));
     $('si-msg').innerHTML='<div class="ok-box">✅ Invoice saved locally for demo. Backend invoice endpoint not found yet: '+lastErr+'</div>';
+  }else if(!saved){
+    $('si-msg').innerHTML='<div class="err-box">Update failed: '+lastErr+'</div>';
   }else{
-    $('si-msg').innerHTML='<div class="ok-box">✅ Invoice saved to backend client invoice register.</div>';
+    $('si-msg').innerHTML='<div class="ok-box">✅ Invoice '+(editId?'updated':'saved')+' successfully.</div>';
+    editingInvoiceId=''; if($('si-edit-id')) $('si-edit-id').value='';
+    if($('si-cancel-edit-btn')) $('si-cancel-edit-btn').style.display='none';
   }
   btn.disabled=false;btn.textContent='💾 Save Invoice to Client Register';
   loadSmartInvoices();
+  loadInvoiceRegister();
 }
 async function loadSmartInvoices(){
   const body=$('si-register-body'); if(!body)return;
@@ -921,7 +938,7 @@ async function loadSmartInvoices(){
   }
   const local=JSON.parse(localStorage.getItem('smart_invoices_demo')||'[]');
   invoices=[...local,...(Array.isArray(invoices)?invoices:[])];
-  body.innerHTML=invoices.length?invoices.slice(0,50).map(x=>`<tr><td>${x.client_name||'—'}</td><td><span class="b ${x.invoice_type==='sales'?'bi':'bg'}">${x.invoice_type||'purchase'}</span></td><td style="font-family:var(--m)">${x.invoice_number||x.invoice_no||x.id?.substring?.(0,8)||'—'}</td><td>${x.vendor_name||x.supplier_name||x.description||'—'}</td><td style="font-family:var(--m);font-size:10px">${x.vendor_gstin||x.supplier_gstin||x.gstin||'—'}</td><td>${x.invoice_date||x.date||'—'}</td><td style="font-family:var(--m)">₹${Number(x.taxable_value||x.taxable||0).toLocaleString('en-IN')}</td><td style="font-family:var(--m)">₹${Number(x.total_amount||x.total||x.amount||0).toLocaleString('en-IN')}</td><td><span class="b bp">${x.source||'saved'}</span></td></tr>`).join(''):'<tr><td colspan="9" style="text-align:center;color:var(--t3);padding:20px">No invoices yet. Upload a bill and save invoice.</td></tr>';
+  body.innerHTML=invoices.length?invoices.slice(0,50).map(x=>`<tr><td>${x.client_name||'—'}</td><td><span class="b ${x.invoice_type==='sales'?'bi':'bg'}">${x.invoice_type||'purchase'}</span></td><td style="font-family:var(--m)">${x.invoice_number||x.invoice_no||x.id?.substring?.(0,8)||'—'}</td><td>${x.vendor_name||x.supplier_name||x.description||'—'}</td><td style="font-family:var(--m);font-size:10px">${x.vendor_gstin||x.supplier_gstin||x.gstin||'—'}</td><td>${x.invoice_date||x.date||'—'}</td><td style="font-family:var(--m)">₹${Number(x.taxable_value||x.taxable||0).toLocaleString('en-IN')}</td><td style="font-family:var(--m)">₹${Number(x.total_amount||x.total||x.amount||0).toLocaleString('en-IN')}</td><td><span class="b bp">${x.source||'saved'}</span></td><td><button class="btn btn-s" onclick="startEditInvoice('${getInvoiceId(x)}')">Edit</button> <button class="btn btn-s" onclick="deleteInvoice('${getInvoiceId(x)}')">Delete</button></td></tr>`).join(''):'<tr><td colspan="9" style="text-align:center;color:var(--t3);padding:20px">No invoices yet. Upload a bill and save invoice.</td></tr>';
 }
 function exportSmartInvoicesCSV(){
   const local=JSON.parse(localStorage.getItem('smart_invoices_demo')||'[]');
@@ -933,6 +950,49 @@ function exportSmartInvoicesCSV(){
 
 
 let invoiceRegisterCache=[];
+let editingInvoiceId = '';
+function escHtml(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+function getInvoiceId(x){return x.id || x.invoice_id || x._id || '';}
+function startEditInvoice(id){
+  const inv = invoiceRegisterCache.find(x => String(getInvoiceId(x)) === String(id));
+  if(!inv){alert('Invoice not found in current register. Refresh and try again.');return;}
+  nav('smartinvoice', null);
+  setTimeout(()=>{
+    if($('si-edit-id')) $('si-edit-id').value = id; editingInvoiceId = id;
+    if($('si-type')) $('si-type').value = inv.invoice_type || 'purchase';
+    if($('si-vendor-name')) $('si-vendor-name').value = inv.vendor_name || inv.supplier_name || '';
+    if($('si-vendor-gstin')) $('si-vendor-gstin').value = inv.vendor_gstin || inv.supplier_gstin || inv.gstin || '';
+    if($('si-invoice-no')) $('si-invoice-no').value = inv.invoice_number || inv.invoice_no || '';
+    if($('si-invoice-date')) $('si-invoice-date').value = inv.invoice_date || inv.date || '';
+    if($('si-taxable')) $('si-taxable').value = inv.taxable_value || inv.taxable || 0;
+    if($('si-cgst')) $('si-cgst').value = inv.cgst || 0;
+    if($('si-sgst')) $('si-sgst').value = inv.sgst || 0;
+    if($('si-igst')) $('si-igst').value = inv.igst || 0;
+    if($('si-total')) $('si-total').value = inv.total_amount || inv.total || inv.amount || 0;
+    if($('si-save-btn')) $('si-save-btn').textContent = '💾 Update Invoice';
+    if($('si-cancel-edit-btn')) $('si-cancel-edit-btn').style.display = 'inline-flex';
+    if($('si-msg')) $('si-msg').innerHTML = '<div class="info-box">Editing invoice '+escHtml(inv.invoice_number || id)+'. Make changes and click Update Invoice.</div>';
+  }, 250);
+}
+function cancelInvoiceEdit(){
+  editingInvoiceId=''; if($('si-edit-id')) $('si-edit-id').value='';
+  if($('si-save-btn')) $('si-save-btn').textContent='💾 Save Invoice to Client Register';
+  if($('si-cancel-edit-btn')) $('si-cancel-edit-btn').style.display='none';
+  clearSmartInvoiceForm();
+}
+async function deleteInvoice(id){
+  if(!id){alert('Invoice id missing');return;}
+  if(!confirm('Delete this invoice from register?'))return;
+  if(String(id).startsWith('local-')){
+    const local=JSON.parse(localStorage.getItem('smart_invoices_demo')||'[]').filter(x=>String(getInvoiceId(x))!==String(id));
+    localStorage.setItem('smart_invoices_demo', JSON.stringify(local));
+    await loadSmartInvoices(); await loadInvoiceRegister(); return;
+  }
+  try{await api('/invoices/'+encodeURIComponent(id), {method:'DELETE'});}
+  catch(e){alert('Delete failed: '+e.message);return;}
+  await loadSmartInvoices(); await loadInvoiceRegister();
+}
+
 async function loadInvoiceRegisterPage(){
   await loadInvoiceRegisterClients();
   await loadInvoiceRegister();
@@ -976,7 +1036,7 @@ function renderInvoiceRegister(){
   if($('ir-value'))$('ir-value').textContent='₹'+totalValue.toLocaleString('en-IN');
   body.innerHTML=rows.length?rows.slice(0,100).map(x=>{
     const gst=Number(x.cgst||0)+Number(x.sgst||0)+Number(x.igst||0);
-    return `<tr><td>${x.client_name||'—'}</td><td><span class="b ${x.invoice_type==='sales'?'bi':'bg'}">${x.invoice_type||'purchase'}</span></td><td style="font-family:var(--m)">${x.invoice_number||x.invoice_no||'—'}</td><td>${x.vendor_name||x.supplier_name||'—'}</td><td style="font-family:var(--m);font-size:10px">${x.vendor_gstin||x.supplier_gstin||x.gstin||'—'}</td><td>${x.invoice_date||x.date||'—'}</td><td style="font-family:var(--m)">₹${Number(x.taxable_value||x.taxable||0).toLocaleString('en-IN')}</td><td style="font-family:var(--m)">₹${gst.toLocaleString('en-IN')}</td><td style="font-family:var(--m)">₹${Number(x.total_amount||x.total||x.amount||0).toLocaleString('en-IN')}</td><td><span class="b bp">${x.source||'saved'}</span></td></tr>`;
+    return `<tr><td>${x.client_name||'—'}</td><td><span class="b ${x.invoice_type==='sales'?'bi':'bg'}">${x.invoice_type||'purchase'}</span></td><td style="font-family:var(--m)">${x.invoice_number||x.invoice_no||'—'}</td><td>${x.vendor_name||x.supplier_name||'—'}</td><td style="font-family:var(--m);font-size:10px">${x.vendor_gstin||x.supplier_gstin||x.gstin||'—'}</td><td>${x.invoice_date||x.date||'—'}</td><td style="font-family:var(--m)">₹${Number(x.taxable_value||x.taxable||0).toLocaleString('en-IN')}</td><td style="font-family:var(--m)">₹${gst.toLocaleString('en-IN')}</td><td style="font-family:var(--m)">₹${Number(x.total_amount||x.total||x.amount||0).toLocaleString('en-IN')}</td><td><span class="b bp">${x.source||'saved'}</span></td><td><button class="btn btn-s" onclick="startEditInvoice('${getInvoiceId(x)}')">Edit</button> <button class="btn btn-s" onclick="deleteInvoice('${getInvoiceId(x)}')">Delete</button></td></tr>`;
   }).join(''):'<tr><td colspan="10" style="text-align:center;color:var(--t3);padding:20px">No invoices found.</td></tr>';
 }
 function exportInvoiceRegisterCSV(){
