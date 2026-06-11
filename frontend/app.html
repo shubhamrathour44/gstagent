@@ -342,19 +342,29 @@ input:focus,select:focus,textarea:focus{border-color:var(--blue2)}
 
     <!-- RECONCILIATION -->
     <div class="page" id="pg-reconciliation">
-      <div class="card"><div class="ch">🔄 GST Reconciliation</div>
-        <div class="g2">
-          <div class="fg"><label>Client Name</label><input id="recon-client" value="Demo Industries Pvt Ltd"/></div>
-          <div class="fg"><label>Period (MMYYYY)</label><input id="recon-period" value="062025"/></div>
+      <div class="card"><div class="ch">🔄 GST Reconciliation — Saved Invoices vs GSTR-2B</div>
+        <div class="info-box">Demo workflow: select client → use saved invoices from Invoice Register → upload/paste GSTR-2B → run matching → export report.</div>
+        <div class="g3">
+          <div class="fg"><label>Client</label><select id="recon-client-id"><option value="">Loading clients...</option></select></div>
+          <div class="fg"><label>Period (MMYYYY)</label><input id="recon-period" value="062026" placeholder="062026"/></div>
+          <div class="fg"><label>GSTR-2B File (CSV/JSON)</label><input type="file" id="gstr2b-file" accept=".csv,.json,.txt"/></div>
         </div>
-        <button class="btn btn-p" onclick="runRecon()">🔄 Run Reconciliation</button>
+        <div class="fg"><label>Or Paste GSTR-2B JSON / CSV Rows</label><textarea id="gstr2b-text" rows="4" placeholder='Example JSON: [{"supplier_gstin":"27ABCDE1234F1Z5","invoice_number":"INV-001","invoice_date":"2026-06-05","total_amount":11800,"taxable_value":10000,"tax_amount":1800}]'></textarea></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+          <button class="btn btn-s" onclick="loadDemoGSTR2B()">🧪 Use Demo GSTR-2B</button>
+          <button class="btn btn-p" onclick="runSavedInvoiceRecon()">🔄 Run Reconciliation</button>
+          <button class="btn btn-s" onclick="exportReconCSV()">⬇️ Export Excel/CSV</button>
+        </div>
+        <div id="recon-msg"></div>
         <div id="recon-result" style="display:none;margin-top:14px">
-          <div class="stats" style="grid-template-columns:repeat(4,1fr)">
+          <div class="stats" style="grid-template-columns:repeat(5,1fr)">
             <div class="stat stat-g"><div class="sv" style="color:var(--green)" id="r-m">0</div><div class="sl">Matched</div></div>
-            <div class="stat stat-r"><div class="sv" style="color:var(--red)" id="r-mm">0</div><div class="sl">Mismatches</div></div>
             <div class="stat stat-a"><div class="sv" style="color:var(--amb)" id="r-mis">0</div><div class="sl">Missing in 2B</div></div>
+            <div class="stat stat-r"><div class="sv" style="color:var(--red)" id="r-amt">0</div><div class="sl">Amount Mismatch</div></div>
+            <div class="stat stat-b"><div class="sv" style="color:var(--blue3)" id="r-extra">0</div><div class="sl">Extra in 2B</div></div>
             <div class="stat stat-r"><div class="sv" style="color:var(--red)" id="r-itc">₹0</div><div class="sl">ITC at Risk</div></div>
           </div>
+          <div class="tw" style="margin-top:12px"><table><thead><tr><th>Status</th><th>Invoice</th><th>GSTIN</th><th>Book Amount</th><th>2B Amount</th><th>Explanation</th><th>Action</th></tr></thead><tbody id="recon-result-body"><tr><td colspan="7" style="text-align:center;color:var(--t3);padding:20px">Run reconciliation.</td></tr></tbody></table></div>
         </div>
       </div>
       <div class="card"><div class="ch">📋 Previous Reconciliations</div>
@@ -986,12 +996,84 @@ async function loadTasks(){
   $('tasks-body').innerHTML=t.length?t.slice(0,20).map(x=>`<tr><td>${x.title||'—'}</td><td>${x.client_name||'—'}</td><td>${x.assigned_to||'—'}</td><td>${x.due_date||'—'}</td><td><span class="b ${x.priority==='high'?'br':x.priority==='medium'?'ba':'bg'}">${x.priority||'—'}</span></td><td><span class="b ${x.status==='done'||x.status==='completed'?'bg':x.status==='overdue'?'br':'ba'}">${x.status||'—'}</span></td></tr>`).join(''):'<tr><td colspan="6" style="text-align:center;color:var(--t3);padding:20px">No tasks.</td></tr>';
   }catch(e){$('tasks-body').innerHTML=`<tr><td colspan="6" style="text-align:center;color:var(--t3);padding:20px">No data.</td></tr>`;}
 }
+let lastReconRows=[];
 async function loadRecon(){
-  try{const d=await api('/reconciliation/list');const r=d.reconciliations||d||[];
-  $('recon-body').innerHTML=r.length?r.slice(0,20).map(x=>`<tr><td>${x.client_name||'—'}</td><td>${x.period||'—'}</td><td style="color:var(--green)">${x.matched_count||0}</td><td style="color:var(--red)">${x.mismatch_count||0}</td><td style="color:var(--red)">₹${(x.itc_difference||0).toLocaleString('en-IN')}</td><td style="font-size:11px;color:var(--t3)">${x.created_at?x.created_at.substring(0,10):'—'}</td></tr>`).join(''):'<tr><td colspan="6" style="text-align:center;color:var(--t3);padding:20px">No reconciliations.</td></tr>';
-  }catch(e){$('recon-body').innerHTML=`<tr><td colspan="6" style="text-align:center;color:var(--t3);padding:20px">No data.</td></tr>`;}
+  await loadReconClients();
+  try{const d=await api('/reconcile-saved/list');const r=d.reconciliations||d||[];
+  $('recon-body').innerHTML=r.length?r.slice(0,20).map(x=>`<tr><td>${x.client_name||'—'}</td><td>${x.period||'—'}</td><td style="color:var(--green)">${x.matched_count||0}</td><td style="color:var(--red)">${x.mismatch_count||0}</td><td style="color:var(--red)">₹${(x.itc_at_risk||0).toLocaleString('en-IN')}</td><td style="font-size:11px;color:var(--t3)">${x.created_at?String(x.created_at).substring(0,10):'—'}</td></tr>`).join(''):'<tr><td colspan="6" style="text-align:center;color:var(--t3);padding:20px">No reconciliations.</td></tr>';
+  }catch(e){$('recon-body').innerHTML=`<tr><td colspan="6" style="text-align:center;color:var(--t3);padding:20px">No previous reconciliations.</td></tr>`;}
 }
-function runRecon(){$('recon-result').style.display='block';$('r-m').textContent='98';$('r-mm').textContent='18';$('r-mis').textContent='11';$('r-itc').textContent='₹87,450';}
+async function loadReconClients(){
+  try{const d=await api('/crm/clients');const c=d.clients||d||[];
+    $('recon-client-id').innerHTML='<option value="">Select Client</option>'+c.map(x=>`<option value="${x.id||x.client_id||x.gstin||x.name}" data-name="${x.name||x.client_name||''}">${x.name||x.client_name||'Client'} — ${x.gstin||'No GSTIN'}</option>`).join('');
+  }catch(e){$('recon-client-id').innerHTML='<option value="">No clients found</option>';}
+}
+function normalizeInv(x){
+  const gstin=(x.vendor_gstin||x.supplier_gstin||x.gstin||x.ctin||'').toString().toUpperCase().replace(/\s/g,'');
+  const inv=(x.invoice_number||x.inum||x.invoice_no||x.inv_no||x.number||'').toString().toUpperCase().replace(/\s/g,'');
+  const total=Number(x.total_amount||x.val||x.invoice_value||x.amount||0)||0;
+  const taxable=Number(x.taxable_value||x.txval||0)||0;
+  const tax=Number(x.tax_amount||x.iamt||0)+Number(x.cgst||x.camt||0)+Number(x.sgst||x.samt||0)+Number(x.igst||x.iamt||0);
+  return {...x,_gstin:gstin,_inv:inv,_total:total,_taxable:taxable,_tax:tax};
+}
+function parseGSTR2BText(txt){
+  txt=(txt||'').trim(); if(!txt)return [];
+  try{const j=JSON.parse(txt);return Array.isArray(j)?j:(j.invoices||j.data||j.items||[]);}catch(e){}
+  const lines=txt.split(/\r?\n/).filter(Boolean); if(lines.length<2)return [];
+  const heads=lines[0].split(',').map(h=>h.trim().toLowerCase());
+  return lines.slice(1).map(line=>{const vals=line.split(',');const o={};heads.forEach((h,i)=>o[h]=vals[i]?.trim()||'');return o;});
+}
+async function readGSTR2BInput(){
+  const f=$('gstr2b-file').files[0];
+  let txt=$('gstr2b-text').value;
+  if(f) txt=await f.text();
+  return parseGSTR2BText(txt).map(normalizeInv);
+}
+function loadDemoGSTR2B(){
+  const demo=[
+    {supplier_gstin:'27ABCDE1234F1Z5',invoice_number:'INV-001',invoice_date:'2026-06-05',taxable_value:10000,cgst:900,sgst:900,total_amount:11800},
+    {supplier_gstin:'07ABCDE1234F1Z5',invoice_number:'INV-002',invoice_date:'2026-06-07',taxable_value:5000,cgst:450,sgst:450,total_amount:5900},
+    {supplier_gstin:'27ABCDE1234F1Z5',invoice_number:'INV-999',invoice_date:'2026-06-09',taxable_value:2000,cgst:180,sgst:180,total_amount:2360}
+  ];
+  $('gstr2b-text').value=JSON.stringify(demo,null,2);
+  $('recon-msg').innerHTML='<div class="ok-box">✅ Demo GSTR-2B loaded. Now click Run Reconciliation.</div>';
+}
+async function runSavedInvoiceRecon(){
+  const sel=$('recon-client-id'); const client_id=sel.value; const client_name=sel.options[sel.selectedIndex]?.dataset?.name||sel.options[sel.selectedIndex]?.textContent||'';
+  if(!client_id){$('recon-msg').innerHTML='<div class="err-box">Select client first.</div>';return;}
+  let gstr2b=await readGSTR2BInput();
+  if(!gstr2b.length){$('recon-msg').innerHTML='<div class="err-box">Upload or paste GSTR-2B data first. For demo click Use Demo GSTR-2B.</div>';return;}
+  $('recon-msg').innerHTML='<div class="info-box">Running reconciliation...</div>';
+  try{
+    const d=await api('/reconcile-saved/run',{method:'POST',body:JSON.stringify({client_id,client_name,period:$('recon-period').value,gstr2b})});
+    showReconResults(d);
+  }catch(e){
+    // frontend fallback for demo if backend route not deployed yet
+    try{const inv=await api('/invoices/list?client_id='+encodeURIComponent(client_id)+'&invoice_type=purchase');const invoices=(inv.invoices||[]).map(normalizeInv);showReconResults(localReconcile(invoices,gstr2b,client_name));$('recon-msg').innerHTML='<div class="ok-box">✅ Reconciled locally for demo.</div>';}catch(e2){$('recon-msg').innerHTML='<div class="err-box">Reconciliation failed: '+e.message+'</div>';}
+  }
+}
+function localReconcile(invoices,gstr2b,client_name){
+  const bMap=new Map(gstr2b.map(x=>[(x._gstin+'|'+x._inv),x])); const used=new Set(); const rows=[]; let itc=0;
+  invoices.forEach(inv=>{const key=inv._gstin+'|'+inv._inv; const b=bMap.get(key);
+    if(!b){itc+=Number(inv.cgst||0)+Number(inv.sgst||0)+Number(inv.igst||0); rows.push({status:'Missing in 2B',invoice_number:inv.invoice_number,vendor_gstin:inv.vendor_gstin,book_amount:inv.total_amount,two_b_amount:0,explanation:'Invoice exists in saved purchase register but not in GSTR-2B. Possible vendor filing issue.',action:'Vendor follow-up'});}
+    else{used.add(key); const diff=Math.abs((Number(inv.total_amount)||0)-(Number(b._total)||0)); if(diff>2){itc+=diff; rows.push({status:'Amount Mismatch',invoice_number:inv.invoice_number,vendor_gstin:inv.vendor_gstin,book_amount:inv.total_amount,two_b_amount:b._total,explanation:'Invoice found in both records but value differs.',action:'Verify bill and 2B'});} else rows.push({status:'Matched',invoice_number:inv.invoice_number,vendor_gstin:inv.vendor_gstin,book_amount:inv.total_amount,two_b_amount:b._total,explanation:'Invoice matched with GSTR-2B.',action:'No action'});}
+  });
+  gstr2b.forEach(b=>{const key=b._gstin+'|'+b._inv;if(!used.has(key)&&!invoices.find(i=>i._gstin+'|'+i._inv===key))rows.push({status:'Extra in 2B',invoice_number:b.invoice_number||b.inum,vendor_gstin:b.supplier_gstin||b.vendor_gstin,book_amount:0,two_b_amount:b._total,explanation:'Invoice appears in GSTR-2B but not in saved invoice register.',action:'Check missing purchase bill'});});
+  return {summary:{matched:rows.filter(r=>r.status==='Matched').length,missing_in_2b:rows.filter(r=>r.status==='Missing in 2B').length,amount_mismatch:rows.filter(r=>r.status==='Amount Mismatch').length,extra_in_2b:rows.filter(r=>r.status==='Extra in 2B').length,itc_at_risk:itc},results:rows,client_name};
+}
+function showReconResults(d){
+  const s=d.summary||{}; lastReconRows=d.results||[]; $('recon-result').style.display='block';
+  $('r-m').textContent=s.matched||0; $('r-mis').textContent=s.missing_in_2b||0; $('r-amt').textContent=s.amount_mismatch||0; $('r-extra').textContent=s.extra_in_2b||0; $('r-itc').textContent='₹'+Number(s.itc_at_risk||0).toLocaleString('en-IN');
+  $('recon-result-body').innerHTML=lastReconRows.length?lastReconRows.map(r=>`<tr><td><span class="b ${r.status==='Matched'?'bg':r.status==='Amount Mismatch'?'br':r.status==='Missing in 2B'?'ba':'bi'}">${r.status}</span></td><td style="font-family:var(--m)">${r.invoice_number||'—'}</td><td style="font-family:var(--m);font-size:10px">${r.vendor_gstin||'—'}</td><td>₹${Number(r.book_amount||0).toLocaleString('en-IN')}</td><td>₹${Number(r.two_b_amount||0).toLocaleString('en-IN')}</td><td>${r.explanation||''}</td><td>${r.action||''}</td></tr>`).join(''):'<tr><td colspan="7" style="text-align:center;color:var(--t3);padding:20px">No records.</td></tr>';
+  $('recon-msg').innerHTML='<div class="ok-box">✅ Reconciliation complete. Show this table to CA, then export CSV.</div>';
+  loadRecon();
+}
+function exportReconCSV(){
+  if(!lastReconRows.length){alert('Run reconciliation first.');return;}
+  const cols=['status','invoice_number','vendor_gstin','book_amount','two_b_amount','explanation','action'];
+  const csv=[cols.join(','),...lastReconRows.map(r=>cols.map(c=>'"'+String(r[c]??'').replace(/"/g,'""')+'"').join(','))].join('\n');
+  const blob=new Blob([csv],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='gst-reconciliation-report.csv';a.click();URL.revokeObjectURL(a.href);
+}
 
 async function loadNotices(){
   try{const d=await api('/notices/list');const n=d.notices||d||[];

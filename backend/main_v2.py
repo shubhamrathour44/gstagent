@@ -22,6 +22,7 @@ from tds import router as tds_router
 from tax_audit import router as tax_audit_router
 from ai_agent_router import router as ai_agent_router
 from invoices import router as invoices_router
+from reconcile_saved import router as reconcile_saved_router
 
 
 logging.basicConfig(level=logging.INFO)
@@ -112,6 +113,7 @@ app.include_router(form26as_router)
 app.include_router(tds_router)
 app.include_router(tax_audit_router)
 app.include_router(invoices_router)
+app.include_router(reconcile_saved_router)
 
 
 if __name__ == "__main__":
