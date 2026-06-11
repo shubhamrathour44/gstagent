@@ -21,6 +21,8 @@ from form26as import router as form26as_router
 from tds import router as tds_router
 from tax_audit import router as tax_audit_router
 from ai_agent_router import router as ai_agent_router
+from invoices import router as invoices_router
+
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("gstagent-backend")
@@ -109,6 +111,8 @@ app.include_router(ai_agent_router)
 app.include_router(form26as_router)
 app.include_router(tds_router)
 app.include_router(tax_audit_router)
+app.include_router(invoices_router)
+
 
 if __name__ == "__main__":
     import uvicorn
