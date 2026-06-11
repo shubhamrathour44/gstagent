@@ -1,0 +1,24 @@
+INVOICE REGISTER → RECONCILIATION V1 SETUP
+
+1) Copy files:
+   - app_with_reconciliation_v1.html  → frontendpp.html
+   - reconcile_saved.py               → backendeconcile_saved.py
+
+2) Open backend\main_v2.py and add imports near other router imports:
+   from reconcile_saved import router as reconcile_saved_router
+
+3) Add this near other app.include_router(...) lines:
+   app.include_router(reconcile_saved_router)
+
+4) Push:
+   git add frontendpp.html backendeconcile_saved.py backend\main_v2.py
+   git commit -m "Add saved invoice reconciliation"
+   git push origin main
+
+5) Test:
+   - Open https://gstagent.vercel.app/app
+   - Go to Reconciliation
+   - Select client
+   - Click Use Demo GSTR-2B
+   - Click Run Reconciliation
+   - Export CSV

@@ -1,0 +1,25 @@
+Invoice Register drop-in package
+
+Files:
+1. app_with_invoice_register.html -> replace frontend/app.html
+2. invoices.py -> copy to backend/invoices.py
+
+Then edit backend/main_v2.py:
+Add import near other routers:
+    from invoices import router as invoices_router
+
+Add include after other app.include_router lines:
+    app.include_router(invoices_router)
+
+Then commit and push:
+    cd C:\Users\Shubham\Downloads\gstagent-github
+    copy C:\Users\Shubham\Downloads\app_with_invoice_register.html frontend\app.html
+    copy C:\Users\Shubham\Downloads\invoices.py backend\invoices.py
+    git add frontend\app.html backend\invoices.py backend\main_v2.py
+    git commit -m "Add invoice register and save invoice API"
+    git push origin main
+
+Test:
+- Open https://gstagent.vercel.app/app
+- Smart Invoice Upload -> Save Invoice
+- Invoice Register -> Refresh Register

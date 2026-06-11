@@ -1,0 +1,1102 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<!-- Smart Invoice Upload Auth Fixed v2 -->
+<title>TaxSphere — One Platform. Complete Tax & Compliance.</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+
+/* ── THEME TOKENS ── */
+[data-theme="dark"]{
+  --bg:#070B12;--s1:#0C1118;--s2:#131A24;--s3:#1A2333;
+  --bd:rgba(255,255,255,.07);--bd2:rgba(255,255,255,.12);
+  --txt:#F0F4FF;--t2:#8B9FBF;--t3:#3D5070;
+  --shadow:0 4px 24px rgba(0,0,0,.4);
+}
+[data-theme="light"]{
+  --bg:#F0F4F8;--s1:#FFFFFF;--s2:#F7F9FC;--s3:#EEF2F7;
+  --bd:rgba(0,0,0,.08);--bd2:rgba(0,0,0,.14);
+  --txt:#0F1A2E;--t2:#4A5E7A;--t3:#9BAFC8;
+  --shadow:0 4px 24px rgba(0,0,0,.08);
+}
+
+/* ── BRAND ── */
+:root{
+  --blue:#1A3FAA;--blue2:#2B5CE6;--blue3:#4B7BFF;
+  --green:#22C55E;--green2:#16A34A;
+  --red:#EF4444;--amb:#F59E0B;--pur:#8B5CF6;
+  --f:'Inter',sans-serif;--m:'JetBrains Mono',monospace;
+  --sw:240px;
+}
+
+body{font-family:var(--f);background:var(--bg);color:var(--txt);min-height:100vh;display:flex;font-size:13px;transition:background .2s,color .2s}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── SIDEBAR ── */
+.sidebar{height:100vh;
+  width:var(--sw);min-height:100vh;background:var(--s1);
+  border-right:1px solid var(--bd);
+  display:flex;flex-direction:column;
+  position:fixed;top:0;left:0;z-index:100;
+  transition:transform .25s;
+  box-shadow:var(--shadow);
+}
+.sb-head{padding:16px 14px 12px;border-bottom:1px solid var(--bd);flex-shrink:0}
+.logo-wrap{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.logo-img{width:36px;height:36px;object-fit:contain}
+.logo-svg{width:36px;height:36px}
+.brand-text{display:flex;flex-direction:column}
+.brand-name{font-size:16px;font-weight:800;letter-spacing:-.03em;line-height:1}
+.brand-name span{color:var(--green)}
+.brand-tag{font-size:9px;color:var(--t3);letter-spacing:.04em;margin-top:2px}
+.firm-box{background:var(--s2);border:1px solid var(--bd);border-radius:8px;padding:8px 10px}
+.firm-n{font-size:12px;font-weight:600;color:var(--txt)}
+.firm-r{font-size:10px;color:var(--t3);margin-top:1px}
+
+.sb-nav{flex:1;overflow-y:scroll;height:0;min-height:0;padding:8px 8px;scrollbar-width:thin;scrollbar-color:#4A6080 transparent}
+.sb-nav::-webkit-scrollbar{width:6px}
+.sb-nav::-webkit-scrollbar-thumb{background:#4A6080;border-radius:4px}.sb-nav::-webkit-scrollbar-track{background:rgba(255,255,255,.03)}
+.ns{font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.1em;padding:10px 8px 5px}
+.ni{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;cursor:pointer;color:var(--t2);font-size:12px;font-weight:500;transition:all .15s;margin-bottom:1px;text-decoration:none;border:none;background:none;width:100%;font-family:var(--f);text-align:left}
+.ni:hover{background:var(--s2);color:var(--txt)}
+.ni.active{background:linear-gradient(135deg,rgba(26,63,170,.15),rgba(34,197,94,.08));color:var(--blue2);font-weight:600;border-left:3px solid var(--blue2)}
+.ni-icon{font-size:14px;width:18px;text-align:center;flex-shrink:0}
+.ni-badge{margin-left:auto;background:rgba(239,68,68,.15);color:#FF8080;font-size:9px;font-weight:700;padding:1px 6px;border-radius:4px;flex-shrink:0}
+.ni-badge-g{background:rgba(34,197,94,.12);color:#4ADE80}
+
+.sb-foot{padding:10px 8px;border-top:1px solid var(--bd);flex-shrink:0;display:flex;flex-direction:column;gap:6px}
+.theme-toggle{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:8px;background:var(--s2);cursor:pointer;border:1px solid var(--bd)}
+.toggle-track{width:36px;height:20px;background:var(--bd2);border-radius:10px;position:relative;transition:background .2s;cursor:pointer}
+.toggle-track.on{background:var(--green)}
+.toggle-thumb{width:16px;height:16px;background:#fff;border-radius:50%;position:absolute;top:2px;left:2px;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.toggle-thumb.on{left:18px}
+.logout-btn{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;cursor:pointer;color:var(--t3);font-size:12px;font-weight:500;transition:all .15s;width:100%;background:none;border:none;font-family:var(--f)}
+.logout-btn:hover{background:rgba(239,68,68,.08);color:var(--red)}
+
+/* ── MAIN ── */
+.main{margin-left:var(--sw);flex:1;min-height:100vh;display:flex;flex-direction:column;transition:margin .25s}
+.topbar{height:52px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;padding:0 24px;background:var(--s1);position:sticky;top:0;z-index:50;box-shadow:var(--shadow)}
+.page-title{font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px}
+.tb-right{display:flex;align-items:center;gap:12px}
+.api-pill{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--t2);background:var(--s2);border:1px solid var(--bd);padding:4px 10px;border-radius:20px}
+.api-dot{width:6px;height:6px;border-radius:50%;background:var(--amb)}
+.mob-btn{display:none;background:none;border:none;color:var(--txt);font-size:20px;cursor:pointer;padding:4px}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:90}
+.overlay.show{display:block}
+
+.content{padding:22px;flex:1}
+.page{display:none;animation:fadeUp .3s ease both}
+.page.active{display:block}
+
+/* ── STATS ── */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.stat{background:var(--s1);border:1px solid var(--bd);border-radius:12px;padding:16px;position:relative;overflow:hidden}
+.stat::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.stat-g::before{background:linear-gradient(90deg,var(--green),var(--blue2))}
+.stat-r::before{background:linear-gradient(90deg,var(--red),#FF8C69)}
+.stat-a::before{background:linear-gradient(90deg,var(--amb),#FCD34D)}
+.stat-b::before{background:linear-gradient(90deg,var(--blue2),var(--pur))}
+.sv{font-size:22px;font-weight:800;font-family:var(--m);margin-bottom:3px}
+.sl{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.07em}
+
+/* ── CARD ── */
+.card{background:var(--s1);border:1px solid var(--bd);border-radius:12px;padding:18px;margin-bottom:14px;box-shadow:var(--shadow)}
+.ch{font-size:11px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px;display:flex;align-items:center;gap:6px}
+
+/* ── TABLE ── */
+.tw{overflow-x:auto;border-radius:8px;border:1px solid var(--bd)}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{padding:9px 12px;text-align:left;font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;background:var(--s2);border-bottom:1px solid var(--bd)}
+td{padding:10px 12px;border-bottom:1px solid var(--bd);color:var(--t2)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--s2)}
+
+/* ── BADGES ── */
+.b{display:inline-flex;padding:2px 8px;border-radius:4px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+.br{background:rgba(239,68,68,.1);color:#F87171;border:1px solid rgba(239,68,68,.2)}
+.bg{background:rgba(34,197,94,.1);color:#4ADE80;border:1px solid rgba(34,197,94,.2)}
+.ba{background:rgba(245,158,11,.1);color:#FCD34D;border:1px solid rgba(245,158,11,.2)}
+.bi{background:rgba(43,92,230,.1);color:#93C5FD;border:1px solid rgba(43,92,230,.2)}
+.bp{background:rgba(139,92,246,.1);color:#C4B5FD;border:1px solid rgba(139,92,246,.2)}
+
+/* ── FORM ── */
+.fg{margin-bottom:12px}
+label{display:block;font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px}
+input,select,textarea{background:var(--s2);border:1.5px solid var(--bd2);border-radius:8px;padding:9px 12px;color:var(--txt);font-size:12px;font-family:var(--f);outline:none;width:100%;transition:border-color .15s}
+input:focus,select:focus,textarea:focus{border-color:var(--blue2)}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:none;font-family:var(--f);transition:all .15s}
+.btn-p{background:linear-gradient(135deg,var(--blue),var(--blue2));color:#fff;box-shadow:0 2px 8px rgba(26,63,170,.3)}
+.btn-p:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(26,63,170,.4)}
+.btn-s{background:var(--s2);color:var(--t2);border:1px solid var(--bd2)}
+.btn-s:hover{color:var(--txt);border-color:var(--bd2)}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+
+/* ── BOXES ── */
+.ok-box{background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.2);border-radius:8px;padding:10px 12px;font-size:12px;color:#4ADE80;margin-bottom:12px}
+.err-box{background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.2);border-radius:8px;padding:10px 12px;font-size:12px;color:#F87171;margin-bottom:12px}
+.info-box{background:rgba(43,92,230,.06);border:1px solid rgba(43,92,230,.2);border-radius:8px;padding:10px 12px;font-size:12px;color:#93C5FD;margin-bottom:12px}
+.result{background:var(--s2);border:1px solid var(--bd);border-radius:8px;padding:14px;font-size:12px;font-family:var(--m);line-height:1.7;color:var(--t2);margin-top:12px;white-space:pre-wrap;max-height:400px;overflow:auto}
+
+/* ── QUICK ACTIONS ── */
+.qa-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.qa{background:var(--s1);border:1px solid var(--bd);border-radius:12px;padding:16px;cursor:pointer;transition:all .2s;text-align:center}
+.qa:hover{border-color:var(--blue2);transform:translateY(-2px);box-shadow:var(--shadow)}
+.qa-icon{font-size:24px;margin-bottom:8px}
+.qa-label{font-size:11px;font-weight:600;color:var(--t2)}
+
+/* ── REGIME ── */
+.regime-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+.rc{background:var(--s2);border:2px solid var(--bd);border-radius:12px;padding:18px;text-align:center;transition:border-color .2s}
+.rc.best{border-color:var(--green)}
+.rc-tax{font-size:28px;font-weight:800;font-family:var(--m);margin:8px 0}
+
+/* ── MOBILE ── */
+@media(max-width:768px){
+  .sidebar{height:100vh;transform:translateX(-100%)}
+  .sidebar.open{transform:translateX(0)}
+  .main{margin-left:0}
+  .mob-btn{display:block}
+  .stats,.qa-grid{grid-template-columns:1fr 1fr}
+  .g2,.g3,.regime-grid{grid-template-columns:1fr}
+}
+@media(max-width:480px){
+  .stats,.qa-grid{grid-template-columns:1fr}
+  .content{padding:14px}
+}
+</style>
+</head>
+<body>
+
+<div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar">
+  <div class="sb-head">
+    <div class="logo-wrap">
+      <!-- TaxSphere Logo SVG -->
+      <svg class="logo-svg" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="18" cy="18" r="17" fill="url(#globeGrad)" opacity=".15" stroke="url(#globeGrad)" stroke-width="1.5"/>
+        <ellipse cx="18" cy="18" rx="10" ry="17" fill="none" stroke="#1A3FAA" stroke-width="1" opacity=".4"/>
+        <line x1="1" y1="18" x2="35" y2="18" stroke="#1A3FAA" stroke-width="1" opacity=".3"/>
+        <!-- bars -->
+        <rect x="8" y="22" width="3" height="6" rx="1" fill="#1A3FAA"/>
+        <rect x="12" y="19" width="3" height="9" rx="1" fill="#1A3FAA"/>
+        <rect x="16" y="16" width="3" height="12" rx="1" fill="#2B5CE6"/>
+        <rect x="20" y="13" width="3" height="15" rx="1" fill="#2B5CE6"/>
+        <!-- arrow -->
+        <polyline points="8,22 12,19 16,16 20,13 26,9" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        <polygon points="26,9 22,9 26,13" fill="#22C55E"/>
+        <defs><linearGradient id="globeGrad" x1="0" y1="0" x2="36" y2="36"><stop offset="0%" stop-color="#1A3FAA"/><stop offset="100%" stop-color="#22C55E"/></linearGradient></defs>
+      </svg>
+      <div class="brand-text">
+        <div class="brand-name">Tax<span>Sphere</span></div>
+        <div class="brand-tag">One Platform. Complete Tax & Compliance.</div>
+      </div>
+    </div>
+    <div class="firm-box">
+      <div class="firm-n" id="firm-name">Loading...</div>
+      <div class="firm-r" id="firm-role">CA Admin</div>
+    </div>
+  </div>
+
+  <div class="sb-nav">
+    <div class="ns">Main</div>
+    <button class="ni active" onclick="nav('dashboard',this)"><span class="ni-icon">📊</span>Dashboard</button>
+    <button class="ni" onclick="nav('clients',this)"><span class="ni-icon">👥</span>Clients</button>
+    <button class="ni" onclick="nav('compliance',this)"><span class="ni-icon">📅</span>Compliance<span class="ni-badge">7</span></button>
+    <button class="ni" onclick="nav('tasks',this)"><span class="ni-icon">✅</span>Tasks<span class="ni-badge">4</span></button>
+
+    <div class="ns">GST</div>
+    <button class="ni" onclick="nav('reconciliation',this)"><span class="ni-icon">🔄</span>Reconciliation</button>
+    <button class="ni" onclick="nav('gsp',this)"><span class="ni-icon">🔌</span>GSP Dashboard</button>
+    <button class="ni" onclick="nav('notices',this)"><span class="ni-icon">⚠️</span>Notices<span class="ni-badge">8</span></button>
+    <button class="ni" onclick="window.location.href='/bill-reader.html'"><span class="ni-icon">📷</span>Bill Reader</button>
+    <button class="ni" onclick="nav('smartinvoice',this)"><span class="ni-icon">📄</span>Smart Invoice Upload<span class="ni-badge-g ni-badge">OCR</span></button>
+    <button class="ni" onclick="nav('invoiceregister',this)"><span class="ni-icon">🧾</span>Invoice Register</button>
+
+    <div class="ns">Income Tax</div>
+    <button class="ni" onclick="nav('itr',this)"><span class="ni-icon">📋</span>ITR Filing</button>
+    <button class="ni" onclick="nav('form26as',this)"><span class="ni-icon">📑</span>Form 26AS / AIS</button>
+    <button class="ni" onclick="nav('tds',this)"><span class="ni-icon">🧾</span>TDS Returns</button>
+    <button class="ni" onclick="nav('taxaudit',this)"><span class="ni-icon">🔍</span>Tax Audit</button>
+
+    <div class="ns">Practice</div>
+    <button class="ni" onclick="nav('documents',this)"><span class="ni-icon">📁</span>Documents</button>
+    <button class="ni" onclick="nav('billing',this)"><span class="ni-icon">💰</span>Billing</button>
+    <button class="ni" onclick="nav('aiagent',this)"><span class="ni-icon">🤖</span>AI Agent</button>
+    <button class="ni" onclick="window.open('/demo.html','_blank')" style="color:var(--green);"><span class="ni-icon">🎯</span>Demo Page</button>
+  </div>
+
+  <div class="sb-foot">
+    <div class="theme-toggle" onclick="toggleTheme()">
+      <span style="font-size:12px;color:var(--t2)" id="theme-label">🌙 Dark Mode</span>
+      <div class="toggle-track on" id="toggle-track"><div class="toggle-thumb on" id="toggle-thumb"></div></div>
+    </div>
+    <button class="logout-btn" onclick="logout()">🚪 Sign Out</button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:10px">
+      <button class="mob-btn" onclick="openSidebar()">☰</button>
+      <div class="page-title" id="page-title">📊 Dashboard</div>
+    </div>
+    <div class="tb-right">
+      <div class="api-pill"><div class="api-dot" id="api-dot"></div><span id="api-status">Connecting...</span></div>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="pg-dashboard">
+      <div class="stats">
+        <div class="stat stat-g"><div class="sv" style="color:var(--green)" id="stat-c">—</div><div class="sl">Active Clients</div></div>
+        <div class="stat stat-a"><div class="sv" style="color:var(--amb)">12</div><div class="sl">Pending Returns</div></div>
+        <div class="stat stat-r"><div class="sv" style="color:var(--red)">8</div><div class="sl">Open Notices</div></div>
+        <div class="stat stat-b"><div class="sv" style="color:var(--blue3)">4</div><div class="sl">Overdue Tasks</div></div>
+      </div>
+      <div class="qa-grid">
+        <div class="qa" onclick="nav('reconciliation',null)"><div class="qa-icon">🔄</div><div class="qa-label">Run Reconciliation</div></div>
+        <div class="qa" onclick="nav('itr',null)"><div class="qa-icon">📋</div><div class="qa-label">New ITR</div></div>
+        <div class="qa" onclick="nav('smartinvoice',null)"><div class="qa-icon">📄</div><div class="qa-label">Smart Invoice Upload</div></div>
+        <div class="qa" onclick="nav('notices',null)"><div class="qa-icon">⚠️</div><div class="qa-label">Notice Reply</div></div>
+      </div>
+      <div class="card">
+        <div class="ch">⚡ Recent Activity</div>
+        <div class="tw">
+          <table>
+            <thead><tr><th>Activity</th><th>Client</th><th>Time</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td>GSTR-2B Reconciliation</td><td>Mehta Industries</td><td>2 hours ago</td><td><span class="b bg">Done</span></td></tr>
+              <tr><td>ITR-3 Filed</td><td>Sharma Traders</td><td>Yesterday</td><td><span class="b bg">Filed</span></td></tr>
+              <tr><td>ASMT-10 Reply Drafted</td><td>Gupta & Sons</td><td>2 days ago</td><td><span class="b ba">Pending</span></td></tr>
+              <tr><td>TDS 26Q Q1</td><td>Patel Enterprises</td><td>3 days ago</td><td><span class="b bi">Draft</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- CLIENTS -->
+    <div class="page" id="pg-clients">
+      <div class="card">
+        <div class="ch">➕ Add Client</div>
+        <div class="info-box">Add a CA client once, then use this client across GST reconciliation, invoices, notices, ITR, TDS, billing and compliance.</div>
+
+        <div class="g2">
+          <div class="fg"><label>Client / Business Name *</label><input id="client-name" placeholder="ABC Traders Pvt Ltd"/></div>
+          <div class="fg"><label>GSTIN</label><input id="client-gstin" placeholder="07ABCDE1234F1Z5" maxlength="15" style="font-family:var(--m)"/></div>
+        </div>
+
+        <div class="g2">
+          <div class="fg"><label>PAN</label><input id="client-pan" placeholder="ABCDE1234F" maxlength="10" style="font-family:var(--m)"/></div>
+          <div class="fg"><label>Contact Person</label><input id="client-contact" placeholder="Mr. Sharma"/></div>
+        </div>
+
+        <div class="g2">
+          <div class="fg"><label>Email</label><input id="client-email" type="email" placeholder="client@email.com"/></div>
+          <div class="fg"><label>Mobile</label><input id="client-phone" placeholder="9876543210" maxlength="10" style="font-family:var(--m)"/></div>
+        </div>
+
+        <div class="g3">
+          <div class="fg"><label>Business Type</label><select id="client-type"><option value="proprietorship">Proprietorship</option><option value="partnership">Partnership</option><option value="llp">LLP</option><option value="company">Company</option><option value="individual">Individual</option><option value="trust">Trust</option></select></div>
+          <div class="fg"><label>GST Filing Frequency</label><select id="client-filing"><option value="monthly">Monthly</option><option value="quarterly">Quarterly</option><option value="composition">Composition</option><option value="not_registered">Not Registered</option></select></div>
+          <div class="fg"><label>Status</label><select id="client-status"><option value="active">Active</option><option value="inactive">Inactive</option></select></div>
+        </div>
+
+        <button class="btn btn-p" id="add-client-btn" onclick="addClient()">💾 Save Client</button>
+        <button class="btn btn-s" onclick="clearClientForm()" style="margin-left:8px">Clear</button>
+        <div id="client-msg" style="margin-top:10px"></div>
+      </div>
+
+      <div class="card">
+        <div class="ch">👥 Client List</div>
+        <div class="tw"><table><thead><tr><th>Name</th><th>GSTIN</th><th>PAN</th><th>Email</th><th>Mobile</th><th>Status</th></tr></thead>
+        <tbody id="clients-body"><tr><td colspan="6" style="text-align:center;color:var(--t3);padding:20px">Loading...</td></tr></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- COMPLIANCE -->
+    <div class="page" id="pg-compliance">
+      <div class="card"><div class="ch">📅 Compliance Tracker</div>
+        <div class="tw"><table><thead><tr><th>Client</th><th>GSTIN</th><th>Return</th><th>Period</th><th>Due Date</th><th>Status</th></tr></thead>
+        <tbody id="comp-body"><tr><td colspan="6" style="text-align:center;color:var(--t3);padding:20px">Loading...</td></tr></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- TASKS -->
+    <div class="page" id="pg-tasks">
+      <div class="card"><div class="ch">✅ Tasks</div>
+        <div class="tw"><table><thead><tr><th>Title</th><th>Client</th><th>Assigned To</th><th>Due</th><th>Priority</th><th>Status</th></tr></thead>
+        <tbody id="tasks-body"><tr><td colspan="6" style="text-align:center;color:var(--t3);padding:20px">Loading...</td></tr></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- RECONCILIATION -->
+    <div class="page" id="pg-reconciliation">
+      <div class="card"><div class="ch">🔄 GST Reconciliation</div>
+        <div class="g2">
+          <div class="fg"><label>Client Name</label><input id="recon-client" value="Demo Industries Pvt Ltd"/></div>
+          <div class="fg"><label>Period (MMYYYY)</label><input id="recon-period" value="062025"/></div>
+        </div>
+        <button class="btn btn-p" onclick="runRecon()">🔄 Run Reconciliation</button>
+        <div id="recon-result" style="display:none;margin-top:14px">
+          <div class="stats" style="grid-template-columns:repeat(4,1fr)">
+            <div class="stat stat-g"><div class="sv" style="color:var(--green)" id="r-m">0</div><div class="sl">Matched</div></div>
+            <div class="stat stat-r"><div class="sv" style="color:var(--red)" id="r-mm">0</div><div class="sl">Mismatches</div></div>
+            <div class="stat stat-a"><div class="sv" style="color:var(--amb)" id="r-mis">0</div><div class="sl">Missing in 2B</div></div>
+            <div class="stat stat-r"><div class="sv" style="color:var(--red)" id="r-itc">₹0</div><div class="sl">ITC at Risk</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="card"><div class="ch">📋 Previous Reconciliations</div>
+        <div class="tw"><table><thead><tr><th>Client</th><th>Period</th><th>Matched</th><th>Mismatches</th><th>ITC Diff</th><th>Date</th></tr></thead>
+        <tbody id="recon-body"><tr><td colspan="6" style="text-align:center;color:var(--t3);padding:20px">Loading...</td></tr></tbody></table></div>
+      </div>
+    </div>
+
+
+    <!-- SMART INVOICE UPLOAD -->
+    <div class="page" id="pg-smartinvoice">
+      <div class="card">
+        <div class="ch">📄 Smart Invoice Upload — OCR + Client Invoice Register</div>
+        <div class="info-box">Demo flow: select client → upload handwritten/printed Hindi-English bill → OCR extracts fields → review/edit → save to invoice register.</div>
+
+        <div class="g3">
+          <div class="fg"><label>Client *</label><select id="si-client"><option value="">Loading clients...</option></select></div>
+          <div class="fg"><label>Invoice Type</label><select id="si-type"><option value="purchase">Purchase Invoice</option><option value="sales">Sales Invoice</option></select></div>
+          <div class="fg"><label>Filing Period</label><input id="si-period" value="062026" placeholder="MMYYYY" style="font-family:var(--m)"/></div>
+        </div>
+
+        <div class="g2">
+          <div class="fg"><label>Upload Bill / Invoice</label><input type="file" id="si-file" accept=".jpg,.jpeg,.png,.webp,.pdf,.xlsx,.xls"/></div>
+          <div class="fg"><label>Language</label><select id="si-lang"><option value="auto">Auto Detect</option><option value="hi">Hindi</option><option value="en">English</option><option value="hi-en">Hindi + English</option></select></div>
+        </div>
+
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+          <button class="btn btn-p" id="si-ocr-btn" onclick="extractSmartInvoice()">📷 Read with OCR</button>
+          <button class="btn btn-s" onclick="fillDemoInvoice()">Use Demo Data</button>
+          <button class="btn btn-s" onclick="clearSmartInvoiceForm()">Clear</button>
+        </div>
+        <div id="si-msg"></div>
+      </div>
+
+      <div class="card">
+        <div class="ch">🧾 Review Extracted Invoice</div>
+        <div class="g3">
+          <div class="fg"><label>Supplier / Vendor Name</label><input id="si-vendor-name" placeholder="ABC Traders"/></div>
+          <div class="fg"><label>Supplier GSTIN</label><input id="si-vendor-gstin" placeholder="07ABCDE1234F1Z5" maxlength="15" style="font-family:var(--m)"/></div>
+          <div class="fg"><label>Invoice Number</label><input id="si-invoice-no" placeholder="INV-1024" style="font-family:var(--m)"/></div>
+        </div>
+        <div class="g3">
+          <div class="fg"><label>Invoice Date</label><input id="si-invoice-date" type="date"/></div>
+          <div class="fg"><label>Taxable Value</label><input id="si-taxable" type="number" placeholder="10000"/></div>
+          <div class="fg"><label>Total Amount</label><input id="si-total" type="number" placeholder="11800"/></div>
+        </div>
+        <div class="g3">
+          <div class="fg"><label>CGST</label><input id="si-cgst" type="number" placeholder="900"/></div>
+          <div class="fg"><label>SGST</label><input id="si-sgst" type="number" placeholder="900"/></div>
+          <div class="fg"><label>IGST</label><input id="si-igst" type="number" placeholder="0"/></div>
+        </div>
+        <div class="g2">
+          <div class="fg"><label>OCR Confidence</label><input id="si-confidence" readonly placeholder="—"/></div>
+          <div class="fg"><label>Detected Language</label><input id="si-detected-lang" readonly placeholder="—"/></div>
+        </div>
+        <button class="btn btn-p" id="si-save-btn" onclick="saveSmartInvoice()">💾 Save Invoice to Client Register</button>
+        <button class="btn btn-s" onclick="loadSmartInvoices()" style="margin-left:8px">Refresh Register</button>
+      </div>
+
+      <div class="card">
+        <div class="ch">📚 Client Invoice Register</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+          <button class="btn btn-s" onclick="loadSmartInvoices()">🔄 Refresh</button>
+          <button class="btn btn-s" onclick="exportSmartInvoicesCSV()">⬇️ Export CSV</button>
+          <button class="btn btn-p" onclick="nav('reconciliation',null)">Run Reconciliation →</button>
+        </div>
+        <div class="tw"><table><thead><tr><th>Client</th><th>Type</th><th>Invoice No</th><th>Vendor</th><th>GSTIN</th><th>Date</th><th>Taxable</th><th>Total</th><th>Source</th></tr></thead>
+        <tbody id="si-register-body"><tr><td colspan="9" style="text-align:center;color:var(--t3);padding:20px">No invoices yet.</td></tr></tbody></table></div>
+      </div>
+    </div>
+
+
+    <!-- INVOICE REGISTER -->
+    <div class="page" id="pg-invoiceregister">
+      <div class="stats">
+        <div class="stat stat-g"><div class="sv" style="color:var(--green)" id="ir-total">0</div><div class="sl">Total Invoices</div></div>
+        <div class="stat stat-b"><div class="sv" style="color:var(--blue3)" id="ir-purchase">0</div><div class="sl">Purchase</div></div>
+        <div class="stat stat-a"><div class="sv" style="color:var(--amb)" id="ir-sales">0</div><div class="sl">Sales</div></div>
+        <div class="stat stat-r"><div class="sv" style="color:var(--red)" id="ir-value">₹0</div><div class="sl">Total Value</div></div>
+      </div>
+
+      <div class="card">
+        <div class="ch">🧾 Client Invoice Register</div>
+        <div class="info-box">All invoices saved from Smart Invoice Upload appear here. Use this page during CA demo before reconciliation.</div>
+        <div class="g3">
+          <div class="fg"><label>Client Filter</label><select id="ir-client" onchange="renderInvoiceRegister()"><option value="">All Clients</option></select></div>
+          <div class="fg"><label>Invoice Type</label><select id="ir-type" onchange="renderInvoiceRegister()"><option value="">All</option><option value="purchase">Purchase</option><option value="sales">Sales</option></select></div>
+          <div class="fg"><label>Search</label><input id="ir-search" placeholder="Invoice no / GSTIN / vendor" oninput="renderInvoiceRegister()"/></div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+          <button class="btn btn-p" onclick="loadInvoiceRegister()">🔄 Refresh Register</button>
+          <button class="btn btn-s" onclick="exportInvoiceRegisterCSV()">⬇️ Export CSV</button>
+          <button class="btn btn-s" onclick="nav('smartinvoice',null)">📄 Add Invoice</button>
+        </div>
+        <div id="ir-msg"></div>
+        <div class="tw"><table><thead><tr><th>Client</th><th>Type</th><th>Invoice No</th><th>Vendor</th><th>GSTIN</th><th>Date</th><th>Taxable</th><th>GST</th><th>Total</th><th>Source</th></tr></thead>
+        <tbody id="ir-body"><tr><td colspan="10" style="text-align:center;color:var(--t3);padding:20px">Loading invoices...</td></tr></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- GSP -->
+    <div class="page" id="pg-gsp">
+      <div class="card"><div class="ch">🔌 GSP Connected Dashboard</div>
+        <div class="g3">
+          <div class="fg"><label>Client</label><input id="gsp-client" value="Demo Industries Pvt Ltd"/></div>
+          <div class="fg"><label>GSTIN</label><input id="gsp-gstin" value="27AABCD1234F1Z5" style="font-family:var(--m)"/></div>
+          <div class="fg"><label>Period</label><input id="gsp-period" value="032026" style="font-family:var(--m)"/></div>
+        </div>
+        <div class="fg"><label>Provider</label>
+          <select id="gsp-provider"><option value="mock">Mock Sandbox</option><option value="mastergst">MasterGST</option><option value="whitebooks">WhiteBooks</option><option value="gsthero">GSTHero</option><option value="iris">IRIS GST</option></select>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+          <button class="btn btn-p" onclick="gspDo('verify')">Verify GSTIN</button>
+          <button class="btn btn-s" onclick="gspDo('2b')">Fetch GSTR-2B</button>
+          <button class="btn btn-s" onclick="gspDo('1')">Fetch GSTR-1</button>
+          <button class="btn btn-s" onclick="gspDo('status')">Filing Status</button>
+          <button class="btn btn-p" onclick="gspDo('reconcile')">Reconcile via GSP</button>
+        </div>
+        <div id="gsp-msg"></div>
+        <pre id="gsp-out" style="background:var(--s2);border:1px solid var(--bd);border-radius:8px;padding:14px;font-size:11px;font-family:var(--m);color:var(--t2);max-height:300px;overflow:auto;white-space:pre-wrap">No response yet.</pre>
+      </div>
+    </div>
+
+    <!-- NOTICES -->
+    <div class="page" id="pg-notices">
+      <div class="card"><div class="ch">✍️ AI Notice Reply Generator</div>
+        <div class="g2">
+          <div class="fg"><label>Notice Type</label>
+            <select id="n-type"><option>ASMT-10 (Scrutiny)</option><option>DRC-01 (Demand)</option><option>REG-03 (Registration)</option><option>CMP-05 (Composition)</option><option>GSTR-3A (Non-filing)</option></select>
+          </div>
+          <div class="fg"><label>Client Name</label><input id="n-client" placeholder="Client name"/></div>
+        </div>
+        <div class="fg"><label>Notice Details</label><textarea id="n-detail" rows="3" placeholder="Brief details about the notice..."></textarea></div>
+        <button class="btn btn-p" onclick="genNotice()">✍️ Generate AI Draft</button>
+        <div id="n-result" style="display:none;margin-top:14px">
+          <div class="ch">📄 Draft Reply</div>
+          <div class="result" id="n-draft"></div>
+          <div style="margin-top:8px;display:flex;gap:8px">
+            <button class="btn btn-s" onclick="navigator.clipboard.writeText(document.getElementById('n-draft').textContent)">📋 Copy</button>
+          </div>
+        </div>
+      </div>
+      <div class="card"><div class="ch">📬 Notice List</div>
+        <div class="tw"><table><thead><tr><th>Client</th><th>Type</th><th>Issue Date</th><th>Reply Due</th><th>Status</th></tr></thead>
+        <tbody id="notices-body"><tr><td colspan="5" style="text-align:center;color:var(--t3);padding:20px">Loading...</td></tr></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- ITR -->
+    <div class="page" id="pg-itr">
+      <div class="card"><div class="ch">📋 ITR Filing — Old vs New Regime</div>
+        <div class="g3">
+          <div class="fg"><label>Client Name</label><input id="itr-client" placeholder="Client name"/></div>
+          <div class="fg"><label>PAN</label><input id="itr-pan" placeholder="ABCDE1234F" style="font-family:var(--m)"/></div>
+          <div class="fg"><label>ITR Type</label>
+            <select id="itr-type"><option value="ITR-1">ITR-1 (Salaried)</option><option value="ITR-2">ITR-2 (Capital Gains)</option><option value="ITR-3">ITR-3 (Business)</option><option value="ITR-4">ITR-4 (Presumptive)</option><option value="ITR-7">ITR-7 (Trust)</option></select>
+          </div>
+        </div>
+        <div class="g3">
+          <div class="fg"><label>Annual Income (₹)</label><input type="number" id="itr-inc" value="1200000"/></div>
+          <div class="fg"><label>Section 80C (₹)</label><input type="number" id="itr-80c" value="150000"/></div>
+          <div class="fg"><label>TDS Deducted (₹)</label><input type="number" id="itr-tds" value="85000"/></div>
+        </div>
+        <button class="btn btn-p" onclick="calcITR()">🧮 Compare Regimes</button>
+        <div id="itr-result" style="display:none">
+          <div class="regime-grid">
+            <div class="rc" id="old-rc"><div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase">Old Regime</div><div class="rc-tax" style="color:var(--amb)" id="old-t">₹0</div><div style="font-size:10px;color:var(--t3)">Tax Payable</div><div id="old-r" style="font-size:11px;color:var(--t2);margin-top:4px"></div></div>
+            <div class="rc" id="new-rc"><div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase">New Regime</div><div class="rc-tax" style="color:var(--green)" id="new-t">₹0</div><div style="font-size:10px;color:var(--t3)">Tax Payable</div><div id="new-r" style="font-size:11px;color:var(--t2);margin-top:4px"></div></div>
+          </div>
+          <div id="itr-rec" style="margin-top:12px;padding:12px;border-radius:8px;text-align:center;font-size:13px;font-weight:600;background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.2);color:#4ADE80"></div>
+          <button class="btn btn-p" style="margin-top:12px" onclick="saveITR()">💾 Save ITR Draft</button>
+        </div>
+      </div>
+      <div class="card"><div class="ch">📋 ITR Returns</div>
+        <div class="tw"><table><thead><tr><th>Client</th><th>PAN</th><th>Type</th><th>AY</th><th>Tax Payable</th><th>Refund</th><th>Status</th></tr></thead>
+        <tbody id="itr-body"><tr><td colspan="7" style="text-align:center;color:var(--t3);padding:20px">Loading...</td></tr></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- FORM 26AS -->
+    <div class="page" id="pg-form26as">
+      <div class="card"><div class="ch">📑 Form 26AS / AIS Reconciliation</div>
+        <div class="info-box">Detect TDS mismatches between Form 26AS, AIS and Books before filing ITR.</div>
+        <div class="g2">
+          <div class="fg"><label>Client Name</label><input id="f26-client" placeholder="Client name"/></div>
+          <div class="fg"><label>PAN</label><input id="f26-pan" placeholder="ABCDE1234F" style="font-family:var(--m)"/></div>
+        </div>
+        <button class="btn btn-p" onclick="loadF26()">📑 Load Mismatches</button>
+      </div>
+      <div class="card"><div class="ch">⚠️ TDS Mismatches</div>
+        <div class="tw"><table><thead><tr><th>Deductor</th><th>Section</th><th>26AS TDS</th><th>AIS TDS</th><th>Difference</th><th>Severity</th></tr></thead>
+        <tbody id="f26-body"><tr><td colspan="6" style="text-align:center;color:var(--t3);padding:20px">Loading...</td></tr></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- TDS -->
+    <div class="page" id="pg-tds">
+      <div class="card"><div class="ch">🧾 TDS Returns — 24Q & 26Q</div>
+        <div class="g3">
+          <div class="fg"><label>Client Name</label><input id="tds-client" placeholder="Client name"/></div>
+          <div class="fg"><label>TAN</label><input id="tds-tan" placeholder="DELM12345B" style="font-family:var(--m)"/></div>
+          <div class="fg"><label>Form Type</label><select id="tds-form"><option value="24Q">24Q (Salary)</option><option value="26Q">26Q (Non-Salary)</option></select></div>
+        </div>
+        <div class="g2">
+          <div class="fg"><label>Quarter</label><select id="tds-q"><option>Q1</option><option>Q2</option><option>Q3</option><option>Q4</option></select></div>
+          <div class="fg"><label>Financial Year</label><select id="tds-fy"><option>2025-26</option><option>2024-25</option></select></div>
+        </div>
+        <button class="btn btn-p" onclick="createTDS()">➕ Create TDS Return</button>
+        <div id="tds-msg" style="margin-top:10px"></div>
+      </div>
+      <div class="card"><div class="ch">📅 Due Dates</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px">
+          <div style="background:var(--s2);border-radius:8px;padding:10px;text-align:center;font-size:11px;border:1px solid var(--bd)"><div style="font-weight:700;color:var(--amb);margin-bottom:2px">Q1 — 31 Jul</div><div style="color:var(--t3)">Apr–Jun</div></div>
+          <div style="background:var(--s2);border-radius:8px;padding:10px;text-align:center;font-size:11px;border:1px solid var(--bd)"><div style="font-weight:700;color:var(--t2);margin-bottom:2px">Q2 — 31 Oct</div><div style="color:var(--t3)">Jul–Sep</div></div>
+          <div style="background:var(--s2);border-radius:8px;padding:10px;text-align:center;font-size:11px;border:1px solid var(--bd)"><div style="font-weight:700;color:var(--t2);margin-bottom:2px">Q3 — 31 Jan</div><div style="color:var(--t3)">Oct–Dec</div></div>
+          <div style="background:var(--s2);border-radius:8px;padding:10px;text-align:center;font-size:11px;border:1px solid var(--bd)"><div style="font-weight:700;color:var(--t2);margin-bottom:2px">Q4 — 31 May</div><div style="color:var(--t3)">Jan–Mar</div></div>
+        </div>
+        <div class="tw"><table><thead><tr><th>Client</th><th>TAN</th><th>Form</th><th>Quarter</th><th>Deductees</th><th>TDS</th><th>Status</th></tr></thead>
+        <tbody id="tds-body"><tr><td colspan="7" style="text-align:center;color:var(--t3);padding:20px">Loading...</td></tr></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- TAX AUDIT -->
+    <div class="page" id="pg-taxaudit">
+      <div class="card"><div class="ch">🔍 Tax Audit — 3CA / 3CB / 3CD</div>
+        <div class="info-box">Due: 30 September · Mandatory above ₹1 Cr (business) or ₹50L (profession)</div>
+        <div class="g3">
+          <div class="fg"><label>Client Name</label><input id="ta-client" placeholder="Client name"/></div>
+          <div class="fg"><label>PAN</label><input id="ta-pan" placeholder="ABCDE1234F" style="font-family:var(--m)"/></div>
+          <div class="fg"><label>Form Type</label><select id="ta-form"><option value="3CA">3CA (Companies)</option><option value="3CB">3CB (Others)</option></select></div>
+        </div>
+        <div class="g2">
+          <div class="fg"><label>Turnover (₹)</label><input type="number" id="ta-turn" placeholder="10000000"/></div>
+          <div class="fg"><label>Net Profit (₹)</label><input type="number" id="ta-profit" placeholder="800000"/></div>
+        </div>
+        <button class="btn btn-p" onclick="createAudit()">➕ Create Audit Report</button>
+        <div id="ta-msg" style="margin-top:10px"></div>
+      </div>
+      <div class="card"><div class="ch">📋 Audit Reports</div>
+        <div class="tw"><table><thead><tr><th>Client</th><th>PAN</th><th>Form</th><th>AY</th><th>Turnover</th><th>Due Date</th><th>Status</th></tr></thead>
+        <tbody id="ta-body"><tr><td colspan="7" style="text-align:center;color:var(--t3);padding:20px">Loading...</td></tr></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- DOCUMENTS -->
+    <div class="page" id="pg-documents">
+      <div class="card"><div class="ch">📁 Document Vault</div>
+        <div class="tw"><table><thead><tr><th>Document</th><th>Client</th><th>Type</th><th>Uploaded</th><th>Size</th></tr></thead>
+        <tbody id="docs-body"><tr><td colspan="5" style="text-align:center;color:var(--t3);padding:20px">Loading...</td></tr></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- BILLING -->
+    <div class="page" id="pg-billing">
+      <div class="stats">
+        <div class="stat stat-g"><div class="sv" style="color:var(--green)">₹2.8L</div><div class="sl">This Month</div></div>
+        <div class="stat stat-a"><div class="sv" style="color:var(--amb)">₹45K</div><div class="sl">Pending</div></div>
+        <div class="stat stat-b"><div class="sv" style="color:var(--blue3)">23</div><div class="sl">Invoices</div></div>
+        <div class="stat stat-r"><div class="sv" style="color:var(--red)">4</div><div class="sl">Overdue</div></div>
+      </div>
+      <div class="card"><div class="ch">💰 Invoices</div>
+        <div class="tw"><table><thead><tr><th>Invoice</th><th>Client</th><th>Services</th><th>Amount</th><th>Due Date</th><th>Status</th></tr></thead>
+        <tbody id="bill-body"><tr><td colspan="6" style="text-align:center;color:var(--t3);padding:20px">Loading...</td></tr></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- AI AGENT -->
+    <div class="page" id="pg-aiagent">
+      <div class="card"><div class="ch">🤖 AI Agent — Ask Anything</div>
+        <div class="fg"><textarea id="ai-q" rows="3" placeholder="Ask about GST rules, ITR filing, notice replies, compliance deadlines..."></textarea></div>
+        <button class="btn btn-p" onclick="askAI()">Ask TaxSphere AI →</button>
+        <div id="ai-res" style="display:none;margin-top:14px"><div class="result" id="ai-ans"></div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const API='https://gstagent-production.up.railway.app';
+const token=localStorage.getItem('gstagent_token'); const _t=localStorage.getItem('gstagent_token');
+if(!token)location.href='/login';
+const h=()=>({'Content-Type':'application/json','Authorization':'Bearer '+token});
+const $=id=>document.getElementById(id);
+
+// THEME
+let dark=true;
+function toggleTheme(){
+  dark=!dark;
+  document.documentElement.setAttribute('data-theme',dark?'dark':'light');
+  $('theme-label').textContent=dark?'🌙 Dark Mode':'☀️ Light Mode';
+  $('toggle-track').className='toggle-track'+(dark?' on':'');
+  $('toggle-thumb').className='toggle-thumb'+(dark?' on':'');
+  localStorage.setItem('ts-theme',dark?'dark':'light');
+}
+// Load saved theme
+const saved=localStorage.getItem('ts-theme');
+if(saved==='light'){dark=true;toggleTheme();}
+
+// SIDEBAR MOBILE
+function openSidebar(){$('sidebar').classList.add('open');$('overlay').classList.add('show')}
+function closeSidebar(){$('sidebar').classList.remove('open');$('overlay').classList.remove('show')}
+
+// INIT
+async function init(){
+  try{
+    const u=await api('/auth/me');
+    $('firm-name').textContent=u.firm_name||u.name||'';
+    $('firm-role').textContent=u.role||'CA Admin';
+    $('api-dot').style.background='var(--green)';
+    $('api-status').textContent='Connected';
+    loadClients();
+  }catch(e){
+    $('api-dot').style.background='var(--red)';
+    $('api-status').textContent='Offline';
+  }
+}
+
+async function api(path,opts={}){
+  const r=await fetch(API+path,{...opts,headers:{...h(),...(opts.headers||{})}});
+  if(r.status===401){logout();return;}
+  const d=await r.json();
+  if(!r.ok)throw new Error(d.detail||'Error');
+  return d;
+}
+
+function logout(){localStorage.clear();location.href='/';}
+
+// NAV
+const titles={dashboard:'📊 Dashboard',clients:'👥 Clients',compliance:'📅 Compliance',tasks:'✅ Tasks',reconciliation:'🔄 GST Reconciliation',smartinvoice:'📄 Smart Invoice Upload',invoiceregister:'🧾 Invoice Register',gsp:'🔌 GSP Dashboard',notices:'⚠️ Notices',itr:'📋 ITR Filing',form26as:'📑 Form 26AS / AIS',tds:'🧾 TDS Returns',taxaudit:'🔍 Tax Audit',documents:'📁 Documents',billing:'💰 Billing',aiagent:'🤖 AI Agent'};
+function nav(page,el){
+  document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  if(el)el.classList.add('active');
+  $('pg-'+page).classList.add('active');
+  $('page-title').textContent=titles[page]||page;
+  closeSidebar();
+  loadPage(page);
+}
+function loadPage(p){const m={clients:loadClients,compliance:loadCompliance,tasks:loadTasks,reconciliation:loadRecon,smartinvoice:loadSmartInvoicePage,invoiceregister:loadInvoiceRegisterPage,notices:loadNotices,itr:loadITR,form26as:loadF26,tds:loadTDS,taxaudit:loadAudit,documents:loadDocs,billing:loadBilling};if(m[p])m[p]();}
+
+// DATA LOADERS
+async function loadClients(){
+  try{
+    const d=await api('/crm/clients');
+    const c=d.clients||d.items||d||[];
+    $('stat-c').textContent=c.length||'—';
+    $('clients-body').innerHTML=c.length?c.map(x=>`<tr>
+      <td><strong>${x.name||x.client_name||x.business_name||''}</strong><div style="font-size:10px;color:var(--t3);margin-top:2px">${x.contact_person||''}</div></td>
+      <td style="font-family:var(--m);font-size:10px">${x.gstin||'—'}</td>
+      <td style="font-family:var(--m);font-size:10px">${x.pan||'—'}</td>
+      <td>${x.email||'—'}</td>
+      <td style="font-family:var(--m);font-size:10px">${x.phone||x.mobile||'—'}</td>
+      <td><span class="b ${(x.status||'active')==='active'?'bg':'ba'}">${x.status||'Active'}</span></td>
+    </tr>`).join(''):'<tr><td colspan="6" style="text-align:center;color:var(--t3);padding:20px">No clients yet. Add your first client above.</td></tr>';
+  }catch(e){$('clients-body').innerHTML=`<tr><td colspan="6" style="text-align:center;color:var(--t3);padding:20px">No data. ${e.message||''}</td></tr>`;}
+}
+
+function clearClientForm(){
+  ['client-name','client-gstin','client-pan','client-contact','client-email','client-phone'].forEach(id=>{if($(id))$(id).value='';});
+  if($('client-type'))$('client-type').value='proprietorship';
+  if($('client-filing'))$('client-filing').value='monthly';
+  if($('client-status'))$('client-status').value='active';
+  if($('client-msg'))$('client-msg').innerHTML='';
+}
+
+async function addClient(){
+  const name=$('client-name').value.trim();
+  const gstin=$('client-gstin').value.trim().toUpperCase();
+  const pan=$('client-pan').value.trim().toUpperCase();
+  const contact=$('client-contact').value.trim();
+  const email=$('client-email').value.trim();
+  const phone=$('client-phone').value.trim();
+  const businessType=$('client-type').value;
+  const filingFrequency=$('client-filing').value;
+  const status=$('client-status').value;
+
+  if(!name){$('client-msg').innerHTML='<div class="err-box">Client / Business name is required.</div>';return;}
+  if(gstin && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(gstin)){
+    $('client-msg').innerHTML='<div class="err-box">GSTIN format looks invalid. Example: 07ABCDE1234F1Z5</div>';return;
+  }
+  if(pan && !/^[A-Z]{5}[0-9]{4}[A-Z]$/.test(pan)){
+    $('client-msg').innerHTML='<div class="err-box">PAN format looks invalid. Example: ABCDE1234F</div>';return;
+  }
+
+  const btn=$('add-client-btn');
+  btn.disabled=true;btn.textContent='Saving...';
+  $('client-msg').innerHTML='<div class="info-box">Saving client...</div>';
+  const payload={name,client_name:name,business_name:name,gstin,pan,contact_person:contact,email,phone,mobile:phone,business_type:businessType,filing_frequency:filingFrequency,status};
+
+  try{
+    let saved=false,lastErr='';
+    const endpoints=['/crm/clients','/crm/clients/create','/clients','/clients/create'];
+    for(const ep of endpoints){
+      try{await api(ep,{method:'POST',body:JSON.stringify(payload)});saved=true;break;}catch(e){lastErr=e.message||String(e);}
+    }
+    if(!saved)throw new Error(lastErr||'Client API not found');
+    $('client-msg').innerHTML='<div class="ok-box">✅ Client added successfully.</div>';
+    clearClientForm();
+    await loadClients();
+  }catch(e){
+    $('client-msg').innerHTML='<div class="err-box">Error: '+(e.message||'Failed to add client')+'</div>';
+  }finally{
+    btn.disabled=false;btn.textContent='💾 Save Client';
+  }
+}
+
+
+// SMART INVOICE UPLOAD
+function normalizeInvoiceOCR(raw){
+  const d=raw?.invoice||raw?.extracted||raw?.data||raw?.result||raw||{};
+  return {
+    vendor_name:d.vendor_name||d.supplier_name||d.party_name||d.seller_name||d.name||'',
+    vendor_gstin:(d.vendor_gstin||d.supplier_gstin||d.gstin||d.seller_gstin||'').toString().toUpperCase(),
+    invoice_number:d.invoice_number||d.invoice_no||d.bill_no||d.number||'',
+    invoice_date:toISODate(d.invoice_date||d.date||d.bill_date||''),
+    taxable_value:num(d.taxable_value||d.taxable||d.subtotal||d.value),
+    cgst:num(d.cgst||d.cgst_amount),
+    sgst:num(d.sgst||d.sgst_amount),
+    igst:num(d.igst||d.igst_amount),
+    total_amount:num(d.total_amount||d.total||d.grand_total||d.amount),
+    confidence:d.confidence||d.ocr_confidence||raw?.confidence||'',
+    language:d.language||d.detected_language||raw?.language||raw?.detected_language||''
+  };
+}
+function num(v){if(v===undefined||v===null||v==='')return '';return Number(String(v).replace(/[^0-9.-]/g,''))||0;}
+function toISODate(v){
+  if(!v)return '';
+  const s=String(v).trim();
+  if(/^\d{4}-\d{2}-\d{2}$/.test(s))return s;
+  const m=s.match(/(\d{1,2})[\/-](\d{1,2})[\/-](\d{2,4})/);
+  if(m){const y=m[3].length===2?'20'+m[3]:m[3];return `${y}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;}
+  return '';
+}
+async function loadSmartInvoicePage(){
+  await loadSmartClients();
+  loadSmartInvoices();
+}
+async function loadSmartClients(){
+  const sel=$('si-client'); if(!sel)return;
+  try{
+    const d=await api('/crm/clients');
+    const clients=d.clients||d.items||d||[];
+    sel.innerHTML=clients.length?clients.map(c=>{
+      const name=c.name||c.client_name||c.business_name||'Unnamed Client';
+      const val=c.id||c.client_id||c.gstin||name;
+      return `<option value="${String(val).replace(/"/g,'&quot;')}" data-name="${String(name).replace(/"/g,'&quot;')}">${name}${c.gstin?' — '+c.gstin:''}</option>`;
+    }).join(''):'<option value="">No clients found. Add client first.</option>';
+  }catch(e){sel.innerHTML='<option value="">Unable to load clients</option>';}
+}
+function clearSmartInvoiceForm(){
+  ['si-file','si-vendor-name','si-vendor-gstin','si-invoice-no','si-invoice-date','si-taxable','si-total','si-cgst','si-sgst','si-igst','si-confidence','si-detected-lang'].forEach(id=>{if($(id))$(id).value='';});
+  if($('si-msg'))$('si-msg').innerHTML='';
+}
+function fillDemoInvoice(){
+  const today=new Date().toISOString().substring(0,10);
+  $('si-vendor-name').value='Sharma Stationery & General Store';
+  $('si-vendor-gstin').value='05ABCDE1234F1Z5';
+  $('si-invoice-no').value='HS-1045';
+  $('si-invoice-date').value=today;
+  $('si-taxable').value='12500';
+  $('si-cgst').value='1125';
+  $('si-sgst').value='1125';
+  $('si-igst').value='0';
+  $('si-total').value='14750';
+  $('si-confidence').value='Demo / 92%';
+  $('si-detected-lang').value='Hindi + English';
+  $('si-msg').innerHTML='<div class="ok-box">✅ Demo invoice filled. Review and save it.</div>';
+}
+async function extractSmartInvoice(){
+  const f=$('si-file')?.files?.[0];
+  if(!f){$('si-msg').innerHTML='<div class="err-box">Please upload a bill, image, PDF or Excel file first.</div>';return;}
+  if(!token){$('si-msg').innerHTML='<div class="err-box">Login token missing. Please login again, then try OCR.</div>';return;}
+  const btn=$('si-ocr-btn');btn.disabled=true;btn.textContent='Reading...';
+  $('si-msg').innerHTML='<div class="info-box">Reading bill with OCR using authenticated Bill Reader API. Hindi + English handwritten bills may require manual correction.</div>';
+  const fd=new FormData();fd.append('file',f);fd.append('language',$('si-lang').value);fd.append('client_id',$('si-client').value||'');fd.append('invoice_type',$('si-type').value);
+  const endpoints=['/bill-reader/scan','/bill-reader/extract','/bill-reader/read','/bill-reader/upload','/bill-reader/ocr','/bill-reader/process'];
+  let data=null,lastErr='';
+  for(const ep of endpoints){
+    try{
+      const r=await fetch(API+ep,{method:'POST',headers:{'Authorization':'Bearer '+token},body:fd});
+      const txt=await r.text();let d={};try{d=JSON.parse(txt)}catch{d={raw_text:txt}};
+      if(!r.ok)throw new Error(d.detail||d.error||txt||'OCR failed');
+      data=d;break;
+    }catch(e){lastErr=e.message||String(e);}
+  }
+  try{
+    if(!data)throw new Error(lastErr||'Bill Reader OCR endpoint not found');
+    const inv=normalizeInvoiceOCR(data);
+    $('si-vendor-name').value=inv.vendor_name;
+    $('si-vendor-gstin').value=inv.vendor_gstin;
+    $('si-invoice-no').value=inv.invoice_number;
+    $('si-invoice-date').value=inv.invoice_date;
+    $('si-taxable').value=inv.taxable_value;
+    $('si-cgst').value=inv.cgst;
+    $('si-sgst').value=inv.sgst;
+    $('si-igst').value=inv.igst;
+    $('si-total').value=inv.total_amount;
+    $('si-confidence').value=inv.confidence||'Check manually';
+    $('si-detected-lang').value=inv.language||$('si-lang').value;
+    $('si-msg').innerHTML='<div class="ok-box">✅ OCR completed. Review/edit fields and save invoice.</div>';
+  }catch(e){
+    $('si-msg').innerHTML='<div class="err-box">OCR did not return structured data: '+(e.message||'Unknown error')+'<br/>Use Demo Data or fill fields manually for demo.</div>';
+  }finally{btn.disabled=false;btn.textContent='📷 Read with OCR';}
+}
+function getSmartInvoicePayload(){
+  const sel=$('si-client');
+  const clientName=sel?.options?.[sel.selectedIndex]?.dataset?.name||sel?.options?.[sel.selectedIndex]?.textContent||'';
+  return {
+    client_id:$('si-client').value,
+    client_name:clientName.replace(/ — .*/,''),
+    invoice_type:$('si-type').value,
+    period:$('si-period').value,
+    vendor_name:$('si-vendor-name').value.trim(),
+    vendor_gstin:$('si-vendor-gstin').value.trim().toUpperCase(),
+    invoice_number:$('si-invoice-no').value.trim(),
+    invoice_date:$('si-invoice-date').value,
+    taxable_value:Number($('si-taxable').value||0),
+    cgst:Number($('si-cgst').value||0),
+    sgst:Number($('si-sgst').value||0),
+    igst:Number($('si-igst').value||0),
+    total_amount:Number($('si-total').value||0),
+    source:'smart_invoice_upload_ocr',
+    status:'saved'
+  };
+}
+async function saveSmartInvoice(){
+  const p=getSmartInvoicePayload();
+  if(!p.client_id){$('si-msg').innerHTML='<div class="err-box">Select client first.</div>';return;}
+  if(!p.invoice_number){$('si-msg').innerHTML='<div class="err-box">Invoice number is required.</div>';return;}
+  const btn=$('si-save-btn');btn.disabled=true;btn.textContent='Saving...';
+  const endpoints=['/invoices/create','/invoices','/invoice/create','/billing/invoices'];
+  let saved=false,lastErr='';
+  for(const ep of endpoints){
+    try{await api(ep,{method:'POST',body:JSON.stringify(p)});saved=true;break;}catch(e){lastErr=e.message||String(e);}
+  }
+  if(!saved){
+    const local=JSON.parse(localStorage.getItem('smart_invoices_demo')||'[]');
+    local.unshift({...p,id:'local-'+Date.now(),created_at:new Date().toISOString()});
+    localStorage.setItem('smart_invoices_demo',JSON.stringify(local));
+    $('si-msg').innerHTML='<div class="ok-box">✅ Invoice saved locally for demo. Backend invoice endpoint not found yet: '+lastErr+'</div>';
+  }else{
+    $('si-msg').innerHTML='<div class="ok-box">✅ Invoice saved to backend client invoice register.</div>';
+  }
+  btn.disabled=false;btn.textContent='💾 Save Invoice to Client Register';
+  loadSmartInvoices();
+}
+async function loadSmartInvoices(){
+  const body=$('si-register-body'); if(!body)return;
+  let invoices=[];
+  const endpoints=['/invoices/list','/invoices','/invoice/list','/billing/invoices'];
+  for(const ep of endpoints){
+    try{const d=await api(ep);invoices=d.invoices||d.items||d.data||d||[];if(Array.isArray(invoices))break;}catch(e){}
+  }
+  const local=JSON.parse(localStorage.getItem('smart_invoices_demo')||'[]');
+  invoices=[...local,...(Array.isArray(invoices)?invoices:[])];
+  body.innerHTML=invoices.length?invoices.slice(0,50).map(x=>`<tr><td>${x.client_name||'—'}</td><td><span class="b ${x.invoice_type==='sales'?'bi':'bg'}">${x.invoice_type||'purchase'}</span></td><td style="font-family:var(--m)">${x.invoice_number||x.invoice_no||x.id?.substring?.(0,8)||'—'}</td><td>${x.vendor_name||x.supplier_name||x.description||'—'}</td><td style="font-family:var(--m);font-size:10px">${x.vendor_gstin||x.supplier_gstin||x.gstin||'—'}</td><td>${x.invoice_date||x.date||'—'}</td><td style="font-family:var(--m)">₹${Number(x.taxable_value||x.taxable||0).toLocaleString('en-IN')}</td><td style="font-family:var(--m)">₹${Number(x.total_amount||x.total||x.amount||0).toLocaleString('en-IN')}</td><td><span class="b bp">${x.source||'saved'}</span></td></tr>`).join(''):'<tr><td colspan="9" style="text-align:center;color:var(--t3);padding:20px">No invoices yet. Upload a bill and save invoice.</td></tr>';
+}
+function exportSmartInvoicesCSV(){
+  const local=JSON.parse(localStorage.getItem('smart_invoices_demo')||'[]');
+  if(!local.length){alert('No locally saved invoices to export yet.');return;}
+  const cols=['client_name','invoice_type','invoice_number','vendor_name','vendor_gstin','invoice_date','taxable_value','cgst','sgst','igst','total_amount'];
+  const csv=[cols.join(','),...local.map(r=>cols.map(c=>'"'+String(r[c]??'').replace(/"/g,'""')+'"').join(','))].join('\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='smart-invoice-register.csv';a.click();URL.revokeObjectURL(a.href);
+}
+
+
+let invoiceRegisterCache=[];
+async function loadInvoiceRegisterPage(){
+  await loadInvoiceRegisterClients();
+  await loadInvoiceRegister();
+}
+async function loadInvoiceRegisterClients(){
+  const sel=$('ir-client'); if(!sel)return;
+  try{
+    const d=await api('/crm/clients'); const c=d.clients||d||[];
+    sel.innerHTML='<option value="">All Clients</option>'+c.map(x=>`<option value="${x.id||x.client_id||''}">${x.name||x.client_name||'Unnamed Client'}</option>`).join('');
+  }catch(e){sel.innerHTML='<option value="">All Clients</option>';}
+}
+async function loadInvoiceRegister(){
+  const body=$('ir-body'); if(!body)return;
+  body.innerHTML='<tr><td colspan="10" style="text-align:center;color:var(--t3);padding:20px">Loading invoices...</td></tr>';
+  let invoices=[], lastErr='';
+  const endpoints=['/invoices/list','/invoices','/invoice/list'];
+  for(const ep of endpoints){
+    try{const d=await api(ep); invoices=d.invoices||d.items||d.data||d||[]; if(Array.isArray(invoices))break;}catch(e){lastErr=e.message||String(e);}
+  }
+  const local=JSON.parse(localStorage.getItem('smart_invoices_demo')||'[]');
+  invoiceRegisterCache=[...local,...(Array.isArray(invoices)?invoices:[])];
+  if(!invoiceRegisterCache.length && $('ir-msg')) $('ir-msg').innerHTML='<div class="info-box">No backend invoices found yet. Save an invoice from Smart Invoice Upload. Last API message: '+(lastErr||'none')+'</div>';
+  renderInvoiceRegister();
+}
+function renderInvoiceRegister(){
+  const body=$('ir-body'); if(!body)return;
+  const client=$('ir-client')?.value||'', type=$('ir-type')?.value||'', q=($('ir-search')?.value||'').toLowerCase();
+  let rows=invoiceRegisterCache.filter(x=>{
+    const cid=String(x.client_id||'');
+    const okClient=!client || cid===String(client);
+    const okType=!type || String(x.invoice_type||'purchase').toLowerCase()===type;
+    const hay=[x.client_name,x.invoice_number,x.invoice_no,x.vendor_name,x.supplier_name,x.vendor_gstin,x.gstin].join(' ').toLowerCase();
+    return okClient && okType && (!q || hay.includes(q));
+  });
+  const totalValue=rows.reduce((s,x)=>s+Number(x.total_amount||x.total||x.amount||0),0);
+  const purchase=rows.filter(x=>String(x.invoice_type||'purchase').toLowerCase()==='purchase').length;
+  const sales=rows.filter(x=>String(x.invoice_type||'').toLowerCase()==='sales').length;
+  if($('ir-total'))$('ir-total').textContent=rows.length;
+  if($('ir-purchase'))$('ir-purchase').textContent=purchase;
+  if($('ir-sales'))$('ir-sales').textContent=sales;
+  if($('ir-value'))$('ir-value').textContent='₹'+totalValue.toLocaleString('en-IN');
+  body.innerHTML=rows.length?rows.slice(0,100).map(x=>{
+    const gst=Number(x.cgst||0)+Number(x.sgst||0)+Number(x.igst||0);
+    return `<tr><td>${x.client_name||'—'}</td><td><span class="b ${x.invoice_type==='sales'?'bi':'bg'}">${x.invoice_type||'purchase'}</span></td><td style="font-family:var(--m)">${x.invoice_number||x.invoice_no||'—'}</td><td>${x.vendor_name||x.supplier_name||'—'}</td><td style="font-family:var(--m);font-size:10px">${x.vendor_gstin||x.supplier_gstin||x.gstin||'—'}</td><td>${x.invoice_date||x.date||'—'}</td><td style="font-family:var(--m)">₹${Number(x.taxable_value||x.taxable||0).toLocaleString('en-IN')}</td><td style="font-family:var(--m)">₹${gst.toLocaleString('en-IN')}</td><td style="font-family:var(--m)">₹${Number(x.total_amount||x.total||x.amount||0).toLocaleString('en-IN')}</td><td><span class="b bp">${x.source||'saved'}</span></td></tr>`;
+  }).join(''):'<tr><td colspan="10" style="text-align:center;color:var(--t3);padding:20px">No invoices found.</td></tr>';
+}
+function exportInvoiceRegisterCSV(){
+  if(!invoiceRegisterCache.length){alert('No invoices to export.');return;}
+  const cols=['client_name','invoice_type','invoice_number','vendor_name','vendor_gstin','invoice_date','taxable_value','cgst','sgst','igst','total_amount','source'];
+  const csv=[cols.join(','),...invoiceRegisterCache.map(r=>cols.map(c=>'"'+String(r[c]??'').replace(/"/g,'""')+'"').join(','))].join('\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='invoice-register.csv';a.click();URL.revokeObjectURL(a.href);
+}
+
+async function loadCompliance(){
+  try{const d=await api('/compliance/list');const c=d.items||d.compliance||d||[];
+  $('comp-body').innerHTML=c.length?c.slice(0,20).map(x=>`<tr><td>${x.client_name||'—'}</td><td style="font-family:var(--m);font-size:10px">${x.gstin||'—'}</td><td>${x.return_type||x.type||'—'}</td><td>${x.period||'—'}</td><td>${x.due_date||'—'}</td><td><span class="b ${x.status==='filed'?'bg':x.status==='overdue'?'br':'ba'}">${x.status||'pending'}</span></td></tr>`).join(''):'<tr><td colspan="6" style="text-align:center;color:var(--t3);padding:20px">No records.</td></tr>';
+  }catch(e){$('comp-body').innerHTML=`<tr><td colspan="6" style="text-align:center;color:var(--t3);padding:20px">No data.</td></tr>`;}
+}
+async function loadTasks(){
+  try{const d=await api('/tasks/list');const t=d.tasks||d||[];
+  $('tasks-body').innerHTML=t.length?t.slice(0,20).map(x=>`<tr><td>${x.title||'—'}</td><td>${x.client_name||'—'}</td><td>${x.assigned_to||'—'}</td><td>${x.due_date||'—'}</td><td><span class="b ${x.priority==='high'?'br':x.priority==='medium'?'ba':'bg'}">${x.priority||'—'}</span></td><td><span class="b ${x.status==='done'||x.status==='completed'?'bg':x.status==='overdue'?'br':'ba'}">${x.status||'—'}</span></td></tr>`).join(''):'<tr><td colspan="6" style="text-align:center;color:var(--t3);padding:20px">No tasks.</td></tr>';
+  }catch(e){$('tasks-body').innerHTML=`<tr><td colspan="6" style="text-align:center;color:var(--t3);padding:20px">No data.</td></tr>`;}
+}
+async function loadRecon(){
+  try{const d=await api('/reconciliation/list');const r=d.reconciliations||d||[];
+  $('recon-body').innerHTML=r.length?r.slice(0,20).map(x=>`<tr><td>${x.client_name||'—'}</td><td>${x.period||'—'}</td><td style="color:var(--green)">${x.matched_count||0}</td><td style="color:var(--red)">${x.mismatch_count||0}</td><td style="color:var(--red)">₹${(x.itc_difference||0).toLocaleString('en-IN')}</td><td style="font-size:11px;color:var(--t3)">${x.created_at?x.created_at.substring(0,10):'—'}</td></tr>`).join(''):'<tr><td colspan="6" style="text-align:center;color:var(--t3);padding:20px">No reconciliations.</td></tr>';
+  }catch(e){$('recon-body').innerHTML=`<tr><td colspan="6" style="text-align:center;color:var(--t3);padding:20px">No data.</td></tr>`;}
+}
+function runRecon(){$('recon-result').style.display='block';$('r-m').textContent='98';$('r-mm').textContent='18';$('r-mis').textContent='11';$('r-itc').textContent='₹87,450';}
+
+async function loadNotices(){
+  try{const d=await api('/notices/list');const n=d.notices||d||[];
+  $('notices-body').innerHTML=n.length?n.slice(0,20).map(x=>`<tr><td>${x.client_name||'—'}</td><td>${x.notice_type||'—'}</td><td>${x.issue_date||'—'}</td><td>${x.reply_due||'—'}</td><td><span class="b ${x.status==='replied'?'bg':x.status==='overdue'?'br':'ba'}">${x.status||'open'}</span></td></tr>`).join(''):'<tr><td colspan="5" style="text-align:center;color:var(--t3);padding:20px">No notices.</td></tr>';
+  }catch(e){$('notices-body').innerHTML=`<tr><td colspan="5" style="text-align:center;color:var(--t3);padding:20px">No data.</td></tr>`;}
+}
+const ntpl={'ASMT-10 (Scrutiny)':d=>`To,\nThe Proper Officer, GST Department\n\nSubject: Reply to ASMT-10 Notice\n\nRespected Sir/Madam,\n\nWith reference to the notice, we submit:\n\n1. All GST returns for the relevant period have been filed on time.\n2. ${d||'The discrepancy arises from timing differences. Taxable values are correctly reflected in GSTR-1 and GSTR-3B.'}\n3. Documents enclosed: Books extract, Reconciliation, Bank statements.\n\nWe request the Authority to drop the proceedings.\n\nYours faithfully,\n[Authorized Signatory]`,'DRC-01 (Demand)':d=>`To,\nThe Proper Officer, GST Department\n\nSubject: Reply to DRC-01\n\nRespected Sir/Madam,\n\nIn response: The demand based on ${d||'alleged mismatch'} is incorrect. GST liability correctly discharged. After eligible ITC, tax is NIL.\n\nEnclosures: Reconciliation, ITC ledger, Challan copies.\n\nYours faithfully,\n[Authorized Signatory]`,'REG-03 (Registration)':d=>`To,\nThe Proper Officer, GST Registration\n\nSubject: Reply to REG-03\n\n${d||'All documents are genuine. Business premises legally occupied.'}\n\nRequest early approval.\n\nYours faithfully,\n[Authorized Signatory]`,'CMP-05 (Composition)':d=>`To,\nThe Proper Officer, GST Department\n\nSubject: Reply to CMP-05\n\nTurnover within prescribed limit. ${d||'All CMP-08 returns filed on time.'}\n\nYours faithfully,\n[Authorized Signatory]`,'GSTR-3A (Non-filing)':d=>`To,\nThe Proper Officer, GST Department\n\nSubject: Reply to GSTR-3A\n\n${d||'Delay due to technical issues. All returns now filed with late fees paid.'}\n\nRequest notice withdrawal.\n\nYours faithfully,\n[Authorized Signatory]`};
+function genNotice(){const t=$('n-type').value,d=$('n-detail').value;$('n-draft').textContent=(ntpl[t]||ntpl['ASMT-10 (Scrutiny)'])(d);$('n-result').style.display='block';}
+
+async function loadITR(){
+  try{const d=await api('/itr/list');const r=d.returns||d||[];
+  $('itr-body').innerHTML=r.length?r.slice(0,20).map(x=>`<tr><td>${x.client_name||'—'}</td><td style="font-family:var(--m);font-size:10px">${x.pan||'—'}</td><td><span class="b bi">${x.itr_type||'—'}</span></td><td>${x.ay||'—'}</td><td style="font-family:var(--m)">₹${(x.tax_payable||0).toLocaleString('en-IN')}</td><td style="font-family:var(--m);color:var(--green)">₹${(x.refund_amount||0).toLocaleString('en-IN')}</td><td><span class="b ${x.status==='filed'||x.status==='verified'?'bg':x.status==='draft'?'bi':'ba'}">${x.status||'draft'}</span></td></tr>`).join(''):'<tr><td colspan="7" style="text-align:center;color:var(--t3);padding:20px">No ITR records.</td></tr>';
+  }catch(e){$('itr-body').innerHTML=`<tr><td colspan="7" style="text-align:center;color:var(--t3);padding:20px">No data.</td></tr>`;}
+}
+function calcOld(t){if(t<=250000)return 0;if(t<=500000)return(t-250000)*.05;if(t<=1000000)return 12500+(t-500000)*.2;return 112500+(t-1000000)*.3;}
+function calcNew(t){const s=[[300000,0],[600000,.05],[900000,.1],[1200000,.15],[1500000,.2],[Infinity,.3]];let tax=0,p=0;for(const[l,r]of s){if(t<=l){tax+=(t-p)*r;break;}tax+=(l-p)*r;p=l;}if(t<=700000)tax=Math.max(0,tax-25000);return tax;}
+function calcITR(){
+  const inc=+$('itr-inc').value||0,c80c=+$('itr-80c').value||0,tds=+$('itr-tds').value||0,std=50000;
+  const oldT=calcOld(Math.max(0,inc-std-Math.min(c80c,150000)))*1.04;
+  const newT=calcNew(Math.max(0,inc-std))*1.04;
+  const oldP=Math.max(0,oldT-tds),newP=Math.max(0,newT-tds);
+  const oldR=Math.max(0,tds-oldT),newR=Math.max(0,tds-newT);
+  $('old-t').textContent='₹'+Math.round(oldP).toLocaleString('en-IN');
+  $('new-t').textContent='₹'+Math.round(newP).toLocaleString('en-IN');
+  $('old-r').textContent=oldR>0?'Refund: ₹'+Math.round(oldR).toLocaleString('en-IN'):'';
+  $('new-r').textContent=newR>0?'Refund: ₹'+Math.round(newR).toLocaleString('en-IN'):'';
+  $('old-rc').style.borderColor=newT<=oldT?'var(--bd)':'var(--green)';
+  $('new-rc').style.borderColor=newT<=oldT?'var(--green)':'var(--bd)';
+  $('new-rc').classList.toggle('best',newT<=oldT);
+  $('old-rc').classList.toggle('best',oldT<newT);
+  const saving=Math.abs(Math.round(oldT-newT)),rec=newT<=oldT?'New':'Old';
+  $('itr-rec').textContent=`✅ ${rec} Regime recommended — saves ₹${saving.toLocaleString('en-IN')} in tax`;
+  $('itr-result').style.display='block';
+}
+async function saveITR(){
+  const client=$('itr-client').value.trim(),pan=$('itr-pan').value.trim();
+  if(!client||!pan){alert('Enter client name and PAN');return;}
+  try{await api('/itr/create',{method:'POST',body:JSON.stringify({client_name:client,pan,ay:$('itr-ay')?.value||'2025-26',itr_type:$('itr-type').value,income_data:{salary_income:+$('itr-inc').value||0,sec_80c:+$('itr-80c').value||0,tds_employer:+$('itr-tds').value||0,new_tax_regime:false}})});alert('ITR draft saved!');loadITR();}
+  catch(e){alert('Error: '+e.message);}
+}
+
+async function loadF26(){
+  try{const d=await api('/form26as/mismatches');const m=d.mismatches||d||[];
+  $('f26-body').innerHTML=m.length?m.slice(0,20).map(x=>`<tr><td>${x.deductor||x.deductor_name||'—'}</td><td style="font-family:var(--m)">${x.section||'—'}</td><td style="font-family:var(--m)">₹${(x.form26as_tds||0).toLocaleString('en-IN')}</td><td style="font-family:var(--m)">₹${(x.ais_tds||0).toLocaleString('en-IN')}</td><td style="font-family:var(--m);color:var(--amb)">₹${(x.difference||0).toLocaleString('en-IN')}</td><td><span class="b ${x.severity==='high'?'br':'ba'}">${x.severity||'medium'}</span></td></tr>`).join(''):'<tr><td colspan="6" style="text-align:center;color:var(--t3);padding:20px">No mismatches.</td></tr>';
+  }catch(e){$('f26-body').innerHTML=`<tr><td colspan="6" style="text-align:center;color:var(--t3);padding:20px">No data.</td></tr>`;}
+}
+
+async function loadTDS(){
+  try{const d=await api('/tds/list');const t=d.returns||d||[];
+  $('tds-body').innerHTML=t.length?t.slice(0,20).map(x=>`<tr><td>${x.client_name||'—'}</td><td style="font-family:var(--m);font-size:10px">${x.tan||'—'}</td><td><span class="b bi">${x.form_type||'—'}</span></td><td>${x.quarter||'—'} ${x.fy||''}</td><td>${x.total_deductees||0}</td><td style="font-family:var(--m)">₹${(x.total_tds_deducted||0).toLocaleString('en-IN')}</td><td><span class="b ${x.status==='filed'?'bg':x.status==='draft'?'bi':'ba'}">${x.status||'draft'}</span></td></tr>`).join(''):'<tr><td colspan="7" style="text-align:center;color:var(--t3);padding:20px">No TDS returns.</td></tr>';
+  }catch(e){$('tds-body').innerHTML=`<tr><td colspan="7" style="text-align:center;color:var(--t3);padding:20px">No data.</td></tr>`;}
+}
+async function createTDS(){
+  const client=$('tds-client').value.trim(),tan=$('tds-tan').value.trim();
+  if(!client||!tan){$('tds-msg').innerHTML='<div class="err-box">Enter client name and TAN</div>';return;}
+  try{await api('/tds/create',{method:'POST',body:JSON.stringify({client_name:client,tan,form_type:$('tds-form').value,quarter:$('tds-q').value,fy:$('tds-fy').value})});$('tds-msg').innerHTML='<div class="ok-box">✅ TDS return created</div>';loadTDS();}
+  catch(e){$('tds-msg').innerHTML=`<div class="err-box">${e.message}</div>`;}
+}
+
+async function loadAudit(){
+  try{const d=await api('/tax-audit/list');const a=d.reports||d||[];
+  $('ta-body').innerHTML=a.length?a.slice(0,20).map(x=>`<tr><td>${x.client_name||'—'}</td><td style="font-family:var(--m);font-size:10px">${x.pan||'—'}</td><td><span class="b bi">${x.form_type||'—'}</span></td><td>${x.ay||'—'}</td><td style="font-family:var(--m)">₹${(x.turnover||0).toLocaleString('en-IN')}</td><td>${x.due_date||'30 Sep'}</td><td><span class="b ${x.status==='filed'?'bg':'ba'}">${x.status||'draft'}</span></td></tr>`).join(''):'<tr><td colspan="7" style="text-align:center;color:var(--t3);padding:20px">No audit reports.</td></tr>';
+  }catch(e){$('ta-body').innerHTML=`<tr><td colspan="7" style="text-align:center;color:var(--t3);padding:20px">No data.</td></tr>`;}
+}
+async function createAudit(){
+  const client=$('ta-client').value.trim(),pan=$('ta-pan').value.trim();
+  if(!client||!pan){$('ta-msg').innerHTML='<div class="err-box">Enter client name and PAN</div>';return;}
+  try{await api('/tax-audit/create',{method:'POST',body:JSON.stringify({client_name:client,pan,ay:'2025-26',form_type:$('ta-form').value,audit_section:'44AB',turnover:+$('ta-turn').value||0,net_profit:+$('ta-profit').value||0})});$('ta-msg').innerHTML='<div class="ok-box">✅ Audit report created</div>';loadAudit();}
+  catch(e){$('ta-msg').innerHTML=`<div class="err-box">${e.message}</div>`;}
+}
+
+async function loadDocs(){
+  try{const d=await api('/documents/list');const docs=d.documents||d||[];
+  $('docs-body').innerHTML=docs.length?docs.slice(0,20).map(x=>`<tr><td>${x.name||x.filename||'—'}</td><td>${x.client_name||'—'}</td><td><span class="b bi">${x.doc_type||x.type||'—'}</span></td><td>${x.created_at?x.created_at.substring(0,10):'—'}</td><td>${x.file_size?Math.round(x.file_size/1024)+'KB':'—'}</td></tr>`).join(''):'<tr><td colspan="5" style="text-align:center;color:var(--t3);padding:20px">No documents.</td></tr>';
+  }catch(e){$('docs-body').innerHTML=`<tr><td colspan="5" style="text-align:center;color:var(--t3);padding:20px">No data.</td></tr>`;}
+}
+
+async function loadBilling(){
+  try{const d=await api('/billing/invoices');const inv=d.invoices||d||[];
+  $('bill-body').innerHTML=inv.length?inv.slice(0,20).map(x=>`<tr><td style="font-family:var(--m);font-size:10px">${x.invoice_number||x.id?.substring(0,8)||'—'}</td><td>${x.client_name||'—'}</td><td>${x.description||x.services||'—'}</td><td style="font-family:var(--m)">₹${(x.amount||x.total||0).toLocaleString('en-IN')}</td><td>${x.due_date||'—'}</td><td><span class="b ${x.status==='paid'?'bg':x.status==='overdue'?'br':'ba'}">${x.status||'pending'}</span></td></tr>`).join(''):'<tr><td colspan="6" style="text-align:center;color:var(--t3);padding:20px">No invoices.</td></tr>';
+  }catch(e){$('bill-body').innerHTML=`<tr><td colspan="6" style="text-align:center;color:var(--t3);padding:20px">No data.</td></tr>`;}
+}
+
+async function askAI(){
+  const q=$('ai-q').value.trim();if(!q)return;
+  $('ai-ans').textContent='Thinking...';$('ai-res').style.display='block';
+  try{const d=await api('/ai-agent/query',{method:'POST',body:JSON.stringify({query:q})});$('ai-ans').textContent=d.response||d.answer||JSON.stringify(d,null,2);}
+  catch(e){$('ai-ans').textContent='Error: '+e.message;}
+}
+
+async function gspDo(action){
+  const gstin=$('gsp-gstin').value.trim().toUpperCase(),period=$('gsp-period').value.trim(),provider=$('gsp-provider').value,client=$('gsp-client').value.trim();
+  try{
+    let d;
+    if(action==='verify')d=await api(`/gsp/gstin/${gstin}/verify?provider=${provider}`);
+    else if(action==='2b')d=await api('/gsp/gstr2b/fetch',{method:'POST',body:JSON.stringify({gstin,period,provider})});
+    else if(action==='1')d=await api('/gsp/gstr1/fetch',{method:'POST',body:JSON.stringify({gstin,period,provider})});
+    else if(action==='status')d=await api(`/gsp/filing-status?gstin=${gstin}&period=${period}&return_type=GSTR3B&provider=${provider}`);
+    else if(action==='reconcile')d=await api('/gsp/reconcile/gstr2b',{method:'POST',body:JSON.stringify({gstin,period,provider,company_name:client,purchase_register:[]})});
+    $('gsp-out').textContent=JSON.stringify(d,null,2);
+    $('gsp-msg').innerHTML='<div class="ok-box">✅ Done</div>';
+  }catch(e){$('gsp-msg').innerHTML=`<div class="err-box">${e.message}</div>`;}
+}
+
+init();
+</script>
+</body>
+</html>
