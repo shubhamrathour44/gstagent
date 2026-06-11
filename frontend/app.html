@@ -284,9 +284,40 @@ input:focus,select:focus,textarea:focus{border-color:var(--blue2)}
 
     <!-- CLIENTS -->
     <div class="page" id="pg-clients">
-      <div class="card"><div class="ch">👥 Clients</div>
-        <div class="tw"><table><thead><tr><th>Name</th><th>GSTIN</th><th>PAN</th><th>Email</th><th>Status</th></tr></thead>
-        <tbody id="clients-body"><tr><td colspan="5" style="text-align:center;color:var(--t3);padding:20px">Loading...</td></tr></tbody></table></div>
+      <div class="card">
+        <div class="ch">➕ Add Client</div>
+        <div class="info-box">Add a CA client once, then use this client across GST reconciliation, invoices, notices, ITR, TDS, billing and compliance.</div>
+
+        <div class="g2">
+          <div class="fg"><label>Client / Business Name *</label><input id="client-name" placeholder="ABC Traders Pvt Ltd"/></div>
+          <div class="fg"><label>GSTIN</label><input id="client-gstin" placeholder="07ABCDE1234F1Z5" maxlength="15" style="font-family:var(--m)"/></div>
+        </div>
+
+        <div class="g2">
+          <div class="fg"><label>PAN</label><input id="client-pan" placeholder="ABCDE1234F" maxlength="10" style="font-family:var(--m)"/></div>
+          <div class="fg"><label>Contact Person</label><input id="client-contact" placeholder="Mr. Sharma"/></div>
+        </div>
+
+        <div class="g2">
+          <div class="fg"><label>Email</label><input id="client-email" type="email" placeholder="client@email.com"/></div>
+          <div class="fg"><label>Mobile</label><input id="client-phone" placeholder="9876543210" maxlength="10" style="font-family:var(--m)"/></div>
+        </div>
+
+        <div class="g3">
+          <div class="fg"><label>Business Type</label><select id="client-type"><option value="proprietorship">Proprietorship</option><option value="partnership">Partnership</option><option value="llp">LLP</option><option value="company">Company</option><option value="individual">Individual</option><option value="trust">Trust</option></select></div>
+          <div class="fg"><label>GST Filing Frequency</label><select id="client-filing"><option value="monthly">Monthly</option><option value="quarterly">Quarterly</option><option value="composition">Composition</option><option value="not_registered">Not Registered</option></select></div>
+          <div class="fg"><label>Status</label><select id="client-status"><option value="active">Active</option><option value="inactive">Inactive</option></select></div>
+        </div>
+
+        <button class="btn btn-p" id="add-client-btn" onclick="addClient()">💾 Save Client</button>
+        <button class="btn btn-s" onclick="clearClientForm()" style="margin-left:8px">Clear</button>
+        <div id="client-msg" style="margin-top:10px"></div>
+      </div>
+
+      <div class="card">
+        <div class="ch">👥 Client List</div>
+        <div class="tw"><table><thead><tr><th>Name</th><th>GSTIN</th><th>PAN</th><th>Email</th><th>Mobile</th><th>Status</th></tr></thead>
+        <tbody id="clients-body"><tr><td colspan="6" style="text-align:center;color:var(--t3);padding:20px">Loading...</td></tr></tbody></table></div>
       </div>
     </div>
 
@@ -572,11 +603,70 @@ function loadPage(p){const m={clients:loadClients,compliance:loadCompliance,task
 
 // DATA LOADERS
 async function loadClients(){
-  try{const d=await api('/crm/clients');const c=d.clients||d||[];
-  $('stat-c').textContent=c.length||'—';
-  $('clients-body').innerHTML=c.length?c.map(x=>`<tr><td><strong>${x.name||x.client_name||''}</strong></td><td style="font-family:var(--m);font-size:10px">${x.gstin||'—'}</td><td style="font-family:var(--m);font-size:10px">${x.pan||'—'}</td><td>${x.email||'—'}</td><td><span class="b bg">Active</span></td></tr>`).join(''):'<tr><td colspan="5" style="text-align:center;color:var(--t3);padding:20px">No clients yet.</td></tr>';
-  }catch(e){$('clients-body').innerHTML=`<tr><td colspan="5" style="text-align:center;color:var(--t3);padding:20px">No data.</td></tr>`;}
+  try{
+    const d=await api('/crm/clients');
+    const c=d.clients||d.items||d||[];
+    $('stat-c').textContent=c.length||'—';
+    $('clients-body').innerHTML=c.length?c.map(x=>`<tr>
+      <td><strong>${x.name||x.client_name||x.business_name||''}</strong><div style="font-size:10px;color:var(--t3);margin-top:2px">${x.contact_person||''}</div></td>
+      <td style="font-family:var(--m);font-size:10px">${x.gstin||'—'}</td>
+      <td style="font-family:var(--m);font-size:10px">${x.pan||'—'}</td>
+      <td>${x.email||'—'}</td>
+      <td style="font-family:var(--m);font-size:10px">${x.phone||x.mobile||'—'}</td>
+      <td><span class="b ${(x.status||'active')==='active'?'bg':'ba'}">${x.status||'Active'}</span></td>
+    </tr>`).join(''):'<tr><td colspan="6" style="text-align:center;color:var(--t3);padding:20px">No clients yet. Add your first client above.</td></tr>';
+  }catch(e){$('clients-body').innerHTML=`<tr><td colspan="6" style="text-align:center;color:var(--t3);padding:20px">No data. ${e.message||''}</td></tr>`;}
 }
+
+function clearClientForm(){
+  ['client-name','client-gstin','client-pan','client-contact','client-email','client-phone'].forEach(id=>{if($(id))$(id).value='';});
+  if($('client-type'))$('client-type').value='proprietorship';
+  if($('client-filing'))$('client-filing').value='monthly';
+  if($('client-status'))$('client-status').value='active';
+  if($('client-msg'))$('client-msg').innerHTML='';
+}
+
+async function addClient(){
+  const name=$('client-name').value.trim();
+  const gstin=$('client-gstin').value.trim().toUpperCase();
+  const pan=$('client-pan').value.trim().toUpperCase();
+  const contact=$('client-contact').value.trim();
+  const email=$('client-email').value.trim();
+  const phone=$('client-phone').value.trim();
+  const businessType=$('client-type').value;
+  const filingFrequency=$('client-filing').value;
+  const status=$('client-status').value;
+
+  if(!name){$('client-msg').innerHTML='<div class="err-box">Client / Business name is required.</div>';return;}
+  if(gstin && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(gstin)){
+    $('client-msg').innerHTML='<div class="err-box">GSTIN format looks invalid. Example: 07ABCDE1234F1Z5</div>';return;
+  }
+  if(pan && !/^[A-Z]{5}[0-9]{4}[A-Z]$/.test(pan)){
+    $('client-msg').innerHTML='<div class="err-box">PAN format looks invalid. Example: ABCDE1234F</div>';return;
+  }
+
+  const btn=$('add-client-btn');
+  btn.disabled=true;btn.textContent='Saving...';
+  $('client-msg').innerHTML='<div class="info-box">Saving client...</div>';
+  const payload={name,client_name:name,business_name:name,gstin,pan,contact_person:contact,email,phone,mobile:phone,business_type:businessType,filing_frequency:filingFrequency,status};
+
+  try{
+    let saved=false,lastErr='';
+    const endpoints=['/crm/clients','/crm/clients/create','/clients','/clients/create'];
+    for(const ep of endpoints){
+      try{await api(ep,{method:'POST',body:JSON.stringify(payload)});saved=true;break;}catch(e){lastErr=e.message||String(e);}
+    }
+    if(!saved)throw new Error(lastErr||'Client API not found');
+    $('client-msg').innerHTML='<div class="ok-box">✅ Client added successfully.</div>';
+    clearClientForm();
+    await loadClients();
+  }catch(e){
+    $('client-msg').innerHTML='<div class="err-box">Error: '+(e.message||'Failed to add client')+'</div>';
+  }finally{
+    btn.disabled=false;btn.textContent='💾 Save Client';
+  }
+}
+
 async function loadCompliance(){
   try{const d=await api('/compliance/list');const c=d.items||d.compliance||d||[];
   $('comp-body').innerHTML=c.length?c.slice(0,20).map(x=>`<tr><td>${x.client_name||'—'}</td><td style="font-family:var(--m);font-size:10px">${x.gstin||'—'}</td><td>${x.return_type||x.type||'—'}</td><td>${x.period||'—'}</td><td>${x.due_date||'—'}</td><td><span class="b ${x.status==='filed'?'bg':x.status==='overdue'?'br':'ba'}">${x.status||'pending'}</span></td></tr>`).join(''):'<tr><td colspan="6" style="text-align:center;color:var(--t3);padding:20px">No records.</td></tr>';
