@@ -8,6 +8,10 @@
     {
       "source": "/demo",
       "destination": "/demo.html"
+    },
+    {
+      "source": "/bill-reader",
+      "destination": "/bill-reader.html"
     }
   ]
 }
