@@ -2,8 +2,6 @@ import os
 import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from tally_import import router as tally_import_router
-from zoho_import import router as zoho_import_router
 from database import create_tables
 from auth import auth_router
 from integrations import tally_router, zoho_router
@@ -25,6 +23,8 @@ from tax_audit import router as tax_audit_router
 from ai_agent_router import router as ai_agent_router
 from invoices import router as invoices_router
 from reconcile_saved import router as reconcile_saved_router
+from tally_import import router as tally_import_router
+from zoho_import import router as zoho_import_router
 
 
 logging.basicConfig(level=logging.INFO)
@@ -96,8 +96,6 @@ async def modules():
     }
 
 app.include_router(auth_router)
-app.include_router(tally_router)
-app.include_router(zoho_router)
 app.include_router(gsp_router)
 app.include_router(tax_router)
 app.include_router(crm_router)
