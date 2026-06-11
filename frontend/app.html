@@ -801,7 +801,7 @@ async function extractSmartInvoice(){
   const btn=$('si-ocr-btn');btn.disabled=true;btn.textContent='Reading...';
   $('si-msg').innerHTML='<div class="info-box">Reading bill with OCR using authenticated Bill Reader API. Hindi + English handwritten bills may require manual correction.</div>';
   const fd=new FormData();fd.append('file',f);fd.append('language',$('si-lang').value);fd.append('client_id',$('si-client').value||'');fd.append('invoice_type',$('si-type').value);
-  const endpoints=['/bill-reader/extract','/bill-reader/read','/bill-reader/upload','/bill-reader/ocr','/bill-reader/process'];
+  const endpoints=['/bill-reader/scan','/bill-reader/extract','/bill-reader/read','/bill-reader/upload','/bill-reader/ocr','/bill-reader/process'];
   let data=null,lastErr='';
   for(const ep of endpoints){
     try{
