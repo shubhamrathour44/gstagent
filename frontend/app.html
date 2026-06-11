@@ -215,6 +215,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--blue2)}
     <button class="ni" onclick="nav('gsp',this)"><span class="ni-icon">🔌</span>GSP Dashboard</button>
     <button class="ni" onclick="nav('notices',this)"><span class="ni-icon">⚠️</span>Notices<span class="ni-badge">8</span></button>
     <button class="ni" onclick="window.location.href='/bill-reader.html'"><span class="ni-icon">📷</span>Bill Reader</button>
+    <button class="ni" onclick="nav('smartinvoice',this)"><span class="ni-icon">📄</span>Smart Invoice Upload<span class="ni-badge-g ni-badge">OCR</span></button>
 
     <div class="ns">Income Tax</div>
     <button class="ni" onclick="nav('itr',this)"><span class="ni-icon">📋</span>ITR Filing</button>
@@ -263,7 +264,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--blue2)}
       <div class="qa-grid">
         <div class="qa" onclick="nav('reconciliation',null)"><div class="qa-icon">🔄</div><div class="qa-label">Run Reconciliation</div></div>
         <div class="qa" onclick="nav('itr',null)"><div class="qa-icon">📋</div><div class="qa-label">New ITR</div></div>
-        <div class="qa" onclick="window.location.href='/bill-reader.html'"><div class="qa-icon">📷</div><div class="qa-label">Scan Bill</div></div>
+        <div class="qa" onclick="nav('smartinvoice',null)"><div class="qa-icon">📄</div><div class="qa-label">Smart Invoice Upload</div></div>
         <div class="qa" onclick="nav('notices',null)"><div class="qa-icon">⚠️</div><div class="qa-label">Notice Reply</div></div>
       </div>
       <div class="card">
@@ -357,6 +358,69 @@ input:focus,select:focus,textarea:focus{border-color:var(--blue2)}
       <div class="card"><div class="ch">📋 Previous Reconciliations</div>
         <div class="tw"><table><thead><tr><th>Client</th><th>Period</th><th>Matched</th><th>Mismatches</th><th>ITC Diff</th><th>Date</th></tr></thead>
         <tbody id="recon-body"><tr><td colspan="6" style="text-align:center;color:var(--t3);padding:20px">Loading...</td></tr></tbody></table></div>
+      </div>
+    </div>
+
+
+    <!-- SMART INVOICE UPLOAD -->
+    <div class="page" id="pg-smartinvoice">
+      <div class="card">
+        <div class="ch">📄 Smart Invoice Upload — OCR + Client Invoice Register</div>
+        <div class="info-box">Demo flow: select client → upload handwritten/printed Hindi-English bill → OCR extracts fields → review/edit → save to invoice register.</div>
+
+        <div class="g3">
+          <div class="fg"><label>Client *</label><select id="si-client"><option value="">Loading clients...</option></select></div>
+          <div class="fg"><label>Invoice Type</label><select id="si-type"><option value="purchase">Purchase Invoice</option><option value="sales">Sales Invoice</option></select></div>
+          <div class="fg"><label>Filing Period</label><input id="si-period" value="062026" placeholder="MMYYYY" style="font-family:var(--m)"/></div>
+        </div>
+
+        <div class="g2">
+          <div class="fg"><label>Upload Bill / Invoice</label><input type="file" id="si-file" accept=".jpg,.jpeg,.png,.webp,.pdf,.xlsx,.xls"/></div>
+          <div class="fg"><label>Language</label><select id="si-lang"><option value="auto">Auto Detect</option><option value="hi">Hindi</option><option value="en">English</option><option value="hi-en">Hindi + English</option></select></div>
+        </div>
+
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+          <button class="btn btn-p" id="si-ocr-btn" onclick="extractSmartInvoice()">📷 Read with OCR</button>
+          <button class="btn btn-s" onclick="fillDemoInvoice()">Use Demo Data</button>
+          <button class="btn btn-s" onclick="clearSmartInvoiceForm()">Clear</button>
+        </div>
+        <div id="si-msg"></div>
+      </div>
+
+      <div class="card">
+        <div class="ch">🧾 Review Extracted Invoice</div>
+        <div class="g3">
+          <div class="fg"><label>Supplier / Vendor Name</label><input id="si-vendor-name" placeholder="ABC Traders"/></div>
+          <div class="fg"><label>Supplier GSTIN</label><input id="si-vendor-gstin" placeholder="07ABCDE1234F1Z5" maxlength="15" style="font-family:var(--m)"/></div>
+          <div class="fg"><label>Invoice Number</label><input id="si-invoice-no" placeholder="INV-1024" style="font-family:var(--m)"/></div>
+        </div>
+        <div class="g3">
+          <div class="fg"><label>Invoice Date</label><input id="si-invoice-date" type="date"/></div>
+          <div class="fg"><label>Taxable Value</label><input id="si-taxable" type="number" placeholder="10000"/></div>
+          <div class="fg"><label>Total Amount</label><input id="si-total" type="number" placeholder="11800"/></div>
+        </div>
+        <div class="g3">
+          <div class="fg"><label>CGST</label><input id="si-cgst" type="number" placeholder="900"/></div>
+          <div class="fg"><label>SGST</label><input id="si-sgst" type="number" placeholder="900"/></div>
+          <div class="fg"><label>IGST</label><input id="si-igst" type="number" placeholder="0"/></div>
+        </div>
+        <div class="g2">
+          <div class="fg"><label>OCR Confidence</label><input id="si-confidence" readonly placeholder="—"/></div>
+          <div class="fg"><label>Detected Language</label><input id="si-detected-lang" readonly placeholder="—"/></div>
+        </div>
+        <button class="btn btn-p" id="si-save-btn" onclick="saveSmartInvoice()">💾 Save Invoice to Client Register</button>
+        <button class="btn btn-s" onclick="loadSmartInvoices()" style="margin-left:8px">Refresh Register</button>
+      </div>
+
+      <div class="card">
+        <div class="ch">📚 Client Invoice Register</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+          <button class="btn btn-s" onclick="loadSmartInvoices()">🔄 Refresh</button>
+          <button class="btn btn-s" onclick="exportSmartInvoicesCSV()">⬇️ Export CSV</button>
+          <button class="btn btn-p" onclick="nav('reconciliation',null)">Run Reconciliation →</button>
+        </div>
+        <div class="tw"><table><thead><tr><th>Client</th><th>Type</th><th>Invoice No</th><th>Vendor</th><th>GSTIN</th><th>Date</th><th>Taxable</th><th>Total</th><th>Source</th></tr></thead>
+        <tbody id="si-register-body"><tr><td colspan="9" style="text-align:center;color:var(--t3);padding:20px">No invoices yet.</td></tr></tbody></table></div>
       </div>
     </div>
 
@@ -589,7 +653,7 @@ async function api(path,opts={}){
 function logout(){localStorage.clear();location.href='/';}
 
 // NAV
-const titles={dashboard:'📊 Dashboard',clients:'👥 Clients',compliance:'📅 Compliance',tasks:'✅ Tasks',reconciliation:'🔄 GST Reconciliation',gsp:'🔌 GSP Dashboard',notices:'⚠️ Notices',itr:'📋 ITR Filing',form26as:'📑 Form 26AS / AIS',tds:'🧾 TDS Returns',taxaudit:'🔍 Tax Audit',documents:'📁 Documents',billing:'💰 Billing',aiagent:'🤖 AI Agent'};
+const titles={dashboard:'📊 Dashboard',clients:'👥 Clients',compliance:'📅 Compliance',tasks:'✅ Tasks',reconciliation:'🔄 GST Reconciliation',smartinvoice:'📄 Smart Invoice Upload',gsp:'🔌 GSP Dashboard',notices:'⚠️ Notices',itr:'📋 ITR Filing',form26as:'📑 Form 26AS / AIS',tds:'🧾 TDS Returns',taxaudit:'🔍 Tax Audit',documents:'📁 Documents',billing:'💰 Billing',aiagent:'🤖 AI Agent'};
 function nav(page,el){
   document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
@@ -599,7 +663,7 @@ function nav(page,el){
   closeSidebar();
   loadPage(page);
 }
-function loadPage(p){const m={clients:loadClients,compliance:loadCompliance,tasks:loadTasks,reconciliation:loadRecon,notices:loadNotices,itr:loadITR,form26as:loadF26,tds:loadTDS,taxaudit:loadAudit,documents:loadDocs,billing:loadBilling};if(m[p])m[p]();}
+function loadPage(p){const m={clients:loadClients,compliance:loadCompliance,tasks:loadTasks,reconciliation:loadRecon,smartinvoice:loadSmartInvoicePage,notices:loadNotices,itr:loadITR,form26as:loadF26,tds:loadTDS,taxaudit:loadAudit,documents:loadDocs,billing:loadBilling};if(m[p])m[p]();}
 
 // DATA LOADERS
 async function loadClients(){
@@ -665,6 +729,164 @@ async function addClient(){
   }finally{
     btn.disabled=false;btn.textContent='💾 Save Client';
   }
+}
+
+
+// SMART INVOICE UPLOAD
+function normalizeInvoiceOCR(raw){
+  const d=raw?.invoice||raw?.extracted||raw?.data||raw?.result||raw||{};
+  return {
+    vendor_name:d.vendor_name||d.supplier_name||d.party_name||d.seller_name||d.name||'',
+    vendor_gstin:(d.vendor_gstin||d.supplier_gstin||d.gstin||d.seller_gstin||'').toString().toUpperCase(),
+    invoice_number:d.invoice_number||d.invoice_no||d.bill_no||d.number||'',
+    invoice_date:toISODate(d.invoice_date||d.date||d.bill_date||''),
+    taxable_value:num(d.taxable_value||d.taxable||d.subtotal||d.value),
+    cgst:num(d.cgst||d.cgst_amount),
+    sgst:num(d.sgst||d.sgst_amount),
+    igst:num(d.igst||d.igst_amount),
+    total_amount:num(d.total_amount||d.total||d.grand_total||d.amount),
+    confidence:d.confidence||d.ocr_confidence||raw?.confidence||'',
+    language:d.language||d.detected_language||raw?.language||raw?.detected_language||''
+  };
+}
+function num(v){if(v===undefined||v===null||v==='')return '';return Number(String(v).replace(/[^0-9.-]/g,''))||0;}
+function toISODate(v){
+  if(!v)return '';
+  const s=String(v).trim();
+  if(/^\d{4}-\d{2}-\d{2}$/.test(s))return s;
+  const m=s.match(/(\d{1,2})[\/-](\d{1,2})[\/-](\d{2,4})/);
+  if(m){const y=m[3].length===2?'20'+m[3]:m[3];return `${y}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;}
+  return '';
+}
+async function loadSmartInvoicePage(){
+  await loadSmartClients();
+  loadSmartInvoices();
+}
+async function loadSmartClients(){
+  const sel=$('si-client'); if(!sel)return;
+  try{
+    const d=await api('/crm/clients');
+    const clients=d.clients||d.items||d||[];
+    sel.innerHTML=clients.length?clients.map(c=>{
+      const name=c.name||c.client_name||c.business_name||'Unnamed Client';
+      const val=c.id||c.client_id||c.gstin||name;
+      return `<option value="${String(val).replace(/"/g,'&quot;')}" data-name="${String(name).replace(/"/g,'&quot;')}">${name}${c.gstin?' — '+c.gstin:''}</option>`;
+    }).join(''):'<option value="">No clients found. Add client first.</option>';
+  }catch(e){sel.innerHTML='<option value="">Unable to load clients</option>';}
+}
+function clearSmartInvoiceForm(){
+  ['si-file','si-vendor-name','si-vendor-gstin','si-invoice-no','si-invoice-date','si-taxable','si-total','si-cgst','si-sgst','si-igst','si-confidence','si-detected-lang'].forEach(id=>{if($(id))$(id).value='';});
+  if($('si-msg'))$('si-msg').innerHTML='';
+}
+function fillDemoInvoice(){
+  const today=new Date().toISOString().substring(0,10);
+  $('si-vendor-name').value='Sharma Stationery & General Store';
+  $('si-vendor-gstin').value='05ABCDE1234F1Z5';
+  $('si-invoice-no').value='HS-1045';
+  $('si-invoice-date').value=today;
+  $('si-taxable').value='12500';
+  $('si-cgst').value='1125';
+  $('si-sgst').value='1125';
+  $('si-igst').value='0';
+  $('si-total').value='14750';
+  $('si-confidence').value='Demo / 92%';
+  $('si-detected-lang').value='Hindi + English';
+  $('si-msg').innerHTML='<div class="ok-box">✅ Demo invoice filled. Review and save it.</div>';
+}
+async function extractSmartInvoice(){
+  const f=$('si-file')?.files?.[0];
+  if(!f){$('si-msg').innerHTML='<div class="err-box">Please upload a bill, image, PDF or Excel file first.</div>';return;}
+  const btn=$('si-ocr-btn');btn.disabled=true;btn.textContent='Reading...';
+  $('si-msg').innerHTML='<div class="info-box">Reading bill with OCR. Hindi + English handwritten bills may require manual correction.</div>';
+  const fd=new FormData();fd.append('file',f);fd.append('language',$('si-lang').value);fd.append('client_id',$('si-client').value||'');fd.append('invoice_type',$('si-type').value);
+  const endpoints=['/bill-reader/extract','/bill-reader/read','/bill-reader/upload','/bill-reader/ocr','/bill-reader/process'];
+  let data=null,lastErr='';
+  for(const ep of endpoints){
+    try{
+      const r=await fetch(API+ep,{method:'POST',headers:{'Authorization':'Bearer '+token},body:fd});
+      const txt=await r.text();let d={};try{d=JSON.parse(txt)}catch{d={raw_text:txt}};
+      if(!r.ok)throw new Error(d.detail||d.error||txt||'OCR failed');
+      data=d;break;
+    }catch(e){lastErr=e.message||String(e);}
+  }
+  try{
+    if(!data)throw new Error(lastErr||'Bill Reader OCR endpoint not found');
+    const inv=normalizeInvoiceOCR(data);
+    $('si-vendor-name').value=inv.vendor_name;
+    $('si-vendor-gstin').value=inv.vendor_gstin;
+    $('si-invoice-no').value=inv.invoice_number;
+    $('si-invoice-date').value=inv.invoice_date;
+    $('si-taxable').value=inv.taxable_value;
+    $('si-cgst').value=inv.cgst;
+    $('si-sgst').value=inv.sgst;
+    $('si-igst').value=inv.igst;
+    $('si-total').value=inv.total_amount;
+    $('si-confidence').value=inv.confidence||'Check manually';
+    $('si-detected-lang').value=inv.language||$('si-lang').value;
+    $('si-msg').innerHTML='<div class="ok-box">✅ OCR completed. Review/edit fields and save invoice.</div>';
+  }catch(e){
+    $('si-msg').innerHTML='<div class="err-box">OCR did not return structured data: '+(e.message||'Unknown error')+'<br/>Use Demo Data or fill fields manually for demo.</div>';
+  }finally{btn.disabled=false;btn.textContent='📷 Read with OCR';}
+}
+function getSmartInvoicePayload(){
+  const sel=$('si-client');
+  const clientName=sel?.options?.[sel.selectedIndex]?.dataset?.name||sel?.options?.[sel.selectedIndex]?.textContent||'';
+  return {
+    client_id:$('si-client').value,
+    client_name:clientName.replace(/ — .*/,''),
+    invoice_type:$('si-type').value,
+    period:$('si-period').value,
+    vendor_name:$('si-vendor-name').value.trim(),
+    vendor_gstin:$('si-vendor-gstin').value.trim().toUpperCase(),
+    invoice_number:$('si-invoice-no').value.trim(),
+    invoice_date:$('si-invoice-date').value,
+    taxable_value:Number($('si-taxable').value||0),
+    cgst:Number($('si-cgst').value||0),
+    sgst:Number($('si-sgst').value||0),
+    igst:Number($('si-igst').value||0),
+    total_amount:Number($('si-total').value||0),
+    source:'smart_invoice_upload_ocr',
+    status:'saved'
+  };
+}
+async function saveSmartInvoice(){
+  const p=getSmartInvoicePayload();
+  if(!p.client_id){$('si-msg').innerHTML='<div class="err-box">Select client first.</div>';return;}
+  if(!p.invoice_number){$('si-msg').innerHTML='<div class="err-box">Invoice number is required.</div>';return;}
+  const btn=$('si-save-btn');btn.disabled=true;btn.textContent='Saving...';
+  const endpoints=['/invoices/create','/invoices','/invoice/create','/billing/invoices'];
+  let saved=false,lastErr='';
+  for(const ep of endpoints){
+    try{await api(ep,{method:'POST',body:JSON.stringify(p)});saved=true;break;}catch(e){lastErr=e.message||String(e);}
+  }
+  if(!saved){
+    const local=JSON.parse(localStorage.getItem('smart_invoices_demo')||'[]');
+    local.unshift({...p,id:'local-'+Date.now(),created_at:new Date().toISOString()});
+    localStorage.setItem('smart_invoices_demo',JSON.stringify(local));
+    $('si-msg').innerHTML='<div class="ok-box">✅ Invoice saved locally for demo. Backend invoice endpoint not found yet: '+lastErr+'</div>';
+  }else{
+    $('si-msg').innerHTML='<div class="ok-box">✅ Invoice saved to backend client invoice register.</div>';
+  }
+  btn.disabled=false;btn.textContent='💾 Save Invoice to Client Register';
+  loadSmartInvoices();
+}
+async function loadSmartInvoices(){
+  const body=$('si-register-body'); if(!body)return;
+  let invoices=[];
+  const endpoints=['/invoices/list','/invoices','/invoice/list','/billing/invoices'];
+  for(const ep of endpoints){
+    try{const d=await api(ep);invoices=d.invoices||d.items||d.data||d||[];if(Array.isArray(invoices))break;}catch(e){}
+  }
+  const local=JSON.parse(localStorage.getItem('smart_invoices_demo')||'[]');
+  invoices=[...local,...(Array.isArray(invoices)?invoices:[])];
+  body.innerHTML=invoices.length?invoices.slice(0,50).map(x=>`<tr><td>${x.client_name||'—'}</td><td><span class="b ${x.invoice_type==='sales'?'bi':'bg'}">${x.invoice_type||'purchase'}</span></td><td style="font-family:var(--m)">${x.invoice_number||x.invoice_no||x.id?.substring?.(0,8)||'—'}</td><td>${x.vendor_name||x.supplier_name||x.description||'—'}</td><td style="font-family:var(--m);font-size:10px">${x.vendor_gstin||x.supplier_gstin||x.gstin||'—'}</td><td>${x.invoice_date||x.date||'—'}</td><td style="font-family:var(--m)">₹${Number(x.taxable_value||x.taxable||0).toLocaleString('en-IN')}</td><td style="font-family:var(--m)">₹${Number(x.total_amount||x.total||x.amount||0).toLocaleString('en-IN')}</td><td><span class="b bp">${x.source||'saved'}</span></td></tr>`).join(''):'<tr><td colspan="9" style="text-align:center;color:var(--t3);padding:20px">No invoices yet. Upload a bill and save invoice.</td></tr>';
+}
+function exportSmartInvoicesCSV(){
+  const local=JSON.parse(localStorage.getItem('smart_invoices_demo')||'[]');
+  if(!local.length){alert('No locally saved invoices to export yet.');return;}
+  const cols=['client_name','invoice_type','invoice_number','vendor_name','vendor_gstin','invoice_date','taxable_value','cgst','sgst','igst','total_amount'];
+  const csv=[cols.join(','),...local.map(r=>cols.map(c=>'"'+String(r[c]??'').replace(/"/g,'""')+'"').join(','))].join('\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='smart-invoice-register.csv';a.click();URL.revokeObjectURL(a.href);
 }
 
 async function loadCompliance(){
