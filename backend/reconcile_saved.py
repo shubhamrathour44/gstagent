@@ -1,22 +1,23 @@
-"""Saved Invoice Reconciliation API for GSTAgent.
-
-Drop this file at: backend/reconcile_saved.py
-Mount in main_v2.py:
-    from reconcile_saved import router as reconcile_saved_router
-    app.include_router(reconcile_saved_router)
 """
+Saved Invoice Reconciliation API for GSTAgent demo.
+
+Fix included:
+- Does NOT depend on firm_id column.
+- Reads saved purchase invoices from invoices table using client_id.
+- Matches saved invoices against pasted/uploaded GSTR-2B JSON rows.
+"""
+
 from __future__ import annotations
 
-from datetime import datetime
-from typing import Any, Optional
-from uuid import uuid4
+from typing import Optional, Any
+from difflib import SequenceMatcher
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from auth import CurrentUser, get_current_user
+from auth import get_current_user, CurrentUser
 from database import get_db
 
 try:
@@ -24,110 +25,260 @@ try:
 except Exception:
     ensure_invoice_table = None
 
+
 router = APIRouter(prefix="/reconcile-saved", tags=["Saved Invoice Reconciliation"])
 
-class ReconcileRunIn(BaseModel):
+
+CREATE_RECON_TABLE_SQL = """
+CREATE TABLE IF NOT EXISTS saved_reconciliations (
+    id TEXT PRIMARY KEY,
+    client_id TEXT,
+    client_name TEXT,
+    period TEXT,
+    matched_count INTEGER DEFAULT 0,
+    mismatch_count INTEGER DEFAULT 0,
+    missing_count INTEGER DEFAULT 0,
+    amount_mismatch_count INTEGER DEFAULT 0,
+    gstin_mismatch_count INTEGER DEFAULT 0,
+    itc_difference DOUBLE PRECISION DEFAULT 0,
+    results JSONB,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+"""
+
+
+class ReconcileSavedRequest(BaseModel):
     client_id: str
-    client_name: Optional[str] = None
-    period: str = ""
+    client_name: Optional[str] = ""
+    period: str
     gstr2b: list[dict[str, Any]] = []
 
-
-def _firm_id(user: Any) -> str:
-    return str(getattr(user, "firm_id", None) or getattr(user, "id", None) or "demo_firm")
 
 async def ensure_tables(db: AsyncSession) -> None:
     if ensure_invoice_table:
         await ensure_invoice_table(db)
-    await db.execute(text("""
-        CREATE TABLE IF NOT EXISTS saved_reconciliations (
-            id VARCHAR(64) PRIMARY KEY,
-            firm_id VARCHAR(64),
-            client_id VARCHAR(64),
-            client_name VARCHAR(255),
-            period VARCHAR(32),
-            matched_count INTEGER DEFAULT 0,
-            mismatch_count INTEGER DEFAULT 0,
-            itc_at_risk FLOAT DEFAULT 0,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    """))
+    await db.execute(text(CREATE_RECON_TABLE_SQL))
     await db.commit()
 
-def norm(x: dict[str, Any]) -> dict[str, Any]:
-    gstin = str(x.get("vendor_gstin") or x.get("supplier_gstin") or x.get("gstin") or x.get("ctin") or "").upper().replace(" ", "")
-    inv = str(x.get("invoice_number") or x.get("inum") or x.get("invoice_no") or x.get("inv_no") or x.get("number") or "").upper().replace(" ", "")
-    def num(*keys):
-        for k in keys:
-            try:
-                if x.get(k) not in (None, ""):
-                    return float(x.get(k) or 0)
-            except Exception:
-                pass
+
+def norm(v: Any) -> str:
+    return str(v or "").strip().upper().replace(" ", "").replace("-", "").replace("/", "")
+
+
+def get_val(row: dict, keys: list[str], default: Any = "") -> Any:
+    for k in keys:
+        if k in row and row[k] not in (None, ""):
+            return row[k]
+    lower = {str(k).lower(): v for k, v in row.items()}
+    for k in keys:
+        lk = k.lower()
+        if lk in lower and lower[lk] not in (None, ""):
+            return lower[lk]
+    return default
+
+
+def to_float(v: Any) -> float:
+    try:
+        return float(str(v or 0).replace(",", "").replace("₹", "").strip())
+    except Exception:
         return 0.0
-    total = num("total_amount", "val", "invoice_value", "amount")
-    tax = num("tax_amount") or (num("cgst", "camt") + num("sgst", "samt") + num("igst", "iamt"))
-    return {**x, "_gstin": gstin, "_inv": inv, "_total": total, "_tax": tax}
+
+
+def invoice_key(row: dict) -> str:
+    gstin = norm(get_val(row, ["vendor_gstin", "supplier_gstin", "gstin", "ctin"]))
+    inv = norm(get_val(row, ["invoice_number", "inum", "invoice_no", "inv_no"]))
+    return f"{gstin}|{inv}"
+
+
+def row_to_dict(row: Any) -> dict:
+    data = dict(row._mapping) if hasattr(row, "_mapping") else dict(row)
+    if data.get("created_at") is not None:
+        data["created_at"] = str(data["created_at"])
+    return data
+
 
 @router.post("/run")
-async def run_reconciliation(payload: ReconcileRunIn, current_user: CurrentUser = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def run_reconciliation(
+    payload: ReconcileSavedRequest,
+    db: AsyncSession = Depends(get_db),
+    user: CurrentUser = Depends(get_current_user),
+):
     await ensure_tables(db)
-    firm_id = _firm_id(current_user)
-    result = await db.execute(text("""
-        SELECT * FROM invoices
-        WHERE firm_id = :firm_id AND client_id = :client_id AND invoice_type = 'purchase'
-        ORDER BY created_at DESC LIMIT 1000
-    """), {"firm_id": firm_id, "client_id": str(payload.client_id)})
-    invoices = [norm(dict(r._mapping)) for r in result]
-    gstr2b = [norm(x) for x in payload.gstr2b]
 
-    bmap = {x["_gstin"] + "|" + x["_inv"]: x for x in gstr2b}
-    used: set[str] = set()
-    rows: list[dict[str, Any]] = []
-    itc = 0.0
+    inv_result = await db.execute(
+        text(
+            """
+            SELECT * FROM invoices
+            WHERE client_id = :client_id
+            AND COALESCE(invoice_type, 'purchase') = 'purchase'
+            ORDER BY created_at DESC
+            LIMIT 1000
+            """
+        ),
+        {"client_id": payload.client_id},
+    )
+    purchase_invoices = [row_to_dict(r) for r in inv_result.fetchall()]
 
-    for inv in invoices:
-        key = inv["_gstin"] + "|" + inv["_inv"]
-        b = bmap.get(key)
-        tax_value = float(inv.get("cgst") or 0) + float(inv.get("sgst") or 0) + float(inv.get("igst") or 0)
-        if not b:
-            itc += tax_value
-            rows.append({"status":"Missing in 2B","invoice_number":inv.get("invoice_number"),"vendor_gstin":inv.get("vendor_gstin"),"book_amount":inv.get("total_amount") or inv.get("_total"),"two_b_amount":0,"explanation":"Invoice exists in saved purchase register but not in GSTR-2B. Possible vendor filing issue.","action":"Vendor follow-up"})
-            continue
-        used.add(key)
-        diff = abs(float(inv.get("total_amount") or inv.get("_total") or 0) - float(b.get("_total") or 0))
-        if diff > 2:
-            itc += diff
-            rows.append({"status":"Amount Mismatch","invoice_number":inv.get("invoice_number"),"vendor_gstin":inv.get("vendor_gstin"),"book_amount":inv.get("total_amount") or inv.get("_total"),"two_b_amount":b.get("_total"),"explanation":"Invoice found in both records but value differs.","action":"Verify bill and GSTR-2B value"})
+    two_b = payload.gstr2b or []
+    two_b_by_key = {invoice_key(x): x for x in two_b if invoice_key(x) != "|"}
+
+    results = []
+    matched = 0
+    missing = 0
+    amount_mismatch = 0
+    gstin_mismatch = 0
+    itc_risk = 0.0
+
+    for inv in purchase_invoices:
+        key = invoice_key(inv)
+        total = to_float(get_val(inv, ["total_amount", "total", "invoice_value", "val"]))
+        tax = to_float(inv.get("cgst")) + to_float(inv.get("sgst")) + to_float(inv.get("igst"))
+
+        match = two_b_by_key.get(key)
+
+        if match:
+            b_total = to_float(get_val(match, ["total_amount", "total", "invoice_value", "val"]))
+            b_tax = to_float(get_val(match, ["tax_amount", "tax", "igst", "cgst", "sgst"], 0))
+            diff = abs(total - b_total)
+
+            if diff > 5:
+                amount_mismatch += 1
+                itc_risk += tax
+                results.append({
+                    "status": "AMOUNT_MISMATCH",
+                    "severity": "HIGH" if diff > 1000 else "MEDIUM",
+                    "invoice_number": inv.get("invoice_number"),
+                    "vendor_gstin": inv.get("vendor_gstin"),
+                    "vendor_name": inv.get("vendor_name"),
+                    "book_total": total,
+                    "gstr2b_total": b_total,
+                    "difference": diff,
+                    "itc_risk": tax,
+                    "reason": "Invoice matched by GSTIN and invoice number, but amount differs from GSTR-2B."
+                })
+            else:
+                matched += 1
+                results.append({
+                    "status": "MATCHED",
+                    "severity": "LOW",
+                    "invoice_number": inv.get("invoice_number"),
+                    "vendor_gstin": inv.get("vendor_gstin"),
+                    "vendor_name": inv.get("vendor_name"),
+                    "book_total": total,
+                    "gstr2b_total": b_total,
+                    "difference": diff,
+                    "itc_risk": 0,
+                    "reason": "Invoice matched with GSTR-2B."
+                })
         else:
-            rows.append({"status":"Matched","invoice_number":inv.get("invoice_number"),"vendor_gstin":inv.get("vendor_gstin"),"book_amount":inv.get("total_amount") or inv.get("_total"),"two_b_amount":b.get("_total"),"explanation":"Invoice matched with GSTR-2B.","action":"No action"})
+            # Try same invoice number but different GSTIN
+            inv_no = norm(inv.get("invoice_number"))
+            possible = None
+            for row in two_b:
+                if norm(get_val(row, ["invoice_number", "inum", "invoice_no", "inv_no"])) == inv_no:
+                    possible = row
+                    break
 
-    invoice_keys = {i["_gstin"] + "|" + i["_inv"] for i in invoices}
-    for b in gstr2b:
-        key = b["_gstin"] + "|" + b["_inv"]
-        if key not in used and key not in invoice_keys:
-            rows.append({"status":"Extra in 2B","invoice_number":b.get("invoice_number") or b.get("inum"),"vendor_gstin":b.get("supplier_gstin") or b.get("vendor_gstin") or b.get("gstin"),"book_amount":0,"two_b_amount":b.get("_total"),"explanation":"Invoice appears in GSTR-2B but not in saved invoice register.","action":"Check missing purchase bill"})
+            if possible:
+                gstin_mismatch += 1
+                itc_risk += tax
+                results.append({
+                    "status": "GSTIN_MISMATCH",
+                    "severity": "HIGH",
+                    "invoice_number": inv.get("invoice_number"),
+                    "vendor_gstin": inv.get("vendor_gstin"),
+                    "gstr2b_gstin": get_val(possible, ["vendor_gstin", "supplier_gstin", "gstin", "ctin"]),
+                    "vendor_name": inv.get("vendor_name"),
+                    "book_total": total,
+                    "gstr2b_total": to_float(get_val(possible, ["total_amount", "total", "invoice_value", "val"])),
+                    "difference": 0,
+                    "itc_risk": tax,
+                    "reason": "Invoice number found in GSTR-2B, but supplier GSTIN differs."
+                })
+            else:
+                missing += 1
+                itc_risk += tax
+                results.append({
+                    "status": "MISSING_IN_2B",
+                    "severity": "HIGH",
+                    "invoice_number": inv.get("invoice_number"),
+                    "vendor_gstin": inv.get("vendor_gstin"),
+                    "vendor_name": inv.get("vendor_name"),
+                    "book_total": total,
+                    "gstr2b_total": 0,
+                    "difference": total,
+                    "itc_risk": tax,
+                    "reason": "Invoice exists in saved purchase invoices but is not found in GSTR-2B. Possible vendor filing issue."
+                })
 
-    summary = {
-        "matched": len([r for r in rows if r["status"] == "Matched"]),
-        "missing_in_2b": len([r for r in rows if r["status"] == "Missing in 2B"]),
-        "amount_mismatch": len([r for r in rows if r["status"] == "Amount Mismatch"]),
-        "extra_in_2b": len([r for r in rows if r["status"] == "Extra in 2B"]),
-        "itc_at_risk": round(itc, 2),
-    }
-    rec_id = str(uuid4())
-    await db.execute(text("""
-        INSERT INTO saved_reconciliations (id, firm_id, client_id, client_name, period, matched_count, mismatch_count, itc_at_risk, created_at)
-        VALUES (:id,:firm_id,:client_id,:client_name,:period,:matched_count,:mismatch_count,:itc_at_risk,:created_at)
-    """), {"id":rec_id,"firm_id":firm_id,"client_id":payload.client_id,"client_name":payload.client_name or "","period":payload.period,"matched_count":summary["matched"],"mismatch_count":len(rows)-summary["matched"],"itc_at_risk":summary["itc_at_risk"],"created_at":datetime.utcnow()})
+    mismatch_count = missing + amount_mismatch + gstin_mismatch
+    recon_id = f"rec_{__import__('time').time_ns()}"
+
+    await db.execute(
+        text(
+            """
+            INSERT INTO saved_reconciliations (
+                id, client_id, client_name, period,
+                matched_count, mismatch_count, missing_count,
+                amount_mismatch_count, gstin_mismatch_count,
+                itc_difference, results, created_at
+            )
+            VALUES (
+                :id, :client_id, :client_name, :period,
+                :matched_count, :mismatch_count, :missing_count,
+                :amount_mismatch_count, :gstin_mismatch_count,
+                :itc_difference, CAST(:results AS JSONB), CURRENT_TIMESTAMP
+            )
+            """
+        ),
+        {
+            "id": recon_id,
+            "client_id": payload.client_id,
+            "client_name": payload.client_name or "",
+            "period": payload.period,
+            "matched_count": matched,
+            "mismatch_count": mismatch_count,
+            "missing_count": missing,
+            "amount_mismatch_count": amount_mismatch,
+            "gstin_mismatch_count": gstin_mismatch,
+            "itc_difference": itc_risk,
+            "results": __import__("json").dumps(results),
+        },
+    )
     await db.commit()
-    return {"ok": True, "reconciliation_id": rec_id, "summary": summary, "results": rows}
+
+    return {
+        "ok": True,
+        "reconciliation_id": recon_id,
+        "summary": {
+            "matched": matched,
+            "mismatches": mismatch_count,
+            "missing_in_2b": missing,
+            "amount_mismatch": amount_mismatch,
+            "gstin_mismatch": gstin_mismatch,
+            "itc_risk": itc_risk,
+            "total_purchase_invoices": len(purchase_invoices),
+            "total_gstr2b_rows": len(two_b),
+        },
+        "results": results,
+    }
+
 
 @router.get("/list")
-async def list_reconciliations(current_user: CurrentUser = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def list_reconciliations(
+    client_id: Optional[str] = None,
+    db: AsyncSession = Depends(get_db),
+    user: CurrentUser = Depends(get_current_user),
+):
     await ensure_tables(db)
-    result = await db.execute(text("""
-        SELECT * FROM saved_reconciliations WHERE firm_id = :firm_id ORDER BY created_at DESC LIMIT 100
-    """), {"firm_id": _firm_id(current_user)})
-    rows = [dict(r._mapping) for r in result]
-    return {"reconciliations": rows, "count": len(rows)}
+
+    sql = "SELECT * FROM saved_reconciliations WHERE 1=1"
+    params: dict[str, Any] = {}
+    if client_id:
+        sql += " AND client_id = :client_id"
+        params["client_id"] = client_id
+    sql += " ORDER BY created_at DESC LIMIT 100"
+
+    result = await db.execute(text(sql), params)
+    rows = [row_to_dict(r) for r in result.fetchall()]
+    return {"ok": True, "reconciliations": rows, "count": len(rows)}
