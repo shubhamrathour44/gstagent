@@ -218,6 +218,8 @@ input:focus,select:focus,textarea:focus{border-color:var(--blue2)}
     <button class="ni" onclick="window.location.href='/bill-reader.html'"><span class="ni-icon">📷</span>Bill Reader</button>
     <button class="ni" onclick="nav('smartinvoice',this)"><span class="ni-icon">📄</span>Smart Invoice Upload<span class="ni-badge-g ni-badge">OCR</span></button>
     <button class="ni" onclick="nav('invoiceregister',this)"><span class="ni-icon">🧾</span>Invoice Register</button>
+    <button class="ni" onclick="nav('accountingIntegrations',this)"><span class="ni-icon">📚</span>Accounting Integrations</button>
+
 
     <div class="ns">Income Tax</div>
     <button class="ni" onclick="nav('itr',this)"><span class="ni-icon">📋</span>ITR Filing</button>
@@ -633,6 +635,46 @@ input:focus,select:focus,textarea:focus{border-color:var(--blue2)}
       </div>
     </div>
 
+    
+    <!-- ACCOUNTING INTEGRATIONS -->
+    <div class="page" id="pg-accountingIntegrations">
+      <div class="card">
+        <div class="ch">📚 Accounting Integrations — Tally + Zoho Books</div>
+        <div class="info-box">Upload Tally or Zoho Books Excel/CSV export → import invoices → view in Invoice Register → reconcile with GSTR-2B.</div>
+        <div class="stats">
+          <div class="stat stat-b"><div class="sv" id="acc-tally-count" style="color:var(--blue3)">0</div><div class="sl">Tally Imported</div></div>
+          <div class="stat stat-g"><div class="sv" id="acc-zoho-count" style="color:var(--green)">0</div><div class="sl">Zoho Imported</div></div>
+          <div class="stat stat-a"><div class="sv" id="acc-master-count" style="color:var(--amb)">0</div><div class="sl">Masters Parsed</div></div>
+          <div class="stat stat-r"><div class="sv" style="color:var(--red)">Demo</div><div class="sl">Status</div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="ch">📘 Tally Import</div>
+        <div class="g3">
+          <div class="fg"><label>Client</label><select id="tally-client"></select></div>
+          <div class="fg"><label>Register Type</label><select id="tally-type"><option value="purchase">Purchase Register</option><option value="sales">Sales Register</option></select></div>
+          <div class="fg"><label>Tally Excel/CSV</label><input type="file" id="tally-file" accept=".xlsx,.xls,.csv"></div>
+        </div>
+        <button class="btn btn-p" onclick="importTallyInvoices()">📥 Import Tally Invoices</button>
+        <button class="btn btn-s" onclick="importTallyMasters()">📚 Import Tally Masters</button>
+        <div id="tally-msg" style="margin-top:10px"></div>
+      </div>
+
+      <div class="card">
+        <div class="ch">🚀 Zoho Books Import</div>
+        <div class="g3">
+          <div class="fg"><label>Client</label><select id="zoho-client"></select></div>
+          <div class="fg"><label>Register Type</label><select id="zoho-type"><option value="sales">Sales Invoices</option><option value="purchase">Purchase Bills</option></select></div>
+          <div class="fg"><label>Zoho Excel/CSV</label><input type="file" id="zoho-file" accept=".xlsx,.xls,.csv"></div>
+        </div>
+        <button class="btn btn-p" onclick="importZohoInvoices()">📥 Import Zoho Invoices</button>
+        <button class="btn btn-s" onclick="importZohoContacts()">👥 Import Zoho Contacts</button>
+        <div id="zoho-msg" style="margin-top:10px"></div>
+      </div>
+    </div>
+
+
     <!-- AI AGENT -->
     <div class="page" id="pg-aiagent">
       <div class="card"><div class="ch">🤖 AI Agent — Ask Anything</div>
@@ -696,7 +738,7 @@ async function api(path,opts={}){
 function logout(){localStorage.clear();location.href='/';}
 
 // NAV
-const titles={dashboard:'📊 Dashboard',clients:'👥 Clients',compliance:'📅 Compliance',tasks:'✅ Tasks',reconciliation:'🔄 GST Reconciliation',smartinvoice:'📄 Smart Invoice Upload',invoiceregister:'🧾 Invoice Register',gsp:'🔌 GSP Dashboard',notices:'⚠️ Notices',itr:'📋 ITR Filing',form26as:'📑 Form 26AS / AIS',tds:'🧾 TDS Returns',taxaudit:'🔍 Tax Audit',documents:'📁 Documents',billing:'💰 Billing',aiagent:'🤖 AI Agent'};
+const titles={dashboard:'📊 Dashboard',clients:'👥 Clients',compliance:'📅 Compliance',tasks:'✅ Tasks',reconciliation:'🔄 GST Reconciliation',smartinvoice:'📄 Smart Invoice Upload',invoiceregister:'🧾 Invoice Register',gsp:'🔌 GSP Dashboard',notices:'⚠️ Notices',itr:'📋 ITR Filing',form26as:'📑 Form 26AS / AIS',tds:'🧾 TDS Returns',taxaudit:'🔍 Tax Audit',documents:'📁 Documents',billing:'💰 Billing',aiagent:'🤖 AI Agent',accountingIntegrations:'📚 Accounting Integrations'};
 function nav(page,el){
   document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
@@ -706,7 +748,7 @@ function nav(page,el){
   closeSidebar();
   loadPage(page);
 }
-function loadPage(p){const m={clients:loadClients,compliance:loadCompliance,tasks:loadTasks,reconciliation:loadRecon,smartinvoice:loadSmartInvoicePage,invoiceregister:loadInvoiceRegisterPage,notices:loadNotices,itr:loadITR,form26as:loadF26,tds:loadTDS,taxaudit:loadAudit,documents:loadDocs,billing:loadBilling};if(m[p])m[p]();}
+function loadPage(p){const m={'accountingIntegrations':loadAccountingIntegrations,clients:loadClients,compliance:loadCompliance,tasks:loadTasks,reconciliation:loadRecon,smartinvoice:loadSmartInvoicePage,invoiceregister:loadInvoiceRegisterPage,notices:loadNotices,itr:loadITR,form26as:loadF26,tds:loadTDS,taxaudit:loadAudit,documents:loadDocs,billing:loadBilling};if(m[p])m[p]();}
 
 // DATA LOADERS
 async function loadClients(){
@@ -1236,6 +1278,43 @@ async function gspDo(action){
     $('gsp-out').textContent=JSON.stringify(d,null,2);
     $('gsp-msg').innerHTML='<div class="ok-box">✅ Done</div>';
   }catch(e){$('gsp-msg').innerHTML=`<div class="err-box">${e.message}</div>`;}
+}
+
+
+function fillIntegrationClientDropdowns(){
+  const source = document.querySelector('#smart-client, #smartClientSelect, #recon-client, #recon-client-select, #invoice-client-filter');
+  ['tally-client','zoho-client'].forEach(id=>{
+    const el=$(id); if(!el) return;
+    if(source && source.options && source.options.length){ el.innerHTML=source.innerHTML; }
+    else { el.innerHTML='<option value="">Select Client</option>'; }
+  });
+}
+function loadAccountingIntegrations(){ fillIntegrationClientDropdowns(); }
+async function importTallyInvoices(){
+  const client=$('tally-client')?.value, file=$('tally-file')?.files?.[0];
+  if(!client||!file){ $('tally-msg').innerHTML='<div class="err-box">Select client and upload Tally Excel/CSV</div>'; return; }
+  const fd=new FormData(); fd.append('client_id',client); fd.append('invoice_type',$('tally-type').value); fd.append('file',file);
+  try{ const r=await fetch(API+'/tally-import/invoices',{method:'POST',headers:{Authorization:'Bearer '+token},body:fd}); const d=await r.json(); if(!r.ok) throw new Error(d.detail||'Import failed'); $('acc-tally-count').textContent=d.imported||0; $('tally-msg').innerHTML=`<div class="ok-box">✅ Imported ${d.imported||0} Tally invoices</div>`; if(typeof loadInvoiceRegister==='function') loadInvoiceRegister(); }
+  catch(e){ $('tally-msg').innerHTML='<div class="err-box">Tally import failed: '+e.message+'</div>'; }
+}
+async function importTallyMasters(){
+  const file=$('tally-file')?.files?.[0]; if(!file){ $('tally-msg').innerHTML='<div class="err-box">Upload Tally Excel/CSV first</div>'; return; }
+  const fd=new FormData(); fd.append('file',file);
+  try{ const r=await fetch(API+'/tally-import/masters',{method:'POST',headers:{Authorization:'Bearer '+token},body:fd}); const d=await r.json(); if(!r.ok) throw new Error(d.detail||'Import failed'); $('acc-master-count').textContent=d.masters_found||0; $('tally-msg').innerHTML=`<div class="ok-box">✅ Parsed ${d.masters_found||0} Tally masters</div>`; }
+  catch(e){ $('tally-msg').innerHTML='<div class="err-box">Tally masters failed: '+e.message+'</div>'; }
+}
+async function importZohoInvoices(){
+  const client=$('zoho-client')?.value, file=$('zoho-file')?.files?.[0];
+  if(!client||!file){ $('zoho-msg').innerHTML='<div class="err-box">Select client and upload Zoho Excel/CSV</div>'; return; }
+  const fd=new FormData(); fd.append('client_id',client); fd.append('invoice_type',$('zoho-type').value); fd.append('file',file);
+  try{ const r=await fetch(API+'/zoho-import/invoices',{method:'POST',headers:{Authorization:'Bearer '+token},body:fd}); const d=await r.json(); if(!r.ok) throw new Error(d.detail||'Import failed'); $('acc-zoho-count').textContent=d.imported||0; $('zoho-msg').innerHTML=`<div class="ok-box">✅ Imported ${d.imported||0} Zoho invoices</div>`; if(typeof loadInvoiceRegister==='function') loadInvoiceRegister(); }
+  catch(e){ $('zoho-msg').innerHTML='<div class="err-box">Zoho import failed: '+e.message+'</div>'; }
+}
+async function importZohoContacts(){
+  const file=$('zoho-file')?.files?.[0]; if(!file){ $('zoho-msg').innerHTML='<div class="err-box">Upload Zoho Excel/CSV first</div>'; return; }
+  const fd=new FormData(); fd.append('file',file);
+  try{ const r=await fetch(API+'/zoho-import/masters',{method:'POST',headers:{Authorization:'Bearer '+token},body:fd}); const d=await r.json(); if(!r.ok) throw new Error(d.detail||'Import failed'); $('acc-master-count').textContent=d.masters_found||0; $('zoho-msg').innerHTML=`<div class="ok-box">✅ Parsed ${d.masters_found||0} Zoho contacts</div>`; }
+  catch(e){ $('zoho-msg').innerHTML='<div class="err-box">Zoho contacts failed: '+e.message+'</div>'; }
 }
 
 init();

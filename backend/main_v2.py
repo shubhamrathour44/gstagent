@@ -2,6 +2,8 @@ import os
 import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from tally_import import router as tally_import_router
+from zoho_import import router as zoho_import_router
 from database import create_tables
 from auth import auth_router
 from integrations import tally_router, zoho_router
