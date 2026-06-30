@@ -3,7 +3,7 @@ import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from database import create_tables
-from auth import auth_router
+from auth import router as auth_router
 from integrations import tally_router, zoho_router
 from gsp.router import gsp_router
 from tax.router import tax_router
