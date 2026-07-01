@@ -160,6 +160,120 @@ class Mismatch(Base):
     reconciliation: Mapped[Reconciliation] = relationship(back_populates="mismatches")
 
 
+class Employee(Base):
+    __tablename__ = "employees"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    firm_id: Mapped[str] = mapped_column(String(36), ForeignKey("ca_firms.id"), index=True, nullable=False)
+    client_id: Mapped[Optional[str]] = mapped_column(String(36), nullable=True)
+
+    name: Mapped[str] = mapped_column(String(200), nullable=False)
+    email: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
+    phone: Mapped[Optional[str]] = mapped_column(String(30), nullable=True)
+    pan: Mapped[Optional[str]] = mapped_column(String(10), nullable=True)
+    aadhar: Mapped[Optional[str]] = mapped_column(String(12), nullable=True)
+    upi_id: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    bank_account: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
+    bank_ifsc: Mapped[Optional[str]] = mapped_column(String(11), nullable=True)
+
+    designation: Mapped[str] = mapped_column(String(100), nullable=False)
+    department: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    joining_date: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    status: Mapped[str] = mapped_column(String(20), default="active", index=True)
+
+    basic_salary: Mapped[float] = mapped_column(Float, default=0.0)
+    hra: Mapped[float] = mapped_column(Float, default=0.0)
+    dearness_allowance: Mapped[float] = mapped_column(Float, default=0.0)
+    other_allowances: Mapped[float] = mapped_column(Float, default=0.0)
+
+    pf_applicable: Mapped[bool] = mapped_column(Boolean, default=True)
+    esi_applicable: Mapped[bool] = mapped_column(Boolean, default=True)
+    pt_applicable: Mapped[bool] = mapped_column(Boolean, default=False)
+
+    created_by: Mapped[Optional[str]] = mapped_column(String(36), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class Attendance(Base):
+    __tablename__ = "attendance"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    firm_id: Mapped[str] = mapped_column(String(36), index=True, nullable=False)
+    employee_id: Mapped[str] = mapped_column(String(36), ForeignKey("employees.id"), index=True, nullable=False)
+
+    attendance_date: Mapped[datetime] = mapped_column(DateTime, index=True, nullable=False)
+    status: Mapped[str] = mapped_column(String(20), default="present")
+    hours_worked: Mapped[float] = mapped_column(Float, default=8.0)
+    remarks: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class SalaryStructure(Base):
+    __tablename__ = "salary_structures"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    firm_id: Mapped[str] = mapped_column(String(36), index=True, nullable=False)
+    employee_id: Mapped[str] = mapped_column(String(36), ForeignKey("employees.id"), index=True, nullable=False)
+
+    effective_from: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    effective_to: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+
+    basic: Mapped[float] = mapped_column(Float, default=0.0)
+    hra: Mapped[float] = mapped_column(Float, default=0.0)
+    dearness_allowance: Mapped[float] = mapped_column(Float, default=0.0)
+    travel_allowance: Mapped[float] = mapped_column(Float, default=0.0)
+    medical_allowance: Mapped[float] = mapped_column(Float, default=0.0)
+    other_allowances: Mapped[float] = mapped_column(Float, default=0.0)
+
+    pf_rate: Mapped[float] = mapped_column(Float, default=12.0)
+    esi_rate: Mapped[float] = mapped_column(Float, default=0.75)
+    pt_rate: Mapped[float] = mapped_column(Float, default=0.0)
+
+    created_by: Mapped[Optional[str]] = mapped_column(String(36), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class Payroll(Base):
+    __tablename__ = "payrolls"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    firm_id: Mapped[str] = mapped_column(String(36), index=True, nullable=False)
+    employee_id: Mapped[str] = mapped_column(String(36), ForeignKey("employees.id"), index=True, nullable=False)
+
+    month: Mapped[str] = mapped_column(String(7), index=True, nullable=False)
+    status: Mapped[str] = mapped_column(String(20), default="draft")
+
+    working_days: Mapped[int] = mapped_column(Integer, default=26)
+    actual_days_worked: Mapped[int] = mapped_column(Integer, default=26)
+
+    basic_salary: Mapped[float] = mapped_column(Float, default=0.0)
+    hra: Mapped[float] = mapped_column(Float, default=0.0)
+    dearness_allowance: Mapped[float] = mapped_column(Float, default=0.0)
+    travel_allowance: Mapped[float] = mapped_column(Float, default=0.0)
+    medical_allowance: Mapped[float] = mapped_column(Float, default=0.0)
+    other_allowances: Mapped[float] = mapped_column(Float, default=0.0)
+
+    gross_salary: Mapped[float] = mapped_column(Float, default=0.0)
+
+    pf_deduction: Mapped[float] = mapped_column(Float, default=0.0)
+    esi_deduction: Mapped[float] = mapped_column(Float, default=0.0)
+    pt_deduction: Mapped[float] = mapped_column(Float, default=0.0)
+    income_tax: Mapped[float] = mapped_column(Float, default=0.0)
+    other_deductions: Mapped[float] = mapped_column(Float, default=0.0)
+
+    total_deductions: Mapped[float] = mapped_column(Float, default=0.0)
+    net_salary: Mapped[float] = mapped_column(Float, default=0.0)
+
+    payment_method: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    payment_date: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+
+    created_by: Mapped[Optional[str]] = mapped_column(String(36), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
 class AuditLog(Base):
     __tablename__ = "audit_logs"
 

@@ -22,6 +22,7 @@ from invoices import router as invoices_router
 from reconcile_saved import router as reconcile_saved_router
 from tally_import import router as tally_import_router
 from zoho_import import router as zoho_import_router
+from payroll.router import payroll_router
 
 
 logging.basicConfig(level=logging.INFO)
@@ -88,7 +89,8 @@ async def modules():
             "notices",
             "tasks",
             "tally",
-            "zoho"
+            "zoho",
+            "payroll"
         ]
     }
 
@@ -110,6 +112,7 @@ app.include_router(invoices_router)
 app.include_router(reconcile_saved_router)
 app.include_router(tally_import_router)
 app.include_router(zoho_import_router)
+app.include_router(payroll_router)
 
 
 if __name__ == "__main__":
