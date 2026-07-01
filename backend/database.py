@@ -274,6 +274,31 @@ class Payroll(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
+class ITRDocument(Base):
+    __tablename__ = "itr_documents"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    firm_id: Mapped[str] = mapped_column(String(36), index=True, nullable=False)
+    itr_return_id: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("itr_returns.id"), nullable=True)
+
+    document_type: Mapped[str] = mapped_column(String(50), index=True, nullable=False)
+    document_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    file_path: Mapped[str] = mapped_column(String(500), nullable=False)
+    file_size: Mapped[int] = mapped_column(Integer, default=0)
+    mime_type: Mapped[str] = mapped_column(String(100), nullable=False)
+
+    pan: Mapped[Optional[str]] = mapped_column(String(10), index=True, nullable=True)
+    assessment_year: Mapped[Optional[str]] = mapped_column(String(10), nullable=True)
+
+    extraction_status: Mapped[str] = mapped_column(String(20), default="pending")
+    extracted_data: Mapped[dict] = mapped_column(JSON, default=dict)
+    extraction_errors: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+
+    uploaded_by: Mapped[Optional[str]] = mapped_column(String(36), nullable=True)
+    uploaded_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
 class ChartOfAccounts(Base):
     __tablename__ = "chart_of_accounts"
 

@@ -24,6 +24,7 @@ from tally_import import router as tally_import_router
 from zoho_import import router as zoho_import_router
 from payroll.router import payroll_router
 from accounting.router import accounting_router
+from itr_documents.router import router as itr_documents_router
 
 
 logging.basicConfig(level=logging.INFO)
@@ -92,7 +93,8 @@ async def modules():
             "tally",
             "zoho",
             "payroll",
-            "accounting"
+            "accounting",
+            "itr_documents"
         ]
     }
 
@@ -116,6 +118,7 @@ app.include_router(tally_import_router)
 app.include_router(zoho_import_router)
 app.include_router(payroll_router)
 app.include_router(accounting_router)
+app.include_router(itr_documents_router)
 
 
 if __name__ == "__main__":
