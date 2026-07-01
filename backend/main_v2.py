@@ -17,9 +17,6 @@ from reconciliation.router import router as reconciliation_router
 from bill_reader.router import router as bill_reader_router
 from itr.router import router as itr_router
 from password_reset import router as password_reset_router
-from form26as import router as form26as_router
-from tds import router as tds_router
-from tax_audit import router as tax_audit_router
 from ai_agent_router import router as ai_agent_router
 from invoices import router as invoices_router
 from reconcile_saved import router as reconcile_saved_router
@@ -109,9 +106,6 @@ app.include_router(bill_reader_router)
 app.include_router(itr_router)
 app.include_router(password_reset_router)
 app.include_router(ai_agent_router)
-app.include_router(form26as_router)
-app.include_router(tds_router)
-app.include_router(tax_audit_router)
 app.include_router(invoices_router)
 app.include_router(reconcile_saved_router)
 app.include_router(tally_import_router)
