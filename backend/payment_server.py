@@ -52,11 +52,17 @@ async def health():
         "database": "sqlite"
     }
 
-# Import new feature routers
+# Import feature routers
 from gst.features_router import features_router
+from gst.itr_router import itr_router
+from gst.gstr3b_router import gstr3b_router
+from gst.itr_forms_router import itr_forms_router
 
-# Include new feature router
+# Include routers
 app.include_router(features_router)
+app.include_router(itr_router)
+app.include_router(gstr3b_router)
+app.include_router(itr_forms_router)
 
 # Demo Endpoints (No auth required for demo)
 @app.get("/demo/interest-calculator")
