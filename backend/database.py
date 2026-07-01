@@ -274,6 +274,136 @@ class Payroll(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
+class ChartOfAccounts(Base):
+    __tablename__ = "chart_of_accounts"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    firm_id: Mapped[str] = mapped_column(String(36), ForeignKey("ca_firms.id"), index=True, nullable=False)
+
+    account_code: Mapped[str] = mapped_column(String(20), unique=True, index=True, nullable=False)
+    account_name: Mapped[str] = mapped_column(String(200), nullable=False)
+    account_type: Mapped[str] = mapped_column(String(50), index=True, nullable=False)
+    category: Mapped[str] = mapped_column(String(50), nullable=False)
+    sub_category: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+
+    description: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, index=True)
+
+    opening_balance: Mapped[float] = mapped_column(Float, default=0.0)
+    opening_balance_type: Mapped[str] = mapped_column(String(10), default="debit")
+
+    created_by: Mapped[Optional[str]] = mapped_column(String(36), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class JournalEntry(Base):
+    __tablename__ = "journal_entries"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    firm_id: Mapped[str] = mapped_column(String(36), index=True, nullable=False)
+
+    entry_number: Mapped[str] = mapped_column(String(20), unique=True, index=True, nullable=False)
+    entry_date: Mapped[datetime] = mapped_column(DateTime, index=True, nullable=False)
+
+    description: Mapped[str] = mapped_column(String(500), nullable=False)
+    reference: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+
+    total_debit: Mapped[float] = mapped_column(Float, default=0.0)
+    total_credit: Mapped[float] = mapped_column(Float, default=0.0)
+
+    is_posted: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    is_reversed: Mapped[bool] = mapped_column(Boolean, default=False)
+
+    created_by: Mapped[Optional[str]] = mapped_column(String(36), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class JournalEntryLine(Base):
+    __tablename__ = "journal_entry_lines"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    firm_id: Mapped[str] = mapped_column(String(36), index=True, nullable=False)
+    journal_entry_id: Mapped[str] = mapped_column(String(36), ForeignKey("journal_entries.id"), index=True, nullable=False)
+    account_id: Mapped[str] = mapped_column(String(36), ForeignKey("chart_of_accounts.id"), index=True, nullable=False)
+
+    account_code: Mapped[str] = mapped_column(String(20), nullable=False)
+    account_name: Mapped[str] = mapped_column(String(200), nullable=False)
+
+    debit: Mapped[float] = mapped_column(Float, default=0.0)
+    credit: Mapped[float] = mapped_column(Float, default=0.0)
+
+    description: Mapped[Optional[str]] = mapped_column(String(300), nullable=True)
+    line_number: Mapped[int] = mapped_column(Integer, default=0)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class GeneralLedger(Base):
+    __tablename__ = "general_ledger"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    firm_id: Mapped[str] = mapped_column(String(36), index=True, nullable=False)
+    account_id: Mapped[str] = mapped_column(String(36), ForeignKey("chart_of_accounts.id"), index=True, nullable=False)
+    journal_entry_id: Mapped[str] = mapped_column(String(36), ForeignKey("journal_entries.id"), index=True, nullable=False)
+
+    account_code: Mapped[str] = mapped_column(String(20), index=True, nullable=False)
+    account_name: Mapped[str] = mapped_column(String(200), nullable=False)
+
+    transaction_date: Mapped[datetime] = mapped_column(DateTime, index=True, nullable=False)
+    description: Mapped[str] = mapped_column(String(500), nullable=False)
+    reference: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+
+    debit: Mapped[float] = mapped_column(Float, default=0.0)
+    credit: Mapped[float] = mapped_column(Float, default=0.0)
+
+    running_balance: Mapped[float] = mapped_column(Float, default=0.0)
+    balance_type: Mapped[str] = mapped_column(String(10), default="debit")
+
+    posted_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class TrialBalance(Base):
+    __tablename__ = "trial_balance"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    firm_id: Mapped[str] = mapped_column(String(36), index=True, nullable=False)
+    account_id: Mapped[str] = mapped_column(String(36), ForeignKey("chart_of_accounts.id"), index=True, nullable=False)
+
+    account_code: Mapped[str] = mapped_column(String(20), index=True, nullable=False)
+    account_name: Mapped[str] = mapped_column(String(200), nullable=False)
+    account_type: Mapped[str] = mapped_column(String(50), nullable=False)
+
+    opening_balance: Mapped[float] = mapped_column(Float, default=0.0)
+    opening_balance_type: Mapped[str] = mapped_column(String(10), default="debit")
+
+    total_debit: Mapped[float] = mapped_column(Float, default=0.0)
+    total_credit: Mapped[float] = mapped_column(Float, default=0.0)
+
+    closing_balance: Mapped[float] = mapped_column(Float, default=0.0)
+    closing_balance_type: Mapped[str] = mapped_column(String(10), default="debit")
+
+    as_on_date: Mapped[datetime] = mapped_column(DateTime, index=True, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class FinancialStatement(Base):
+    __tablename__ = "financial_statements"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    firm_id: Mapped[str] = mapped_column(String(36), index=True, nullable=False)
+
+    statement_type: Mapped[str] = mapped_column(String(50), nullable=False)
+    statement_period: Mapped[str] = mapped_column(String(20), nullable=False)
+    as_on_date: Mapped[datetime] = mapped_column(DateTime, index=True, nullable=False)
+
+    data: Mapped[dict] = mapped_column(JSON, nullable=False)
+
+    created_by: Mapped[Optional[str]] = mapped_column(String(36), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
 class AuditLog(Base):
     __tablename__ = "audit_logs"
 
