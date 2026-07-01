@@ -299,6 +299,49 @@ class ITRDocument(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
 
+class EFilingSubmission(Base):
+    __tablename__ = "efiling_submissions"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    firm_id: Mapped[str] = mapped_column(String(36), index=True, nullable=False)
+    itr_return_id: Mapped[str] = mapped_column(String(36), ForeignKey("itr_returns.id"), index=True, nullable=False)
+
+    pan: Mapped[str] = mapped_column(String(10), index=True, nullable=False)
+    assessment_year: Mapped[str] = mapped_column(String(10), index=True, nullable=False)
+    itr_type: Mapped[str] = mapped_column(String(10), nullable=False)
+
+    # Submission details
+    acknowledgement_number: Mapped[Optional[str]] = mapped_column(String(50), index=True, nullable=True)
+    xml_file_path: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    xml_file_hash: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+
+    # Status tracking
+    submission_status: Mapped[str] = mapped_column(String(50), default="draft", index=True)
+    error_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
+    # ITR-V tracking (verification copy)
+    itr_v_generated: Mapped[bool] = mapped_column(Boolean, default=False)
+    itr_v_file_path: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    itr_v_signed: Mapped[bool] = mapped_column(Boolean, default=False)
+    itr_v_signed_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    signature_method: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)  # "dsc", "aadhar"
+
+    # Portal response tracking
+    submitted_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    processed_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    portal_status: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)  # "acknowledged", "processed", "rejected"
+    portal_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
+    # Refund tracking
+    refund_status: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    refund_amount: Mapped[float] = mapped_column(Float, default=0.0)
+
+    # Audit trail
+    submitted_by: Mapped[Optional[str]] = mapped_column(String(36), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
 class ChartOfAccounts(Base):
     __tablename__ = "chart_of_accounts"
 
