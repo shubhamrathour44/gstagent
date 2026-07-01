@@ -1,7 +1,8 @@
 import os
 import mimetypes
+import logging
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Tuple
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, Query
 from sqlalchemy import select, and_, func, desc
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -15,6 +16,9 @@ from .schemas import (
     DocumentStatistics,
 )
 from .parser import DocumentParserFactory
+from .pdf_extractor import DocumentTextExtractor
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/itr-documents", tags=["ITR Documents"])
 
@@ -53,26 +57,20 @@ def _save_file(firm_id: str, file: UploadFile) -> tuple[str, int]:
     return file_path, len(content)
 
 
-def _extract_text_from_file(file_path: str) -> str:
-    """Extract text from PDF or text file."""
-    # For MVP, support text files and simple extraction
-    # Full PDF support would need PyPDF2 or pdfplumber
+def _extract_text_from_file(file_path: str) -> Tuple[str, str]:
+    """
+    Extract text from document file.
+
+    Returns:
+        Tuple[str, str]: (extracted_text, extraction_method)
+    """
     try:
-        if file_path.lower().endswith('.txt'):
-            with open(file_path, 'r', encoding='utf-8') as f:
-                return f.read()
-        elif file_path.lower().endswith('.pdf'):
-            # For MVP: return placeholder
-            # TODO: Add PyPDF2 for PDF text extraction
-            return "[PDF Content - Requires PyPDF2 for extraction]"
-        elif file_path.lower().endswith(('.xlsx', '.xls')):
-            # For MVP: return placeholder
-            # TODO: Add openpyxl for Excel extraction
-            return "[Excel Content - Requires openpyxl for extraction]"
-        else:
-            return ""
+        text, method = DocumentTextExtractor.extract(file_path)
+        logger.info(f"Extracted from {file_path} using method: {method}")
+        return text, method
     except Exception as e:
-        return f"[Extraction Error: {str(e)}]"
+        logger.error(f"Text extraction error: {str(e)}")
+        return f"[Extraction Error: {str(e)}]", "error"
 
 
 async def _process_document(
@@ -83,18 +81,24 @@ async def _process_document(
     """Process document: extract text and parse data."""
     try:
         # Extract text from file
-        text_content = _extract_text_from_file(file_path)
+        text_content, extraction_method = _extract_text_from_file(file_path)
 
-        if not text_content or text_content.startswith("["):
+        # Check if extraction was unsuccessful
+        if not text_content or text_content.startswith("[") or text_content.startswith("Error"):
             doc.extraction_status = "pending_manual"
-            doc.extraction_errors = "File format requires manual review"
+            doc.extraction_errors = f"Text extraction failed ({extraction_method}): {text_content}"
+            logger.warning(f"Manual review needed for {doc.id}: {doc.extraction_errors}")
             return
+
+        # Log extraction success
+        logger.info(f"Successfully extracted text ({extraction_method}) from {doc.id}: {len(text_content)} chars")
 
         # Parse document
         parsed_data = DocumentParserFactory.parse(doc.document_type, text_content)
 
         doc.extracted_data = parsed_data
         doc.extraction_status = "completed"
+        doc.extraction_errors = None
 
         # Update PAN and AY if extracted
         if parsed_data.get("pan"):
@@ -102,26 +106,38 @@ async def _process_document(
         if parsed_data.get("assessment_year"):
             doc.assessment_year = parsed_data["assessment_year"]
 
+        logger.info(f"Successfully parsed {doc.document_type} from {doc.id}")
+
     except Exception as e:
         doc.extraction_status = "failed"
         doc.extraction_errors = str(e)
+        logger.error(f"Document processing error for {doc.id}: {str(e)}")
 
 
 @router.get("/status")
 async def status(current_user: CurrentUser = Depends(get_current_user)):
+    capabilities = DocumentTextExtractor.get_extraction_capabilities()
+
     return {
         "status": "ok",
         "module": "itr_documents",
         "supported_types": list(ALLOWED_TYPES),
         "max_file_size_mb": MAX_FILE_SIZE / (1024 * 1024),
+        "extraction_capabilities": capabilities,
         "features": [
             "file_upload",
             "data_extraction",
+            "pdf_extraction" if capabilities.get("pdf_pypdf2") else "pdf_extraction_limited",
             "ais_parsing",
             "form26as_parsing",
             "form16_parsing",
             "document_linking"
-        ]
+        ],
+        "pdf_extraction_status": {
+            "pypdf2": "Available" if capabilities.get("pdf_pypdf2") else "Not installed",
+            "ocr": "Available" if capabilities.get("pdf_ocr") else "Not installed",
+            "recommendation": "Install PyPDF2 for PDF support: pip install PyPDF2"
+        }
     }
 
 
