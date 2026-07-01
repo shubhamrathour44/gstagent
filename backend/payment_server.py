@@ -57,12 +57,14 @@ from gst.features_router import features_router
 from gst.itr_router import itr_router
 from gst.gstr3b_router import gstr3b_router
 from gst.itr_forms_router import itr_forms_router
+from gst.pdf_export_router import pdf_export_router
 
 # Include routers
 app.include_router(features_router)
 app.include_router(itr_router)
 app.include_router(gstr3b_router)
 app.include_router(itr_forms_router)
+app.include_router(pdf_export_router)
 
 # Demo Endpoints (No auth required for demo)
 @app.get("/demo/interest-calculator")
