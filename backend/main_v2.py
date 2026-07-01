@@ -28,6 +28,7 @@ from itr_documents.router import router as itr_documents_router
 from itr.efiling_router import router as efiling_router
 from gst.gstr_filing_router import router as gstr_filing_router
 from reconciliation.sales_router import sales_router
+from gst.payment_router import payment_router
 
 
 logging.basicConfig(level=logging.INFO)
@@ -126,6 +127,7 @@ app.include_router(itr_documents_router)
 app.include_router(efiling_router)
 app.include_router(gstr_filing_router)
 app.include_router(sales_router)
+app.include_router(payment_router)
 
 
 if __name__ == "__main__":
