@@ -97,8 +97,8 @@ class InterestCalculationEngine:
 
     # 18% per annum = 1.5% per month = 0.05% per day
     ANNUAL_RATE = 0.18
-    MONTHLY_RATE = self.ANNUAL_RATE / 12
-    DAILY_RATE = self.ANNUAL_RATE / 365
+    MONTHLY_RATE = 0.015  # 1.5% per month
+    DAILY_RATE = 0.0005   # 0.05% per day (18% / 360 for GST purposes)
 
     @staticmethod
     def calculate_interest(
