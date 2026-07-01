@@ -26,6 +26,7 @@ from payroll.router import payroll_router
 from accounting.router import accounting_router
 from itr_documents.router import router as itr_documents_router
 from itr.efiling_router import router as efiling_router
+from gst.gstr_filing_router import router as gstr_filing_router
 
 
 logging.basicConfig(level=logging.INFO)
@@ -122,6 +123,7 @@ app.include_router(payroll_router)
 app.include_router(accounting_router)
 app.include_router(itr_documents_router)
 app.include_router(efiling_router)
+app.include_router(gstr_filing_router)
 
 
 if __name__ == "__main__":

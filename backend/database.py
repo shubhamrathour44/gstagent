@@ -342,6 +342,52 @@ class EFilingSubmission(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
+class GSTRFilingSubmission(Base):
+    __tablename__ = "gstr_filing_submissions"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    firm_id: Mapped[str] = mapped_column(String(36), index=True, nullable=False)
+    gstin: Mapped[str] = mapped_column(String(15), index=True, nullable=False)
+    period: Mapped[str] = mapped_column(String(6), index=True, nullable=False)  # MMYYYY
+    return_type: Mapped[str] = mapped_column(String(10), nullable=False)  # GSTR-1 or GSTR-3B
+
+    # Filing details
+    acknowledgement_number: Mapped[Optional[str]] = mapped_column(String(50), index=True, nullable=True)
+    xml_file_path: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    xml_file_hash: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+
+    # Status tracking
+    filing_status: Mapped[str] = mapped_column(String(50), default="draft", index=True)
+    portal_status: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)  # acknowledged, processed, rejected
+    error_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
+    # Financial summary (from the return)
+    total_taxable_value: Mapped[float] = mapped_column(Float, default=0.0)
+    total_cgst: Mapped[float] = mapped_column(Float, default=0.0)
+    total_sgst: Mapped[float] = mapped_column(Float, default=0.0)
+    total_igst: Mapped[float] = mapped_column(Float, default=0.0)
+    total_cess: Mapped[float] = mapped_column(Float, default=0.0)
+
+    # For GSTR-3B: ITC and tax payable
+    itc_claimed: Mapped[float] = mapped_column(Float, default=0.0)
+    tax_payable: Mapped[float] = mapped_column(Float, default=0.0)
+    refund_available: Mapped[float] = mapped_column(Float, default=0.0)
+
+    # Amendment tracking
+    is_amendment: Mapped[bool] = mapped_column(Boolean, default=False)
+    original_ack_no: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)  # Link to original filing
+
+    # Portal timestamps
+    submitted_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    processed_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    acknowledged_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+
+    # Audit trail
+    submitted_by: Mapped[Optional[str]] = mapped_column(String(36), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
 class ChartOfAccounts(Base):
     __tablename__ = "chart_of_accounts"
 
